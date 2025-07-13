@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Users - SkillSwap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 10px;
+        }
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SkillSwap User Registration Tool</h1>
+        
+        <div class="status" id="status">Ready to register users</div>
+        
+        <div class="controls">
+            <label for="userCount">Number of users:</label>
+            <input type="number" id="userCount" value="20" min="1" max="100">
+            <button class="button" onclick="startRegistration()" id="registerBtn">Register Users</button>
+            <button class="button" onclick="clearOutput()">Clear Output</button>
+        </div>
+        
+        <div id="output">Click "Register Users" to start...</div>
+    </div>
+
+    <script type="module">
+        // Import the registration script
+        import { registerMultipleUsers } from '../src/scripts/registerUsers.js';
+        
+        // Make it available globally
+        window.registerMultipleUsers = registerMultipleUsers;
+        
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const output = document.getElementById('output');
+        
+        function appendToOutput(message, isError = false) {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = isError ? '#dc3545' : '#28a745';
+            output.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            appendToOutput(args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            appendToOutput(args.join(' '), true);
+        };
+        
+        window.startRegistration = async function() {
+            const userCount = parseInt(document.getElementById('userCount').value);
+            const registerBtn = document.getElementById('registerBtn');
+            const status = document.getElementById('status');
+            
+            if (userCount < 1 || userCount > 100) {
+                alert('Please enter a number between 1 and 100');
+                return;
+            }
+            
+            registerBtn.disabled = true;
+            status.textContent = `Registering ${userCount} users...`;
+            status.style.color = '#007bff';
+            
+            try {
+                await registerMultipleUsers(userCount);
+                status.textContent = 'Registration completed!';
+                status.style.color = '#28a745';
+            } catch (error) {
+                status.textContent = 'Registration failed!';
+                status.style.color = '#dc3545';
+                console.error('Registration error:', error);
+            } finally {
+                registerBtn.disabled = false;
+            }
+        };
+        
+        window.clearOutput = function() {
+            output.innerHTML = '';
+        };
+        
+        console.log('✅ Registration tool loaded successfully!');
+        console.log('💡 Make sure your backend server is running on http://localhost:3000');
+    </script>
+</body>
+</html> 

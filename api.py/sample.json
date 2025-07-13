@@ -1,0 +1,66 @@
+[
+    {
+      "username": "Alex Johnson",
+      "skills_offered": ["Photography", "Photo Editing"],
+      "skills_wanted": ["Web Development", "Graphic Design"],
+      "location": "Berlin",
+      "availability": ["Weekends", "Evenings"],
+      "learning_style": "Hands-on",
+      "preferences": "Prefer online sessions via Zoom. 1-hour max sessions."
+    },
+    {
+      "username": "Maria Lopez",
+      "skills_offered": ["Spanish Language", "Cooking (Mexican Cuisine)"],
+      "skills_wanted": ["Basic Guitar", "Photography"],
+      "location": "Madrid",
+      "availability": ["Weekdays", "Afternoons"],
+      "learning_style": "Visual",
+      "preferences": "Prefer in-person meetups at local cafes."
+    },
+    {
+      "username": "Daniel Kim",
+      "skills_offered": ["Web Development", "UI/UX Design"],
+      "skills_wanted": ["Public Speaking", "Creative Writing"],
+      "location": "Seoul",
+      "availability": ["Evenings", "Saturday mornings"],
+      "learning_style": "Theoretical",
+      "preferences": "Sessions should include structured slides and resources."
+    },
+    {
+      "username": "Leila Smith",
+      "skills_offered": ["French Language", "Piano (Beginner)"],
+      "skills_wanted": ["Data Analysis", "Coding in Python"],
+      "location": "Toronto",
+      "availability": ["Weekends"],
+      "learning_style": "Casual",
+      "preferences": "Happy with flexible, casual learning sessions, preferably remote."
+    },
+    {
+      "username": "Omar Hassan",
+      "skills_offered": ["Fitness Coaching", "Nutrition Planning"],
+      "skills_wanted": ["Mobile App Development", "Blockchain Basics"],
+      "location": "Dubai",
+      "availability": ["Early Mornings", "Late Evenings"],
+      "learning_style": "Hands-on",
+      "preferences": "Only available after 7 PM on weekdays or early mornings on weekends."
+    },
+    {
+      "username": "Sofia Petrova",
+      "skills_offered": ["Painting (Oil/Acrylic)", "Art History"],
+      "skills_wanted": ["Social Media Marketing", "Content Creation"],
+      "location": "Paris",
+      "availability": ["Afternoons", "Weekends"],
+      "learning_style": "Visual",
+      "preferences": "Prefer to exchange portfolio reviews as part of learning."
+    },
+    {
+      "username": "Jason Liu",
+      "skills_offered": ["Data Science (Python)", "Machine Learning Basics"],
+      "skills_wanted": ["Photography", "Video Editing"],
+      "location": "San Francisco",
+      "availability": ["Weekday Evenings"],
+      "learning_style": "Theoretical",
+      "preferences": "Can only do 2 sessions per month; prefer detailed technical explanations."
+    }
+  ]
+  
