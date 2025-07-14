@@ -20,16 +20,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
     >
       <div className="relative">
         <img
-          src={user.avatar}
-          alt={user.name}
+          src={user?.avatar}
+          alt={user?.name}
           className="h-10 w-10 rounded-full object-cover"
         />
        
       </div>
       <div>
-        <p className="text-sm font-medium text-white">{user.name}</p>
+        <p className="text-sm font-medium text-white">{user?.name}</p>
         {showEmail && (
-          <p className="text-xs text-gray-400">{user.email}</p>
+          <p className="text-xs text-gray-400">{user?.email}</p>
         )}
       </div>
     </div>

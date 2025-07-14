@@ -399,7 +399,6 @@ const ConnectPage: React.FC = () => {
           setIsSwapModalOpen(false);
           setSelectedSession(null);
         }}
-        onRequestSwap={handleSwapRequest}
       />
 
       {/* Session Details Modal */}

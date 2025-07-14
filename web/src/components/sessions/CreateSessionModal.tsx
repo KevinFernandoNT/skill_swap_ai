@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { X, Calendar, Clock, Users, Globe, Lock, Save, Plus } from 'lucide-react';
 import { Session } from '../../types';
 import { currentUser } from '../../data/mockData';
+import { useToast } from "@/hooks/use-toast";
+import { useCreateSession } from "@/hooks/useCreateSession";
 
 interface CreateSessionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (session: Omit<Session, 'id' | 'participant' | 'status'>) => void;
 }
 
-const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose, onSave }) => {
+const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -28,6 +29,23 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
   const [focusKeywords, setFocusKeywords] = useState<string[]>([]);
   const [focusKeywordInput, setFocusKeywordInput] = useState('');
+  const { toast } = useToast();
+  const { mutate: createSession, status } = useCreateSession({
+    onSuccess: () => {
+      toast({
+        title: "Session created!",
+        description: "Your session has been created successfully.",
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Session creation failed",
+        description: error?.response?.data?.message || "Could not create session.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!isOpen) return null;
 
@@ -64,7 +82,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       meetingLink: formData.meetingLink,
       focusKeywords: [...focusKeywords]
     };
-    onSave(sessionData);
+    createSession(sessionData);
     // Reset form
     setFormData({
       title: '',

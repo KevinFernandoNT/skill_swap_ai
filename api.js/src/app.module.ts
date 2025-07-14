@@ -10,6 +10,7 @@ import { SessionsModule } from './Modules/sessions/sessions.module';
 import { MessagesModule } from './Modules/messages/messages.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module';
+import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-requests.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module'
     SkillsModule,
     SessionsModule,
     MessagesModule,
-    StreamChatModule
+    StreamChatModule,
+    ExchangeRequestsModule
   ],
   controllers: [AppController],
   providers: [AppService],
