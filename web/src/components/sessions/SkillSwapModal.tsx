@@ -2,26 +2,42 @@ import React, { useState } from 'react';
 import { X, ArrowRightLeft, Send, User } from 'lucide-react';
 import { Session, Skill } from '../../types';
 import { currentUser } from '../../data/mockData';
-import { toast } from '../../hooks/use-toast';
+import { useCreateExchangeRequest } from "@/hooks/useCreateExchangeRequest";
+import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
 
 interface SkillSwapModalProps {
   session: Session | null;
   isOpen: boolean;
   onClose: () => void;
-  onRequestSwap: (sessionId: string, selectedSkillId: string, message: string) => void;
 }
 
 const SkillSwapModal: React.FC<SkillSwapModalProps> = ({ 
   session, 
   isOpen, 
-  onClose, 
-  onRequestSwap 
+  onClose
 }) => {
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [message, setMessage] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<null | React.FormEvent>(null);
+  const { toast } = useToast();
+  const { mutate: createExchangeRequest, status } = useCreateExchangeRequest({
+    onSuccess: () => {
+      toast({
+        title: "Swap Request Sent",
+        description: "Your skill swap request has been sent successfully!"
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Swap Request Failed",
+        description: error?.response?.data?.message || "Could not send swap request.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (!isOpen || !session) return null;
 
@@ -38,12 +54,13 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
   };
     
   const handleConfirmSwap = () => {
-    if (!selectedSkillId) return;
-    onRequestSwap(session.id, selectedSkillId, message);
-    onClose();
-    toast({
-      title: 'Swap Request Sent',
-      description: 'Your skill swap request has been sent successfully!'
+    if (!selectedSkillId || !session) return;
+    createExchangeRequest({
+      sessionId: session.id,
+      recipient: session.participant.id,
+      offeredSkill: availableSkills.find(s => s.id === selectedSkillId)?.name || '',
+      requestedSkill: (session as any).teachSkillName || session.title || session.skillCategory,
+      message
     });
     setSelectedSkillId('');
     setMessage('');

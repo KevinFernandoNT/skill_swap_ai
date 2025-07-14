@@ -41,4 +41,34 @@ export class CreateSessionDto {
   @IsOptional()
   @IsBoolean()
   isPublic?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  teachSkillId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  teachSkillName?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  focusedTopics?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  subTopics?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  meetingLink?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  focusKeywords?: string[];
 }

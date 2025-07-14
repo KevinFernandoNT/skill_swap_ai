@@ -353,7 +353,6 @@ const SessionsPage: React.FC = () => {
       <CreateSessionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleCreateSession}
       />
 
       {/* Edit Session Modal */}

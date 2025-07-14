@@ -54,6 +54,30 @@ export class Session {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   participants: Types.ObjectId[];
 
+  @ApiProperty({ required: false })
+  @Prop()
+  teachSkillId?: string;
+
+  @ApiProperty({ required: false })
+  @Prop()
+  teachSkillName?: string;
+
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  focusedTopics?: string[];
+
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  subTopics?: string[];
+
+  @ApiProperty({ required: false })
+  @Prop()
+  meetingLink?: string;
+
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  focusKeywords?: string[];
+
   @ApiProperty()
   createdAt: Date;
 
