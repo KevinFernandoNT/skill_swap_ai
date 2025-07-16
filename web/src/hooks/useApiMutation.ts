@@ -9,7 +9,11 @@ interface ApiMutationOptions<TData = any, TVariables = any> extends UseMutationO
 export function useApiMutation<TData = any, TVariables = any>({ endpoint, method = 'post', ...options }: ApiMutationOptions<TData, TVariables>) {
   return useMutation<TData, unknown, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      const { data } = await api[method](endpoint, variables);
+      let config = {};
+      if (variables instanceof FormData) {
+        config = { headers: { 'Content-Type': 'multipart/form-data' } };
+      }
+      const { data } = await api[method](endpoint, variables, config);
       return data;
     },
     ...options,

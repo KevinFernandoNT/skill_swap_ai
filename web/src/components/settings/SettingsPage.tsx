@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Lock, Save, Camera, Eye, EyeOff } from 'lucide-react';
+import { useCurrentUser, useUpdateProfile, useChangePassword } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+
+type ProfileData = {
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  bio: string;
+  website: string;
+  linkedin: string;
+  github: string;
+  timezone: string;
+  avatar: string | File;
+};
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -17,8 +32,19 @@ const SettingsPage: React.FC = () => {
     }
   }, []);
 
+  const { data: user, refetch } = useCurrentUser();
+  const updateProfile = useUpdateProfile({
+    onSuccess: () => { toast({ title: 'Profile updated!' }); refetch(); },
+    onError: (error) => { toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update profile', variant: 'destructive' }); },
+  });
+  const changePassword = useChangePassword({
+    onSuccess: () => { toast({ title: 'Password changed!' }); setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' }); },
+    onError: (error) => { toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to change password', variant: 'destructive' }); },
+  });
+  const { toast } = useToast();
+
   // Profile form state
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     email: '',
     phone: '+94 (555) 123-4567',
@@ -33,16 +59,16 @@ const SettingsPage: React.FC = () => {
 
   // Update profile data when current user is loaded
   useEffect(() => {
-    if (currentUser) {
+    if (user) {
       setProfileData(prev => ({
         ...prev,
-        name: currentUser.name || '',
-        email: currentUser.email || '',
-        location: currentUser.location || '',
-        avatar: currentUser.avatar || ''
+        name: user.name || '',
+        email: user.email || '',
+        location: user.location || '',
+        avatar: user.avatar || ''
       }));
     }
-  }, [currentUser]);
+  }, [user]);
 
   // Password form state
   const [passwordData, setPasswordData] = useState({
@@ -76,23 +102,32 @@ const SettingsPage: React.FC = () => {
     setNotifications(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle profile update
-    console.log('Profile updated:', profileData);
-    // Show success message
+    const formData = new FormData();
+    Object.entries(profileData).forEach(([key, value]) => {
+      if (key === 'avatar' && value instanceof File) {
+        formData.append('avatar', value);
+      } else if (key !== 'avatar') {
+        formData.append(key, value);
+      }
+    });
+    updateProfile.mutate(formData);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfileData(prev => ({ ...prev, avatar: e.target.files[0] }));
+    }
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match');
+      toast({ title: 'Error', description: 'New passwords do not match', variant: 'destructive' });
       return;
     }
-    // Handle password change
-    console.log('Password changed');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    // Show success message
+    changePassword.mutate({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
   };
 
   const handleNotificationSubmit = (e: React.FormEvent) => {
@@ -162,9 +197,15 @@ const SettingsPage: React.FC = () => {
                 <div className="flex items-center space-x-6">
                   <div className="relative">
                     <img
-                      src={profileData.avatar}
+                      src={typeof profileData.avatar === 'string' ? profileData.avatar : URL.createObjectURL(profileData.avatar)}
                       alt="Profile"
                       className="w-24 h-24 rounded-full object-cover"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <button
                       type="button"

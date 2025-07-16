@@ -12,10 +12,18 @@ export interface User {
 
 // Skill related types
 export interface Skill {
-  id: string;
+  _id: string;
   name: string;
   category: string;
   proficiency: number;
+  type: 'teaching' | 'learning';
+  agenda: string[];
+  description?: string;
+  experience?: string;
+  goals?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
 }
 
 // Session related types

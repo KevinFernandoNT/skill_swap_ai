@@ -46,3 +46,30 @@ type ApiErrorResponse = {
 };
 
 export type ApiError = AxiosError<ApiErrorResponse>;
+
+// --- Skill Types for API ---
+export type SkillRequest = {
+  name?: string;
+  category?: string;
+  proficiency?: number;
+  type?: 'teaching' | 'learning';
+  agenda?: string[];
+  description?: string;
+  experience?: string;
+  goals?: string;
+};
+
+export type SkillResponse = {
+  id: string;
+  name: string;
+  category: string;
+  proficiency: number;
+  type: 'teaching' | 'learning';
+  agenda?: string[];
+  description?: string;
+  experience?: string;
+  goals?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
+};
