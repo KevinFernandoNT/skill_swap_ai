@@ -2,6 +2,7 @@ import usePostRequest from "@/hooks/usePostRequest";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/hooks/types";
 import { User } from "@/types";
+import { useApiMutation } from './useApiMutation';
 
 export const useLogin = (options?: any) =>
   usePostRequest<LoginRequest, LoginResponse>('/auth/login', options);
@@ -33,3 +34,12 @@ export const useSuggestedUsers = (options?: any) => {
     })).filter((user) => user.id !== currentUserId) || [],
   };
 };
+
+export const useCurrentUser = (options?: any) =>
+  useApiQuery('current-user', '/users/profile', options);
+
+export const useUpdateProfile = (options?: any) =>
+  useApiMutation({ endpoint: '/users/profile', method: 'put', ...options });
+
+export const useChangePassword = (options?: any) =>
+  useApiMutation({ endpoint: '/users/change-password', method: 'put', ...options });

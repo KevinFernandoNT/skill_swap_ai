@@ -212,7 +212,7 @@ export const SignupForm = () => {
                 <div className="flex items-center gap-4 mb-2">
                   {avatarPreview && (
                     <div className="w-30 h-32 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
-                      <img src={avatarPreview} alt="Avatar Preview" className="object-cover w-full h-full" />
+                      <img src={avatarPreview} alt="Avatar Preview" className="object-cover w-24 h-24" />
                     </div>
                   )}
                   <FormControl>

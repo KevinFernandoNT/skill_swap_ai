@@ -99,7 +99,7 @@ export const LoginForm = () => {
             </div>
             <div className="relative">
               <Input
-                className="bg-gray-200"
+                className="bg-gray-200 text-black"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 {...register('password')}

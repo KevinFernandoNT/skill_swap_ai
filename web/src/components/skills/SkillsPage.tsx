@@ -4,6 +4,11 @@ import { Skill } from '../../types';
 import { currentUser } from '../../data/mockData';
 import AddSkillModal from './AddSkillModal';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
+import { useGetSkills } from '@/hooks/useGetSkills';
+import { useDeleteSkill } from '@/hooks/useDeleteSkill';
+import { useToast } from '@/hooks/use-toast';
+import EditSkillModal from './EditSkillModal';
+import { PaginatedResult } from '@/hooks/useGetSkills';
 
 interface ExtendedSkill extends Skill {
   type: 'teaching' | 'learning';
@@ -11,99 +16,28 @@ interface ExtendedSkill extends Skill {
 }
 
 const SkillsPage: React.FC = () => {
+  const { toast } = useToast();
+  const { data: skillsResult = { data: [] }, refetch } = useGetSkills();
+  const skills = skillsResult.data || [];
+  const deleteSkill = useDeleteSkill({
+    onSuccess: () => {
+      toast({ title: 'Skill deleted!', description: 'Your skill was deleted successfully.' });
+      refetch();
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete skill', variant: 'destructive' });
+    },
+  });
   const [activeTab, setActiveTab] = useState<'teaching' | 'learning'>('teaching');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
+  const [editingSkill, setEditingSkill] = useState<ExtendedSkill | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Extended skills data with teaching agenda and learning goals
-  const [skills, setSkills] = useState<ExtendedSkill[]>([
-    {
-      id: 's1',
-      name: 'JavaScript',
-      category: 'Programming',
-      proficiency: 85,
-      type: 'teaching',
-      agenda: [
-        'JavaScript fundamentals and ES6+ features',
-        'Asynchronous programming with Promises and async/await',
-        'DOM manipulation and event handling',
-        'Modern development tools and debugging techniques',
-        'Best practices and code organization'
-      ]
-    },
-    {
-      id: 's2',
-      name: 'React',
-      category: 'Programming',
-      proficiency: 78,
-      type: 'teaching',
-      agenda: [
-        'React fundamentals: components, props, and state',
-        'Hooks and functional components',
-        'State management with Context API and Redux',
-        'React Router for navigation',
-        'Testing React applications'
-      ]
-    },
-    {
-      id: 's3',
-      name: 'UX Design',
-      category: 'Design',
-      proficiency: 62,
-      type: 'learning',
-      agenda: [
-        'Design thinking principles',
-        'User research methods',
-        'Wireframing and prototyping',
-        'Figma and design tools',
-        'Usability testing'
-      ]
-    },
-    {
-      id: 's4',
-      name: 'Node.js',
-      category: 'Programming',
-      proficiency: 70,
-      type: 'teaching',
-      agenda: [
-        'Node.js fundamentals and npm ecosystem',
-        'Building REST APIs with Express.js',
-        'Database integration (MongoDB, PostgreSQL)',
-        'Authentication and authorization',
-        'Deployment and production best practices'
-      ]
-    },
-    {
-      id: 's5',
-      name: 'Machine Learning',
-      category: 'Data Science',
-      proficiency: 45,
-      type: 'learning',
-      agenda: [
-        'Supervised learning algorithms',
-        'Unsupervised learning techniques',
-        'Python libraries (scikit-learn, TensorFlow)',
-        'Data preprocessing and feature engineering',
-        'Model evaluation and validation'
-      ]
-    },
-    {
-      id: 's6',
-      name: 'Product Management',
-      category: 'Management',
-      proficiency: 30,
-      type: 'learning',
-      agenda: [
-        'Product strategy and vision',
-        'User research and market analysis',
-        'Roadmap planning and prioritization',
-        'Stakeholder management',
-        'Agile methodologies and sprint planning'
-      ]
-    }
-  ]);
+  // Remove all local skills state and replace with API data
+  // Update handleAddSkill, handleDeleteSkill, confirmDeleteSkill, etc. to use API
 
   const teachingSkills = skills.filter(skill => skill.type === 'teaching');
   const learningSkills = skills.filter(skill => skill.type === 'learning');
@@ -113,15 +47,6 @@ const SkillsPage: React.FC = () => {
     skill.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddSkill = (newSkill: Omit<ExtendedSkill, 'id'>) => {
-    const skill: ExtendedSkill = {
-      ...newSkill,
-      id: `s${Date.now()}`
-    };
-    setSkills(prev => [...prev, skill]);
-    setIsAddModalOpen(false);
-  };
-
   const handleDeleteSkill = (skillId: string) => {
     setSkillToDelete(skillId);
     setDeleteDialogOpen(true);
@@ -129,7 +54,7 @@ const SkillsPage: React.FC = () => {
 
   const confirmDeleteSkill = () => {
     if (skillToDelete) {
-      setSkills(prev => prev.filter(skill => skill.id !== skillToDelete));
+      deleteSkill.mutate(skillToDelete);
       setSkillToDelete(null);
       setDeleteDialogOpen(false);
     }
@@ -233,8 +158,9 @@ const SkillsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSkills.map((skill) => (
               <div
-                key={skill.id}
-                className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50"
+                key={skill._id}
+                className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 cursor-pointer"
+                onClick={() => { setEditingSkill(skill); setIsEditModalOpen(true); }}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -246,7 +172,7 @@ const SkillsPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleDeleteSkill(skill.id)}
+                      onClick={e => { e.stopPropagation(); handleDeleteSkill(skill._id); }}
                       className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                       title="Delete skill"
                     >
@@ -357,8 +283,16 @@ const SkillsPage: React.FC = () => {
       <AddSkillModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSave={handleAddSkill}
         defaultType={activeTab}
+        onSuccess={refetch}
+      />
+
+      {/* Edit Skill Modal */}
+      <EditSkillModal
+        skill={editingSkill}
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setEditingSkill(null); }}
+        onSuccess={refetch}
       />
 
       {/* Delete Skill Confirmation Dialog */}

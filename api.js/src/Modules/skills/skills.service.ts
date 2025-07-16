@@ -31,7 +31,8 @@ export class SkillsService {
     if (!skill) {
       throw new NotFoundException('Skill not found');
     }
-    if (skill.userId.toString() !== userId) {
+
+    if (skill.userId._id.toString() !== userId.toString()) {
       throw new ForbiddenException('You can only update your own skills');
     }
     
@@ -44,7 +45,7 @@ export class SkillsService {
     if (!skill) {
       throw new NotFoundException('Skill not found');
     }
-    if (skill.userId.toString() !== userId) {
+    if (skill.userId._id.toString() !== userId.toString()) {
       throw new ForbiddenException('You can only delete your own skills');
     }
     

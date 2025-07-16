@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Plus, Search, Filter, Edit, Eye, EyeOff, Calendar, Clock, Users, Globe, Lock, MoreVertical, ArrowRightLeft } from 'lucide-react';
 import { Session } from '../../types';
-import { sessions as mockSessions, currentUser } from '../../data/mockData';
 import SessionEditModal from './SessionEditModal';
 import CreateSessionModal from './CreateSessionModal';
 import RescheduleModal from './RescheduleModal';
+import { useGetUserSkills } from '@/hooks/useGetUserSkills';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -28,33 +29,21 @@ const SessionsPage: React.FC = () => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | { type: 'complete' | 'cancel'; session: Session }>(null);
 
-  // Extended sessions with visibility property
-  const [sessionsData, setSessionsData] = useState(
-    mockSessions.map(session => ({
-      ...session,
-      description: session.description || `Learn ${session.skillCategory.toLowerCase()} skills through hands-on practice and real-world examples. This session covers fundamental concepts and practical applications.`,
-      maxParticipants: session.maxParticipants || (session.isTeaching ? Math.floor(Math.random() * 8) + 3 : 1),
-      currentParticipants: session.isTeaching ? Math.floor(Math.random() * 5) + 1 : 1,
-      isPublic: session.isPublic !== undefined ? session.isPublic : Math.random() > 0.5,
-      swappedSkills: session.id === 'session1' ? {
-        offeredSkill: 'JavaScript',
-        requestedSkill: 'React Hooks',
-        swapPartner: 'Sarah Williams'
-      } : undefined
-    }))
-  );
+  const { data: skillsResult, isLoading: skillsLoading } = useGetUserSkills();
+  const navigate = useNavigate();
+  const teachableSkills = (skillsResult?.data || []).filter((s: any) => s.type === 'teaching');
+  const [showNoSkillModal, setShowNoSkillModal] = useState(false);
+
+  React.useEffect(() => {
+    if (!skillsLoading && teachableSkills.length === 0) {
+      setShowNoSkillModal(true);
+    } else {
+      setShowNoSkillModal(false);
+    }
+  }, [skillsLoading, teachableSkills.length]);
 
   // Filter sessions
-  const filteredSessions = sessionsData.filter(session => {
-    const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         session.skillCategory.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || session.status === filterStatus;
-    const matchesVisibility = filterVisibility === 'all' || 
-                             (filterVisibility === 'public' && session.isPublic) ||
-                             (filterVisibility === 'private' && !session.isPublic);
-    
-    return matchesSearch && matchesStatus && matchesVisibility;
-  });
+  const filteredSessions = []; // No mock data, so no sessions to filter
 
   const handleCreateSession = (sessionData: Omit<Session, 'id' | 'participant' | 'status'>) => {
     const newSession: Session & {
@@ -70,7 +59,7 @@ const SessionsPage: React.FC = () => {
     } = {
       ...sessionData,
       id: `session${Date.now()}`,
-      participant: currentUser,
+      participant: { id: 'currentUser', name: 'Current User', email: 'current@example.com', avatar: '', skills: [] }, // Placeholder
       status: 'upcoming',
       description: sessionData.description || `Learn ${sessionData.skillCategory.toLowerCase()} skills through hands-on practice and real-world examples. This session covers fundamental concepts and practical applications.`,
       maxParticipants: sessionData.maxParticipants || (sessionData.isTeaching ? Math.floor(Math.random() * 8) + 3 : 1),
@@ -83,7 +72,7 @@ const SessionsPage: React.FC = () => {
       }
     };
     
-    setSessionsData(prev => [newSession, ...prev]);
+    // setSessionsData(prev => [newSession, ...prev]); // No mock data, so no state update
     setIsCreateModalOpen(false);
   };
 
@@ -105,55 +94,55 @@ const SessionsPage: React.FC = () => {
   };
 
   const handleSaveSession = (updatedSession: any) => {
-    setSessionsData(prev => 
-      prev.map(session => 
-        session.id === updatedSession.id ? updatedSession : session
-      )
-    );
+    // setSessionsData(prev => 
+    //   prev.map(session => 
+    //     session.id === updatedSession.id ? updatedSession : session
+    //   )
+    // ); // No mock data, so no state update
     handleCloseEditModal();
   };
 
   const handleReschedule = (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
-    setSessionsData(prev =>
-      prev.map(session =>
-        session.id === sessionId 
-          ? { ...session, date: newDate, startTime: newStartTime, endTime: newEndTime }
-          : session
-      )
-    );
+    // setSessionsData(prev =>
+    //   prev.map(session =>
+    //     session.id === sessionId 
+    //       ? { ...session, date: newDate, startTime: newStartTime, endTime: newEndTime }
+    //       : session
+    //   )
+    // ); // No mock data, so no state update
     setIsRescheduleModalOpen(false);
     setSelectedSession(null);
   };
 
   const handleCancelSession = (sessionId: string) => {
-    setSessionsData(prev =>
-      prev.map(session =>
-        session.id === sessionId 
-          ? { ...session, status: 'cancelled' as const }
-          : session
-      )
-    );
+    // setSessionsData(prev =>
+    //   prev.map(session =>
+    //     session.id === sessionId 
+    //       ? { ...session, status: 'cancelled' as const }
+    //       : session
+    //   )
+    // ); // No mock data, so no state update
     setIsRescheduleModalOpen(false);
     setSelectedSession(null);
   };
 
   const toggleSessionVisibility = (sessionId: string) => {
-    setSessionsData(prev =>
-      prev.map(session =>
-        session.id === sessionId ? { ...session, isPublic: !session.isPublic } : session
-      )
-    );
+    // setSessionsData(prev =>
+    //   prev.map(session =>
+    //     session.id === sessionId ? { ...session, isPublic: !session.isPublic } : session
+    //   )
+    // ); // No mock data, so no state update
     setActiveDropdown(null);
   };
 
   const handleMarkAsCompleted = (sessionId: string) => {
-    setSessionsData(prev =>
-      prev.map(session =>
-        session.id === sessionId 
-          ? { ...session, status: 'completed' as const }
-          : session
-      )
-    );
+    // setSessionsData(prev =>
+    //   prev.map(session =>
+    //     session.id === sessionId 
+    //       ? { ...session, status: 'completed' as const }
+    //       : session
+    //   )
+    // ); // No mock data, so no state update
     setActiveDropdown(null);
   };
 
@@ -314,7 +303,7 @@ const SessionsPage: React.FC = () => {
                   </div>
                 )}
                 {/* Edit Session Button */}
-                {session.participant.id === currentUser.id && (
+                {session.participant.id === 'currentUser' && ( // Placeholder for current user ID
                   <button
                     onClick={() => handleEditSession(session)}
                     className="mt-3 flex items-center px-4 py-2 text-sm font-medium text-primary bg-gray-800 border border-primary rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition"
@@ -404,6 +393,24 @@ const SessionsPage: React.FC = () => {
             >
               Yes
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* No Teachable Skill Modal */}
+      <AlertDialog open={showNoSkillModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Teachable Skill Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to create at least one teachable lesson (skill) to create a session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              window.dispatchEvent(new CustomEvent('navigateToTab', { detail: { tab: 'skills' } }));
+              setShowNoSkillModal(false);
+            }}>Go to Skills</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

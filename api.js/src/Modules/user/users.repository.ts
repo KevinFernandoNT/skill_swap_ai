@@ -40,7 +40,7 @@ export class UsersRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.userModel.findById(id).select('-password').exec();
+    return this.userModel.findById(id).select('-password').lean().exec();
   }
 
   async findByEmail(email: string): Promise<User | null> {
