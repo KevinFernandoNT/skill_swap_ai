@@ -35,7 +35,8 @@ export class SessionsService {
     if (!session) {
       throw new NotFoundException('Session not found');
     }
-    if (session.hostId.toString() !== userId) {
+
+    if (session.hostId._id.toString() !== userId.toString()) {
       throw new ForbiddenException('You can only update your own sessions');
     }
     
@@ -48,7 +49,7 @@ export class SessionsService {
     if (!session) {
       throw new NotFoundException('Session not found');
     }
-    if (session.hostId.toString() !== userId) {
+    if (session.hostId._id.toString() !== userId.toString()) {
       throw new ForbiddenException('You can only delete your own sessions');
     }
     

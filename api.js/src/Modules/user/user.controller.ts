@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Put, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { UsersService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -62,7 +62,7 @@ export class UsersController {
     const user = await this.usersService.findById(req.user._id);
     if (!user) throw new Error('User not found');
     const isMatch = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
-    if (!isMatch) throw new Error('Current password is incorrect');
+    if (!isMatch) throw new BadRequestException('Current password does not match, Please try again');
     const hashed = await bcrypt.hash(changePasswordDto.newPassword, 12);
     await this.usersService.update(req.user._id, { password: hashed });
     return { message: 'Password changed successfully' };

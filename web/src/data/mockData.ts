@@ -9,9 +9,9 @@ export const currentUser: User = {
   bio: 'Passionate software developer with 5+ years of experience in React and Node.js. Love sharing knowledge and learning from others.',
   location: 'San Francisco, CA',
   skills: [
-    { id: 's1', name: 'JavaScript', category: 'Programming', proficiency: 85 },
-    { id: 's2', name: 'React', category: 'Programming', proficiency: 78 },
-    { id: 's3', name: 'UX Design', category: 'Design', proficiency: 62 }
+    { _id: 's1', name: 'JavaScript', category: 'Programming', proficiency: 85, type: 'teaching', agenda: [] },
+    { _id: 's2', name: 'React', category: 'Programming', proficiency: 78, type: 'teaching', agenda: [] },
+    { _id: 's3', name: 'UX Design', category: 'Design', proficiency: 62, type: 'teaching', agenda: [] }
   ]
 };
 
@@ -24,8 +24,8 @@ export const users: User[] = [
     bio: 'Creative UI/UX designer passionate about creating intuitive user experiences. Specialized in design systems and user research.',
     location: 'New York, NY',
     skills: [
-      { id: 's4', name: 'Figma', category: 'Design', proficiency: 90 },
-      { id: 's5', name: 'User Research', category: 'Design', proficiency: 85 }
+      { _id: 's4', name: 'Figma', category: 'Design', proficiency: 90, type: 'teaching', agenda: [] },
+      { _id: 's5', name: 'User Research', category: 'Design', proficiency: 85, type: 'teaching', agenda: [] }
     ],
     status: 'online'
   },
@@ -37,8 +37,8 @@ export const users: User[] = [
     bio: 'Data scientist with expertise in machine learning and statistical analysis. Love working with Python and helping others learn data science.',
     location: 'Seattle, WA',
     skills: [
-      { id: 's6', name: 'Python', category: 'Programming', proficiency: 95 },
-      { id: 's7', name: 'Machine Learning', category: 'Data Science', proficiency: 88 }
+      { _id: 's6', name: 'Python', category: 'Programming', proficiency: 95, type: 'teaching', agenda: [] },
+      { _id: 's7', name: 'Machine Learning', category: 'Data Science', proficiency: 88, type: 'teaching', agenda: [] }
     ],
     status: 'busy'
   },
@@ -50,8 +50,8 @@ export const users: User[] = [
     bio: 'Experienced product manager with a focus on agile methodologies and user-centered design. Passionate about building great products.',
     location: 'Austin, TX',
     skills: [
-      { id: 's8', name: 'Agile', category: 'Management', proficiency: 92 },
-      { id: 's9', name: 'User Stories', category: 'Management', proficiency: 87 }
+      { _id: 's8', name: 'Agile', category: 'Management', proficiency: 92, type: 'teaching', agenda: [] },
+      { _id: 's9', name: 'User Stories', category: 'Management', proficiency: 87, type: 'teaching', agenda: [] }
     ],
     status: 'offline'
   },
@@ -63,8 +63,8 @@ export const users: User[] = [
     bio: 'Mobile developer specializing in iOS and cross-platform development. Experienced in Swift, Flutter, and React Native.',
     location: 'Los Angeles, CA',
     skills: [
-      { id: 's10', name: 'Swift', category: 'Programming', proficiency: 89 },
-      { id: 's11', name: 'Flutter', category: 'Programming', proficiency: 81 }
+      { _id: 's10', name: 'Swift', category: 'Programming', proficiency: 89, type: 'teaching', agenda: [] },
+      { _id: 's11', name: 'Flutter', category: 'Programming', proficiency: 81, type: 'teaching', agenda: [] }
     ],
     status: 'away'
   },
@@ -76,8 +76,8 @@ export const users: User[] = [
     bio: 'Content strategist and SEO specialist. Help businesses create compelling content that drives engagement and conversions.',
     location: 'Miami, FL',
     skills: [
-      { id: 's12', name: 'Content Writing', category: 'Marketing', proficiency: 94 },
-      { id: 's13', name: 'SEO', category: 'Marketing', proficiency: 86 }
+      { _id: 's12', name: 'Content Writing', category: 'Marketing', proficiency: 94, type: 'teaching', agenda: [] },
+      { _id: 's13', name: 'SEO', category: 'Marketing', proficiency: 86, type: 'teaching', agenda: [] }
     ],
     status: 'online'
   }

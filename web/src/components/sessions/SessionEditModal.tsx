@@ -1,15 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Users, Globe, Lock, Save } from 'lucide-react';
 import { Session } from '../../types';
+import { SessionRequest } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { useUpdateSession } from '@/hooks/useUpdateSession';
 
 interface SessionEditModalProps {
   session: any | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (session: any) => void;
+  refetchSessions: () => void;
 }
 
-const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, onClose, onSave }) => {
+const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, onClose, onSave, refetchSessions }) => {
+  if (!isOpen || !session) return null;
+
+  // All hooks at the top!
+  const toast = useToast();
+  const { mutate: updateSession, status: updateStatus } = useUpdateSession(session._id, {
+    onSuccess: () => {
+      toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
+      onSave({ ...session, ...formData, focusedTopics, subTopics: generalSubTopics });
+      onClose();
+      refetchSessions();
+    },
+    onError: (error: any) => {
+      toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update session', variant: 'destructive' });
+    },
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -42,18 +61,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     }
   }, [session]);
 
-  if (!isOpen || !session) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      ...session,
-      ...formData,
-      focusedTopics: [...focusedTopics],
-      subTopics: [...generalSubTopics]
-    });
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -69,6 +76,15 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
 
   const handleGeneralSubTopicChange = (idx: number, value: string) => {
     setGeneralSubTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSession({
+      ...formData,
+      focusedTopics,
+      subTopics: generalSubTopics,
+    });
   };
 
   const skillCategories = [

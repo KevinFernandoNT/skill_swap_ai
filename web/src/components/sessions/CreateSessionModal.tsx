@@ -1,33 +1,42 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Users, Globe, Lock, Save, Plus } from 'lucide-react';
-import { Session } from '../../types';
-import { currentUser } from '../../data/mockData';
+import { useGetUserSkills } from '@/hooks/useGetUserSkills';
 import { useToast } from "@/hooks/use-toast";
 import { useCreateSession } from "@/hooks/useCreateSession";
+import { SessionRequest } from "@/types";
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
 interface CreateSessionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Validation schema
+const sessionSchema = yup.object({
+  title: yup.string().required('Session title is required'),
+  description: yup.string().required('Description is required'),
+  date: yup.string().required('Date is required'),
+  startTime: yup.string().required('Start time is required'),
+  endTime: yup.string().required('End time is required'),
+  skillCategory: yup.string().required('Skill category is required'),
+  isPublic: yup.boolean(),
+  maxParticipants: yup.number().min(1, 'At least 1 participant').optional(),
+  isTeaching: yup.boolean(),
+  meetingLink: yup.string().url('Invalid meeting link').notRequired(),
+  teachSkillId: yup.string().required('Please select a skill you want to teach'),
+  teachSkillName: yup.string().notRequired(),
+  focusedTopics: yup.array().of(yup.string()).max(5, 'Up to 5 focused topics').notRequired(),
+  subTopics: yup.array().of(yup.string().required('Sub-topic is required')).length(5, 'Exactly 5 sub-topics are required'),
+  focusKeywords: yup.array().of(yup.string()).max(5, 'Up to 5 focus keywords').notRequired(),
+});
+
+type SessionFormValues = yup.InferType<typeof sessionSchema>;
+
 const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-    skillCategory: '',
-    isPublic: true,
-    maxParticipants: 5,
-    isTeaching: true,
-    meetingLink: ''
-  });
-  const [selectedSkillId, setSelectedSkillId] = useState('');
-  const [focusedTopics, setFocusedTopics] = useState<string[]>([]);
+  // All hooks at the top!
   const [focusedTopicInput, setFocusedTopicInput] = useState('');
-  const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
-  const [focusKeywords, setFocusKeywords] = useState<string[]>([]);
   const [focusKeywordInput, setFocusKeywordInput] = useState('');
   const { toast } = useToast();
   const { mutate: createSession, status } = useCreateSession({
@@ -46,45 +55,11 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       });
     },
   });
-
-  if (!isOpen) return null;
-
-  // Get teachable skills (type: teaching)
-  const teachableSkills = (currentUser.skills || []).filter((s: any) => s.type === 'teaching');
-  const selectedSkill = teachableSkills.find(s => s.id === selectedSkillId);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Validate topics
-    if (!selectedSkillId) {
-      alert('Please select a skill you want to teach.');
-      return;
-    }
-    if (focusedTopics.length !== 5) {
-      alert('Please provide exactly 5 focused topics for this session.');
-      return;
-    }
-    if (generalSubTopics.some(t => !t.trim())) {
-      alert('Please provide exactly 5 general sub-topics for this session.');
-      return;
-    }
-    if (focusKeywords.length < 1 || focusKeywords.length > 5) {
-      alert('Please provide between 1 and 5 focus keywords for this session.');
-      return;
-    }
-    const sessionData = {
-      ...formData,
-      maxParticipants: formData.isTeaching ? formData.maxParticipants : 1,
-      teachSkillId: selectedSkillId,
-      teachSkillName: selectedSkill?.name || '',
-      focusedTopics: [...focusedTopics],
-      subTopics: [...generalSubTopics],
-      meetingLink: formData.meetingLink,
-      focusKeywords: [...focusKeywords]
-    };
-    createSession(sessionData);
-    // Reset form
-    setFormData({
+  const { data: skillsResult, isLoading: skillsLoading } = useGetUserSkills();
+  const teachableSkills = (skillsResult?.data || []).filter((s: any) => s.type === 'teaching');
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<SessionFormValues>({
+    resolver: yupResolver(sessionSchema),
+    defaultValues: {
       title: '',
       description: '',
       date: '',
@@ -94,23 +69,50 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       isPublic: true,
       maxParticipants: 5,
       isTeaching: true,
-      meetingLink: ''
-    });
-    setSelectedSkillId('');
-    setFocusedTopics([]);
+      meetingLink: '',
+      teachSkillId: '',
+      teachSkillName: '',
+      focusedTopics: [],
+      subTopics: ['', '', '', '', ''],
+      focusKeywords: [],
+    },
+  });
+  const selectedSkill = teachableSkills.find(s => s._id === watch('teachSkillId'));
+
+  // Now do your conditional returns
+  if (skillsLoading) return <div>Loading...</div>;
+  if (!skillsResult) return <div>No skills loaded.</div>;
+
+  if (!isOpen) return null;
+
+  const handleSubmitForm = (data: SessionFormValues) => {
+    const sessionData: SessionRequest = {
+      title: data.title,
+      description: data.description,
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      skillCategory: data.skillCategory,
+      isPublic: data.isPublic,
+      maxParticipants: data.isTeaching ? data.maxParticipants : 1,
+      isTeaching: data.isTeaching,
+      teachSkillId: data.teachSkillId,
+      teachSkillName: data.teachSkillName,
+      focusedTopics: data.focusedTopics,
+      subTopics: data.subTopics,
+      meetingLink: data.meetingLink,
+      focusKeywords: data.focusKeywords,
+    };
+    createSession(sessionData);
+    reset();
     setFocusedTopicInput('');
-    setGeneralSubTopics(['', '', '', '', '']);
-    setFocusKeywords([]);
     setFocusKeywordInput('');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
-              type === 'number' ? parseInt(value) : value
-    }));
+    setValue(name as keyof SessionFormValues, type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+              type === 'number' ? parseInt(value) : value);
   };
 
   const skillCategories = [
@@ -132,29 +134,34 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   const minDate = tomorrow.toISOString().split('T')[0];
 
   const handleAddFocusedTopic = () => {
-    if (focusedTopicInput.trim() && focusedTopics.length < 5) {
-      setFocusedTopics(prev => [...prev, focusedTopicInput.trim()]);
+    const current = watch('focusedTopics') || [];
+    if (focusedTopicInput.trim() && current.length < 5) {
+      setValue('focusedTopics', [...current, focusedTopicInput.trim()]);
       setFocusedTopicInput('');
     }
   };
 
   const handleRemoveFocusedTopic = (idx: number) => {
-    setFocusedTopics(prev => prev.filter((_, i) => i !== idx));
+    const current = watch('focusedTopics') || [];
+    setValue('focusedTopics', current.filter((_, i) => i !== idx));
   };
 
   const handleGeneralSubTopicChange = (idx: number, value: string) => {
-    setGeneralSubTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
+    const current = watch('subTopics') || ['', '', '', '', ''];
+    setValue('subTopics', current.map((t, i) => (i === idx ? value : t)));
   };
 
   const handleAddFocusKeyword = () => {
-    if (focusKeywordInput.trim() && focusKeywords.length < 5) {
-      setFocusKeywords(prev => [...prev, focusKeywordInput.trim()]);
+    const current = watch('focusKeywords') || [];
+    if (focusKeywordInput.trim() && current.length < 5) {
+      setValue('focusKeywords', [...current, focusKeywordInput.trim()]);
       setFocusKeywordInput('');
     }
   };
 
   const handleRemoveFocusKeyword = (idx: number) => {
-    setFocusKeywords(prev => prev.filter((_, i) => i !== idx));
+    const current = watch('focusKeywords') || [];
+    setValue('focusKeywords', current.filter((_, i) => i !== idx));
   };
 
   return (
@@ -180,7 +187,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit(handleSubmitForm)} className="p-6 space-y-6">
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -188,13 +195,12 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
               </label>
               <input
                 type="text"
-                name="title"
-                value={formData.title}
+                {...register('title')}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="e.g., React Hooks Masterclass"
-                required
               />
+              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
             </div>
 
             {/* Description */}
@@ -203,14 +209,13 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 Description *
               </label>
               <textarea
-                name="description"
-                value={formData.description}
+                {...register('description')}
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Describe what this session covers and what participants will learn"
-                required
               />
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
             </div>
 
             {/* Date and Time */}
@@ -221,13 +226,12 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 </label>
                 <input
                   type="date"
-                  name="date"
-                  value={formData.date}
+                  {...register('date')}
                   onChange={handleChange}
                   min={minDate}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
                 />
+                {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -235,12 +239,11 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 </label>
                 <input
                   type="time"
-                  name="startTime"
-                  value={formData.startTime}
+                  {...register('startTime')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
                 />
+                {errors.startTime && <p className="text-red-500 text-xs mt-1">{errors.startTime.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -248,12 +251,11 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 </label>
                 <input
                   type="time"
-                  name="endTime"
-                  value={formData.endTime}
+                  {...register('endTime')}
                   onChange={handleChange}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
                 />
+                {errors.endTime && <p className="text-red-500 text-xs mt-1">{errors.endTime.message}</p>}
               </div>
             </div>
 
@@ -266,61 +268,63 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 <div className="text-sm text-gray-400 mb-2">You have no teachable skills. Add a teaching skill first.</div>
               ) : (
                 <select
-                  value={selectedSkillId}
-                  onChange={e => setSelectedSkillId(e.target.value)}
+                  value={watch('teachSkillId')}
+                  onChange={e => setValue('teachSkillId', e.target.value)}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
                 >
                   <option value="">Select a skill</option>
                   {teachableSkills.map(skill => (
-                    <option key={skill.id} value={skill.id}>{skill.name} ({skill.category})</option>
+                    <option key={skill._id} value={skill._id}>{skill.name} ({skill.category})</option>
                   ))}
                 </select>
               )}
+              {errors.teachSkillId && <p className="text-red-500 text-xs mt-1">{errors.teachSkillId.message}</p>}
             </div>
 
-            {/* Focused Topics */}
+        
             
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Focused Topics for this Session (up to 5)
-                </label>
-                <div className="flex space-x-2 mb-3">
-                  <input
-                    type="text"
-                    value={focusedTopicInput}
-                    onChange={e => setFocusedTopicInput(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Type a topic and press Add"
-                    disabled={focusedTopics.length > 5}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddFocusedTopic}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={focusedTopics.length >= 5 || !focusedTopicInput.trim()}
-                  >
-                    <Plus className="w-4 h-4 mr-1" /> Add
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {focusedTopics.map((topic, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 bg-gray-800 border border-gray-700 rounded-md px-3 py-2">
-                      <span className="flex-1 text-white">{topic}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFocusedTopic(idx)}
-                        className="text-red-400 hover:text-red-600"
-                        title="Remove topic"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Add up to 5 specific topics or subtopics you will cover in this session.</p>
+
+            {/* Focused Topics (optional, up to 5) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Focused Topics (optional, up to 5)
+              </label>
+              <div className="flex space-x-2 mb-3">
+                <input
+                  type="text"
+                  value={focusedTopicInput}
+                  onChange={e => setFocusedTopicInput(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  placeholder="Type a topic and press Add"
+                  disabled={(watch('focusedTopics') || []).length >= 5}
+                />
+                {errors.focusedTopics && <p className="text-red-500 text-xs mt-1">{errors.focusedTopics.message}</p>}
+                <button
+                  type="button"
+                  onClick={handleAddFocusedTopic}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={(watch('focusedTopics') || []).length >= 5 || !focusedTopicInput.trim()}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Add
+                </button>
               </div>
-            
+              <div className="space-y-2">
+                {(watch('focusedTopics') || []).map((topic, idx) => (
+                  <div key={idx} className="flex items-center space-x-2 bg-gray-800 border border-gray-700 rounded-md px-3 py-2">
+                    <span className="flex-1 text-white">{topic}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFocusedTopic(idx)}
+                      className="text-red-400 hover:text-red-600"
+                      title="Remove topic"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">You can provide up to 5 specific topics or subtopics you will cover in this session (optional).</p>
+            </div>
 
             {/* General Sub-Topics */}
             <div>
@@ -328,21 +332,21 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 General Sub-Topics for this Session (5 required)
               </label>
               <div className="space-y-3">
-                {generalSubTopics.map((topic, idx) => (
+                {(watch('subTopics') || ['', '', '', '', '']).map((topic, idx) => (
                   <div key={idx} className="flex items-center space-x-2">
                     <span className="text-sm text-gray-400 w-8">#{idx + 1}</span>
                     <input
                       type="text"
-                      value={topic}
+                      value={watch('subTopics')[idx] || ''}
                       onChange={e => handleGeneralSubTopicChange(idx, e.target.value)}
                       className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       placeholder={`Sub-topic ${idx + 1}`}
-                      required
                     />
                   </div>
                 ))}
               </div>
               <p className="text-xs text-gray-500 mt-2">Please provide exactly 5 general sub-topics for this session.</p>
+              {errors.subTopics && <p className="text-red-500 text-xs mt-1">{(errors.subTopics as any).message}</p>}
             </div>
 
             {/* Skill Category */}
@@ -351,17 +355,16 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 Skill Category *
               </label>
               <select
-                name="skillCategory"
-                value={formData.skillCategory}
+                {...register('skillCategory')}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                required
               >
                 <option value="">Select a category</option>
                 {skillCategories.map(category => (
                   <option key={category} value={category}>{category}</option>
                 ))}
               </select>
+              {errors.skillCategory && <p className="text-red-500 text-xs mt-1">{errors.skillCategory.message}</p>}
             </div>
 
             {/* Meeting Link (optional) */}
@@ -371,18 +374,18 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
               </label>
               <input
                 type="url"
-                name="meetingLink"
-                value={formData.meetingLink}
+                {...register('meetingLink')}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Paste a meeting URL (Zoom, Google Meet, etc.)"
               />
+              {errors.meetingLink && <p className="text-red-500 text-xs mt-1">{errors.meetingLink.message}</p>}
             </div>
 
-            {/* Focus Keywords */}
+            {/* Focus Keywords (optional, up to 5) */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Focus Keywords (up to 5)
+                Focus Keywords (optional, up to 5)
               </label>
               <div className="flex space-x-2 mb-3">
                 <input
@@ -391,19 +394,20 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                   onChange={e => setFocusKeywordInput(e.target.value)}
                   className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="Type a keyword and press Add"
-                  disabled={focusKeywords.length >= 5}
+                  disabled={(watch('focusKeywords') || []).length >= 5}
                 />
+                {errors.focusKeywords && <p className="text-red-500 text-xs mt-1">{errors.focusKeywords.message}</p>}
                 <button
                   type="button"
                   onClick={handleAddFocusKeyword}
                   className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={focusKeywords.length >= 5 || !focusKeywordInput.trim()}
+                  disabled={(watch('focusKeywords') || []).length >= 5 || !focusKeywordInput.trim()}
                 >
                   <Plus className="w-4 h-4 mr-1" /> Add
                 </button>
               </div>
               <div className="space-y-2">
-                {focusKeywords.map((keyword, idx) => (
+                {(watch('focusKeywords') || []).map((keyword, idx) => (
                   <div key={idx} className="flex items-center space-x-2 bg-gray-800 border border-gray-700 rounded-md px-3 py-2">
                     <span className="flex-1 text-white">{keyword}</span>
                     <button
@@ -417,7 +421,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">Add up to 5 focus keywords for this session.</p>
+              <p className="text-xs text-gray-500 mt-2">You can provide up to 5 focus keywords for this session (optional).</p>
             </div>
 
             {/* Session Preview */}
@@ -426,20 +430,20 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2 text-primary" />
-                  <span>{formData.date || 'Select date'}</span>
+                  <span>{watch('date') || 'Select date'}</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2 text-primary" />
-                  <span>{formData.startTime && formData.endTime ? `${formData.startTime} - ${formData.endTime}` : 'Select time'}</span>
+                  <span>{watch('startTime') && watch('endTime') ? `${watch('startTime')} - ${watch('endTime')}` : 'Select time'}</span>
                 </div>
               
                 <div className="flex items-center">
-                  {formData.isPublic ? (
+                  {watch('isPublic') ? (
                     <Globe className="w-4 h-4 mr-2 text-primary" />
                   ) : (
                     <Lock className="w-4 h-4 mr-2 text-gray-400" />
                   )}
-                  <span>{formData.isPublic ? 'Public session' : 'Private session'}</span>
+                  <span>{watch('isPublic') ? 'Public session' : 'Private session'}</span>
                 </div>
               </div>
             </div>
