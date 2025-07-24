@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Edit, Eye, EyeOff, Calendar, Clock, Users, Globe, Lock, MoreVertical, ArrowRightLeft } from 'lucide-react';
+import { Plus, Search, Edit, Calendar, Clock, MoreVertical } from 'lucide-react';
 import { Session } from '../../types';
 import SessionEditModal from './SessionEditModal';
 import CreateSessionModal from './CreateSessionModal';
 import RescheduleModal from './RescheduleModal';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
+import { useGetSessions } from '@/hooks/useGetSessions';
 import { useNavigate } from 'react-router-dom';
+import { useDeleteSession } from '@/hooks/useDeleteSession';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
@@ -42,8 +44,26 @@ const SessionsPage: React.FC = () => {
     }
   }, [skillsLoading, teachableSkills.length]);
 
-  // Filter sessions
-  const filteredSessions = []; // No mock data, so no sessions to filter
+  // Fetch sessions
+  const { data: sessionsResult, isLoading: sessionsLoading, error: sessionsError, refetch: refetchSessions } = useGetSessions();
+  const allSessions = (sessionsResult?.data || []).map(session => ({
+    ...session,
+    id: session._id || session._id || '',
+  }));
+
+  // Filter sessions based on search and filters
+  const filteredSessions = allSessions.filter(session => {
+    const matchesSearch =
+      session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      session.skillCategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (session.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || session.status === filterStatus;
+    const matchesVisibility =
+      filterVisibility === 'all' ||
+      (filterVisibility === 'public' && session.isPublic) ||
+      (filterVisibility === 'private' && !session.isPublic);
+    return matchesSearch && matchesStatus && matchesVisibility;
+  });
 
   const handleCreateSession = (sessionData: Omit<Session, 'id' | 'participant' | 'status'>) => {
     const newSession: Session & {
@@ -58,8 +78,8 @@ const SessionsPage: React.FC = () => {
       };
     } = {
       ...sessionData,
-      id: `session${Date.now()}`,
-      participant: { id: 'currentUser', name: 'Current User', email: 'current@example.com', avatar: '', skills: [] }, // Placeholder
+      _id: `session${Date.now()}`,
+      participant: { _id: 'currentUser', name: 'Current User', email: 'current@example.com', avatar: '', skills: [] }, // Placeholder
       status: 'upcoming',
       description: sessionData.description || `Learn ${sessionData.skillCategory.toLowerCase()} skills through hands-on practice and real-world examples. This session covers fundamental concepts and practical applications.`,
       maxParticipants: sessionData.maxParticipants || (sessionData.isTeaching ? Math.floor(Math.random() * 8) + 3 : 1),
@@ -71,8 +91,6 @@ const SessionsPage: React.FC = () => {
         swapPartner: ''
       }
     };
-    
-    // setSessionsData(prev => [newSession, ...prev]); // No mock data, so no state update
     setIsCreateModalOpen(false);
   };
 
@@ -94,12 +112,8 @@ const SessionsPage: React.FC = () => {
   };
 
   const handleSaveSession = (updatedSession: any) => {
-    // setSessionsData(prev => 
-    //   prev.map(session => 
-    //     session.id === updatedSession.id ? updatedSession : session
-    //   )
-    // ); // No mock data, so no state update
     handleCloseEditModal();
+    refetchSessions();
   };
 
   const handleReschedule = (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
@@ -176,6 +190,17 @@ const SessionsPage: React.FC = () => {
     }
   };
 
+  const toast = useToast();
+  const { mutate: deleteSession } = useDeleteSession({
+    onSuccess: () => {
+      toast.toast({ title: 'Session deleted!', description: 'The session was deleted successfully.' });
+      refetchSessions();
+    },
+    onError: (error: any) => {
+      toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete session', variant: 'destructive' });
+    },
+  });
+
   return (
     <>
       <div className="bg-black min-h-screen">
@@ -236,24 +261,32 @@ const SessionsPage: React.FC = () => {
             </select>
           </div>
           {/* Sessions Grid */}
+          {sessionsLoading ? (
+            <div className="text-center py-12 text-gray-400">Loading sessions...</div>
+          ) : sessionsError ? (
+            <div className="text-center py-12 text-red-500">Failed to load sessions.</div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSessions.map((session) => (
               <div
-                key={session.id}
-                className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 relative"
+                key={session._id}
+                className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 relative cursor-pointer"
+                onClick={() => handleEditSession(session)}
               >
                 {/* Hamburger Edit Icon */}
-              
-                  <button
-                    className="absolute top-4 right-4 text-gray-400 hover:text-primary focus:outline-none"
-                    onClick={() => handleEditSession(session)}
-                    title="Edit Session"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-                
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-primary focus:outline-none"
+                  onClick={e => { e.stopPropagation(); handleEditSession(session); }}
+                  title="Edit Session"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
                 {/* Session Code */}
-                <div className="mb-2 text-xs text-gray-400">Session Code: <span className="text-primary font-mono">{(session.id.match(/\d{4}$/)?.[0] || session.id.slice(-4).padStart(4, '0'))}</span></div>
+                <div className="mb-2 text-xs text-gray-400">
+                  Session Code: <span className="text-primary font-mono">{(session._id && typeof session._id === 'string'
+  ? (session._id.match(/\d{4}$/)?.[0] || session._id.slice(-4).padStart(4, '0'))
+  : '----')}</span>
+                </div>
                 {/* Title */}
                 <h3 className="text-lg font-medium text-white mb-2">{session.title}</h3>
                 {/* Skill & Agenda */}
@@ -289,23 +322,17 @@ const SessionsPage: React.FC = () => {
                 {(session.status !== 'completed' && session.status !== 'cancelled') && (
                   <div className="flex gap-2 mt-2">
                     <button
-                      onClick={() => setConfirmAction({ type: 'complete', session })}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition"
-                    >
-                      Mark as Completed
-                    </button>
-                    <button
-                      onClick={() => setConfirmAction({ type: 'cancel', session })}
+                      onClick={e => { e.stopPropagation(); setConfirmAction({ type: 'cancel', session }); }}
                       className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition"
                     >
-                      Cancel Session
+                      Delete Session
                     </button>
                   </div>
                 )}
                 {/* Edit Session Button */}
-                {session.participant.id === 'currentUser' && ( // Placeholder for current user ID
+                {session?.participant?._id === 'currentUser' && ( // Placeholder for current user ID
                   <button
-                    onClick={() => handleEditSession(session)}
+                    onClick={e => { e.stopPropagation(); handleEditSession(session); }}
                     className="mt-3 flex items-center px-4 py-2 text-sm font-medium text-primary bg-gray-800 border border-primary rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition"
                     title="Edit Session"
                   >
@@ -316,8 +343,9 @@ const SessionsPage: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
           {/* Empty State */}
-          {filteredSessions.length === 0 && (
+          {!sessionsLoading && !sessionsError && filteredSessions.length === 0 && (
             <div className="text-center py-12">
               <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No sessions found</h3>
@@ -342,6 +370,7 @@ const SessionsPage: React.FC = () => {
       <CreateSessionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={refetchSessions}
       />
 
       {/* Edit Session Modal */}
@@ -350,6 +379,7 @@ const SessionsPage: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         onSave={handleSaveSession}
+        refetchSessions={refetchSessions}
       />
 
       {/* Reschedule Modal */}
@@ -368,13 +398,9 @@ const SessionsPage: React.FC = () => {
       <AlertDialog open={!!confirmAction} onOpenChange={open => { if (!open) setConfirmAction(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmAction?.type === 'complete' ? 'Mark Session as Completed?' : 'Cancel Session?'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction?.type === 'complete'
-                ? 'Are you sure you want to mark this session as completed? This action cannot be undone.'
-                : 'Are you sure you want to cancel this session? This action cannot be undone.'}
+              Are you sure you want to delete this session? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -382,16 +408,12 @@ const SessionsPage: React.FC = () => {
             <AlertDialogAction
               onClick={() => {
                 if (confirmAction) {
-                  if (confirmAction.type === 'complete') {
-                    handleMarkAsCompleted(confirmAction.session.id);
-                  } else {
-                    handleCancelSession(confirmAction.session.id);
-                  }
+                  deleteSession(confirmAction.session._id);
                   setConfirmAction(null);
                 }
               }}
             >
-              Yes
+              Yes, Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

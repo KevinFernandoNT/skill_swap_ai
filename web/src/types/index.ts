@@ -1,6 +1,6 @@
 // User related types
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   avatar: string;
   email: string;
@@ -28,7 +28,7 @@ export interface Skill {
 
 // Session related types
 export interface Session {
-  id: string;
+  _id: string;
   title: string;
   date: string;
   startTime: string;
@@ -94,6 +94,24 @@ export interface ExchangeRequest {
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   createdAt: string;
   updatedAt: string;
+}
+
+// Session creation request type (matches backend CreateSessionDto)
+export interface SessionRequest {
+  title: string;
+  description?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  skillCategory: string;
+  isTeaching: boolean;
+  maxParticipants?: number;
+  isPublic?: boolean;
+  teachSkillId?: string;
+  teachSkillName?: string;
+  subTopics?: string[];
+  meetingLink?: string;
+  focusKeywords?: string[];
 }
 
 // Navigation item type

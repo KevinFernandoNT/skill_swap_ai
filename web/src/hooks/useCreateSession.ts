@@ -1,8 +1,8 @@
 import usePostRequest from "@/hooks/usePostRequest";
-import { Session } from "@/types";
+import { SessionRequest } from "@/types";
 
 export const useCreateSession = (options?: any) =>
-  usePostRequest<Omit<Session, 'id' | 'participant' | 'status'>, any>(
+  usePostRequest<SessionRequest, any>(
     "/sessions",
     options
   ); 

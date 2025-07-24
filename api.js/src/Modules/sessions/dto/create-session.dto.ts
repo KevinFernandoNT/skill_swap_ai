@@ -55,11 +55,6 @@ export class CreateSessionDto {
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsString({ each: true })
-  focusedTopics?: string[];
-
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsString({ each: true })
   subTopics?: string[];
 
   @ApiPropertyOptional()

@@ -1,15 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Users, Globe, Lock, Save } from 'lucide-react';
 import { Session } from '../../types';
+import { SessionRequest } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { useUpdateSession } from '@/hooks/useUpdateSession';
 
 interface SessionEditModalProps {
   session: any | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (session: any) => void;
+  refetchSessions: () => void;
 }
 
-const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, onClose, onSave }) => {
+const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, onClose, onSave, refetchSessions }) => {
+  if (!isOpen || !session) return null;
+
+  // All hooks at the top!
+  const toast = useToast();
+  const { mutate: updateSession, status: updateStatus } = useUpdateSession(session._id, {
+    onSuccess: () => {
+      toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
+      onSave({ ...session, ...formData, subTopics: generalSubTopics });
+      onClose();
+      refetchSessions();
+    },
+    onError: (error: any) => {
+      toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update session', variant: 'destructive' });
+    },
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,7 +40,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     maxParticipants: 5,
     isTeaching: true
   });
-  const [focusedTopics, setFocusedTopics] = useState<string[]>(['', '', '', '', '']);
   const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
 
   useEffect(() => {
@@ -37,22 +55,9 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         maxParticipants: session.maxParticipants || 5,
         isTeaching: session.isTeaching || true
       });
-      setFocusedTopics(session.focusedTopics && session.focusedTopics.length === 5 ? [...session.focusedTopics] : ['', '', '', '', '']);
       setGeneralSubTopics(session.subTopics && session.subTopics.length === 5 ? [...session.subTopics] : ['', '', '', '', '']);
     }
   }, [session]);
-
-  if (!isOpen || !session) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      ...session,
-      ...formData,
-      focusedTopics: [...focusedTopics],
-      subTopics: [...generalSubTopics]
-    });
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -63,12 +68,16 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     }));
   };
 
-  const handleTopicChange = (idx: number, value: string) => {
-    setFocusedTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
-  };
-
   const handleGeneralSubTopicChange = (idx: number, value: string) => {
     setGeneralSubTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSession({
+      ...formData,
+      subTopics: generalSubTopics,
+    });
   };
 
   const skillCategories = [

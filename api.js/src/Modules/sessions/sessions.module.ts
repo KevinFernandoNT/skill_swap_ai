@@ -1,16 +1,30 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
 import { SessionsRepository } from './sessions.repository';
 import { Session, SessionSchema } from './schemas/session.schema';
+import { Skill, SkillSchema } from '../skills/schemas/skill.schema';
+import { ExternalHttpService } from '../common/http.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
+    MongooseModule.forFeature([
+      { name: Session.name, schema: SessionSchema },
+      { name: Skill.name, schema: SkillSchema }
+    ]),
+    HttpModule.register({
+      timeout: 30000,
+      maxRedirects: 5,
+    }),
   ],
   controllers: [SessionsController],
-  providers: [SessionsService, SessionsRepository],
-  exports: [SessionsService, SessionsRepository],
+  providers: [
+    SessionsService,
+    SessionsRepository,
+    ExternalHttpService,
+  ],
+  exports: [SessionsService, SessionsRepository, ExternalHttpService],
 })
 export class SessionsModule {}

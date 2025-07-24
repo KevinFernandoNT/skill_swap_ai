@@ -64,10 +64,6 @@ export class Session {
 
   @ApiProperty({ type: [String], required: false })
   @Prop({ type: [String], default: [] })
-  focusedTopics?: string[];
-
-  @ApiProperty({ type: [String], required: false })
-  @Prop({ type: [String], default: [] })
   subTopics?: string[];
 
   @ApiProperty({ required: false })
@@ -77,6 +73,10 @@ export class Session {
   @ApiProperty({ type: [String], required: false })
   @Prop({ type: [String], default: [] })
   focusKeywords?: string[];
+
+  @ApiProperty({ required: false })
+  @Prop({ type: [String], default: [], required: false })
+  metadata?: string[];
 
   @ApiProperty()
   createdAt: Date;
