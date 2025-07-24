@@ -370,6 +370,7 @@ const SessionsPage: React.FC = () => {
       <CreateSessionModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={refetchSessions}
       />
 
       {/* Edit Session Modal */}

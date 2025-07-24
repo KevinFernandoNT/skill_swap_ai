@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -11,13 +11,21 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SessionsController {
+  private readonly logger = new Logger(SessionsController.name);
+
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new session' })
   @ApiResponse({ status: 201, description: 'Session created successfully' })
   async create(@Request() req, @Body() createSessionDto: CreateSessionDto) {
-    return this.sessionsService.create(req.user._id, createSessionDto);
+    this.logger.log(`Received session creation request from user: ${req.user._id}`);
+    this.logger.log(`Request body: ${JSON.stringify(createSessionDto)}`);
+    
+    const result = await this.sessionsService.create(req.user._id, createSessionDto);
+    
+    this.logger.log(`Session creation completed successfully`);
+    return result;
   }
 
   @Get()

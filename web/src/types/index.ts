@@ -109,7 +109,6 @@ export interface SessionRequest {
   isPublic?: boolean;
   teachSkillId?: string;
   teachSkillName?: string;
-  focusedTopics?: string[];
   subTopics?: string[];
   meetingLink?: string;
   focusKeywords?: string[];

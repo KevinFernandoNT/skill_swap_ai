@@ -21,7 +21,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
   const { mutate: updateSession, status: updateStatus } = useUpdateSession(session._id, {
     onSuccess: () => {
       toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
-      onSave({ ...session, ...formData, focusedTopics, subTopics: generalSubTopics });
+      onSave({ ...session, ...formData, subTopics: generalSubTopics });
       onClose();
       refetchSessions();
     },
@@ -40,7 +40,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     maxParticipants: 5,
     isTeaching: true
   });
-  const [focusedTopics, setFocusedTopics] = useState<string[]>(['', '', '', '', '']);
   const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
 
   useEffect(() => {
@@ -56,7 +55,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         maxParticipants: session.maxParticipants || 5,
         isTeaching: session.isTeaching || true
       });
-      setFocusedTopics(session.focusedTopics && session.focusedTopics.length === 5 ? [...session.focusedTopics] : ['', '', '', '', '']);
       setGeneralSubTopics(session.subTopics && session.subTopics.length === 5 ? [...session.subTopics] : ['', '', '', '', '']);
     }
   }, [session]);
@@ -70,10 +68,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     }));
   };
 
-  const handleTopicChange = (idx: number, value: string) => {
-    setFocusedTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
-  };
-
   const handleGeneralSubTopicChange = (idx: number, value: string) => {
     setGeneralSubTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
   };
@@ -82,7 +76,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     e.preventDefault();
     updateSession({
       ...formData,
-      focusedTopics,
       subTopics: generalSubTopics,
     });
   };

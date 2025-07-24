@@ -66,11 +66,6 @@ export class UpdateSessionDto {
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsString({ each: true })
-  focusedTopics?: string[];
-
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsString({ each: true })
   subTopics?: string[];
 
   @ApiPropertyOptional()
@@ -82,4 +77,9 @@ export class UpdateSessionDto {
   @IsOptional()
   @IsString({ each: true })
   focusKeywords?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  metadata?: string[];
 }
