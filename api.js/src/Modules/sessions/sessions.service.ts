@@ -83,6 +83,23 @@ export class SessionsService {
     return this.sessionsRepository.findByUserId(userId, paginationDto);
   }
 
+  async findUpcomingSessions(userId: string, paginationDto?: PaginationDto): Promise<PaginatedResult<Session>> {
+    this.logger.log(`Finding upcoming sessions for user: ${userId}`);
+    
+    // Calculate date range for next 3 days
+    const today = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
+    
+    // Format dates as YYYY-MM-DD strings
+    const todayStr = today.toISOString().split('T')[0];
+    const threeDaysStr = threeDaysFromNow.toISOString().split('T')[0];
+    
+    this.logger.log(`Date range: ${todayStr} to ${threeDaysStr}`);
+    
+    return this.sessionsRepository.findUpcomingSessions(userId, todayStr, threeDaysStr, paginationDto);
+  }
+
   async findPublic(paginationDto: PaginationDto): Promise<PaginatedResult<Session>> {
     return this.sessionsRepository.findPublic(paginationDto);
   }

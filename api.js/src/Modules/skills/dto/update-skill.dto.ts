@@ -44,4 +44,10 @@ export class UpdateSkillDto {
   @IsArray()
   @IsString({ each: true })
   agenda?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Metadata keywords for skill categorization and search' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  metadata?: string[];
 }

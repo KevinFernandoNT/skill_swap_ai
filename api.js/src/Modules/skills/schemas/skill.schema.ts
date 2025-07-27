@@ -38,6 +38,10 @@ export class Skill {
   @Prop({ type: [String] })
   agenda?: string[];
 
+  @ApiProperty({ required: false, type: [String], description: 'Metadata keywords for skill categorization and search' })
+  @Prop({ type: [String], default: [] })
+  metadata?: string[];
+
   @ApiProperty()
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;

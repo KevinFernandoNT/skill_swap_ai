@@ -53,6 +53,14 @@ export class SessionsController {
     return this.sessionsService.search(query, status, paginationDto);
   }
 
+  @Get('upcoming')
+  @ApiOperation({ summary: 'Get upcoming sessions for the next 3 days' })
+  @ApiResponse({ status: 200, description: 'Upcoming sessions retrieved successfully' })
+  async getUpcomingSessions(@Request() req, @Query() paginationDto?: PaginationDto) {
+    this.logger.log(`Fetching upcoming sessions for user: ${req.user._id}`);
+    return this.sessionsService.findUpcomingSessions(req.user._id, paginationDto);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get session by ID' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully' })
