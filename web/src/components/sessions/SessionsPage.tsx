@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Calendar, Clock, MoreVertical } from 'lucide-react';
+import { Plus, Search, Edit, Calendar, Clock, MoreVertical, Trash2 } from 'lucide-react';
 import { Session } from '../../types';
 import SessionEditModal from './SessionEditModal';
 import CreateSessionModal from './CreateSessionModal';
@@ -320,25 +320,26 @@ const SessionsPage: React.FC = () => {
                 </div>
                 {/* Mark as Completed & Cancel Session Buttons */}
                 {(session.status !== 'completed' && session.status !== 'cancelled') && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-4 items-center">
+                    {/* Edit Session Button */}
+                    <button
+                      onClick={e => { e.stopPropagation(); handleEditSession(session); }}
+                      className="flex items-center px-3 py-2 text-sm font-medium text-primary bg-gray-800 border border-primary rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition"
+                      title="Edit Session"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </button>
+                    
+                    {/* Delete Session Button with Trash Icon */}
                     <button
                       onClick={e => { e.stopPropagation(); setConfirmAction({ type: 'cancel', session }); }}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition"
+                      className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition"
+                      title="Delete Session"
                     >
-                      Delete Session
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                )}
-                {/* Edit Session Button */}
-                {session?.participant?._id === 'currentUser' && ( // Placeholder for current user ID
-                  <button
-                    onClick={e => { e.stopPropagation(); handleEditSession(session); }}
-                    className="mt-3 flex items-center px-4 py-2 text-sm font-medium text-primary bg-gray-800 border border-primary rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition"
-                    title="Edit Session"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Session
-                  </button>
                 )}
               </div>
             ))}

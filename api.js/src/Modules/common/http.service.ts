@@ -61,6 +61,8 @@ export class ExternalHttpService {
 
         // Use sessions service to update the session with the returned keywords
         await this.updateSessionWithMetadata(sessionId, response.data.response);
+      } else {
+        await this.updateSessionWithMetadata(sessionId, []); // Save empty array on error
       }
 
       this.logger.log(`Background process completed successfully for skill: ${skillName}, session metadata updated`);
@@ -111,7 +113,46 @@ export class ExternalHttpService {
   }
 
   /**
-   * Execute the background process without blocking the main thread
+   * Send keywords to Python API for search and get matching keywords
+   */
+  async searchKeywords(keywords: string[]): Promise<string[]> {
+    try {
+      this.logger.log(`Sending keywords to Python API for search: ${JSON.stringify(keywords)}`);
+
+      const requestData = {
+        keywords: keywords
+      };
+
+      this.logger.log(`Sending request to Python API: ${this.pythonApiBaseUrl}/search/keywords`);
+      this.logger.log(`Request payload: ${JSON.stringify(requestData)}`);
+
+      const response: AxiosResponse<{ response: string[] }> = await firstValueFrom(
+        this.httpService.post(`${this.pythonApiBaseUrl}/search/keywords`, requestData, {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status < 500, // Accept 4xx errors but reject 5xx
+        })
+      );
+
+      this.logger.log(`Python API response received: ${JSON.stringify(response.data)}`);
+      
+      if (response.status >= 400) {
+        this.logger.error(`Python API returned error status: ${response.status}`);
+        return [];
+      }
+
+      return response.data.response || [];
+    } catch (error) {
+      this.logger.error(`Error calling Python API for keyword search: ${error.message}`);
+      this.logger.error(`Stack trace: ${error.stack}`);
+      return [];
+    }
+  }
+
+  /**
+   * Execute the background process without blocking the main thread for sessions
    */
   executeBackgroundProcess(sessionId: string, skillName: string, focusKeywords: string[]): void {
     // Execute in the next tick to ensure it doesn't block the current request

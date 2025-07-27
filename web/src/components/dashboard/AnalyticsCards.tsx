@@ -1,70 +1,103 @@
 import AnalyticsCard from './AnalyticsCard';
-import { AnalyticsData } from '../../types';
-import { sessions, users } from '../../data/mockData';
+import { AnalyticsData, Session } from '../../types';
+import { ExchangeSession } from '../../hooks/useGetUpcomingExchangeSessions';
+import { useGetExchangeSessionStats } from '../../hooks/useGetExchangeSessionStats';
 
 interface AnalyticsCardsProps {
   data: AnalyticsData;
+  upcomingSessions?: Session[];
+  upcomingExchangeSessions?: ExchangeSession[];
 }
 
-const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ data }) => {
-  // Get today's sessions
+const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({ 
+  data, 
+  upcomingSessions = [], 
+  upcomingExchangeSessions = [] 
+}) => {
+  // Get exchange session statistics
+  const { data: statsData, isLoading: statsLoading, error: statsError } = useGetExchangeSessionStats();
+  const stats = statsData?.data || { completedExchangeSessions: 0, scheduledExchangeSessions: 0, uniqueExchangePartners: 0 };
+
+  // Get today's sessions from the upcoming sessions
   const today = new Date().toISOString().split('T')[0];
-  const todaySessions = sessions.filter(session => session.date === '2025-06-10'); // Using mock date
+  const todaySessions = upcomingSessions.filter(session => session.date === today);
+  const todayExchangeSessions = upcomingExchangeSessions.filter(session => session.date === today);
   
-  // Get completed sessions count
-  const completedSessions = sessions.filter(session => session.status === 'completed');
+  // Get upcoming exchange sessions count (next 3 days) - fallback to API stats if data not available
+  const upcomingExchangeCount = upcomingExchangeSessions.length || stats.scheduledExchangeSessions;
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {/* Sessions Today */}
+      {/* Scheduled Exchange Sessions */}
       <AnalyticsCard
-        title="Sessions Today"
-        value={todaySessions.length}
-        icon="sessions"
-        subtext="Scheduled sessions"
+        title="Scheduled Sessions"
+        value={statsLoading ? '...' : stats.scheduledExchangeSessions}
+        icon="time"
+        subtext="Upcoming exchanges"
       >
         <div className="space-y-2 mt-3">
-          {todaySessions.slice(0, 3).map((session, index) => (
-            <div key={session.id} className="text-xs text-gray-300">
-              <div className="font-medium">{session.title}</div>
-              <div className="text-gray-400">with {session.participant.name}</div>
+          {upcomingExchangeSessions.slice(0, 3).map((session, index) => (
+            <div key={session._id} className="text-xs text-gray-300">
+              <div className="font-medium">{session.skillId.name} ↔ {session.requestedSkillId.name}</div>
+              <div className="text-gray-400">{new Date(session.date).toLocaleDateString()}</div>
             </div>
           ))}
-        </div>
-      </AnalyticsCard>
-
-      {/* Total Connections */}
-      <AnalyticsCard
-        title="Total Connections"
-        value={users.length + 15} // Adding some extra to make it realistic
-        icon="connections"
-        subtext="Active connections"
-      >
-        <div className="flex -space-x-2 overflow-hidden mt-2">
-          {users.slice(0, 4).map((user, index) => (
-            <img
-              key={user.id}
-              className="inline-block h-6 w-6 rounded-full ring-2 ring-gray-900"
-              src={user.avatar}
-              alt={user.name}
-            />
-          ))}
-          {users.length > 4 && (
-            <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-xs font-medium text-white ring-2 ring-gray-900">
-              +{users.length - 4}
-            </div>
+          {!statsLoading && stats.scheduledExchangeSessions === 0 && (
+            <div className="text-xs text-gray-500">No scheduled sessions</div>
+          )}
+          {statsLoading && (
+            <div className="text-xs text-gray-500">Loading...</div>
           )}
         </div>
       </AnalyticsCard>
 
-      {/* Total Completed Sessions */}
+
+
+      {/* Completed Exchange Sessions */}
       <AnalyticsCard
         title="Completed Sessions"
-        value={completedSessions.length + 47} // Adding some extra for realism
-        icon="time"
-        trend={12}
-        subtext="All time"
-      />
+        value={statsLoading ? '...' : stats.completedExchangeSessions}
+        icon="sessions"
+        subtext="Successful exchanges"
+      >
+        <div className="space-y-2 mt-3">
+          {!statsLoading && stats.completedExchangeSessions > 0 && (
+            <div className="text-xs text-gray-300">
+              <div className="font-medium">✓ {stats.completedExchangeSessions} exchange{stats.completedExchangeSessions !== 1 ? 's' : ''} completed</div>
+              <div className="text-gray-400">Building your skill network</div>
+            </div>
+          )}
+          {!statsLoading && stats.completedExchangeSessions === 0 && (
+            <div className="text-xs text-gray-500">No completed sessions yet</div>
+          )}
+          {statsLoading && (
+            <div className="text-xs text-gray-500">Loading...</div>
+          )}
+        </div>
+      </AnalyticsCard>
+
+      {/* Exchange Partners */}
+      <AnalyticsCard
+        title="Exchange Partners"
+        value={statsLoading ? '...' : stats.uniqueExchangePartners}
+        icon="connections"
+        subtext="Unique skill partners"
+      >
+        <div className="space-y-2 mt-3">
+          {!statsLoading && stats.uniqueExchangePartners > 0 && (
+            <div className="text-xs text-gray-300">
+              <div className="font-medium">🤝 {stats.uniqueExchangePartners} unique partner{stats.uniqueExchangePartners !== 1 ? 's' : ''}</div>
+              <div className="text-gray-400">Growing your network</div>
+            </div>
+          )}
+          {!statsLoading && stats.uniqueExchangePartners === 0 && (
+            <div className="text-xs text-gray-500">No exchange partners yet</div>
+          )}
+          {statsLoading && (
+            <div className="text-xs text-gray-500">Loading...</div>
+          )}
+        </div>
+      </AnalyticsCard>
     </div>
   );
 };

@@ -38,6 +38,13 @@ export class SkillsController {
     return this.skillsService.search(query, type, paginationDto);
   }
 
+  @Get('suggested-users')
+  @ApiOperation({ summary: 'Get suggested users based on current user learning skills' })
+  @ApiResponse({ status: 200, description: 'Suggested users retrieved successfully' })
+  async getSuggestedUsers(@Request() req) {
+    return this.skillsService.getSuggestedUsers(req.user._id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get skill by ID' })
   @ApiResponse({ status: 200, description: 'Skill retrieved successfully' })

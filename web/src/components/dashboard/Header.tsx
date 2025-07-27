@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Bell, Plus, MessageSquare, UserPlus } from 'lucide-react';
+import { Bell, Plus, MessageSquare, UserPlus, LogOut } from 'lucide-react';
 import CreateSessionModal from '../sessions/CreateSessionModal';
 import { Session } from '../../types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import { Button } from '../ui/button';
 
 const Header: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isCreateSessionOpen, setIsCreateSessionOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Get current user from localStorage
@@ -28,6 +38,11 @@ const Header: React.FC = () => {
     console.log('Creating session:', sessionData);
     setIsCreateSessionOpen(false);
     // Show success message or redirect
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
   };
 
   return (
@@ -54,14 +69,10 @@ const Header: React.FC = () => {
               </button>
               <button
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ml-2"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to logout? You will need to log in again to access your dashboard.')) {
-                    localStorage.clear();
-                    window.location.href = '/login';
-                  }
-                }}
+                onClick={() => setIsLogoutModalOpen(true)}
                 aria-label="Logout"
               >
+                <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </button>
             </div>
@@ -122,6 +133,43 @@ const Header: React.FC = () => {
         </div>
       </header>
 
+      {/* Logout Confirmation Modal */}
+      <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogOut className="w-5 h-5 text-red-500" />
+              Confirm Logout
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Are you sure you want to logout? You will need to log in again to access your dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsLogoutModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        isOpen={isCreateSessionOpen}
+        onClose={() => setIsCreateSessionOpen(false)}
+        onSubmit={handleCreateSession}
+      />
     </>
   );
 };

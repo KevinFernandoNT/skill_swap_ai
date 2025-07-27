@@ -12,7 +12,10 @@ const skillSchema = yup.object({
   category: yup.string().required('Category is required'),
   proficiency: yup.number().min(0).max(100).required('Proficiency is required'),
   type: yup.string().oneOf(['teaching', 'learning']).required('Type is required'),
-  agenda: yup.array().of(yup.string()).max(5, 'You can add up to 5 sub topics or domain areas').notRequired(),
+  agenda: yup.array()
+    .of(yup.string().trim().required('Topic cannot be empty'))
+    .length(5, 'You must add exactly 5 sub topics or domain areas')
+    .required('Sub topics are required'),
   description: yup.string().max(500, 'Description is too long').notRequired(),
   experience: yup.string().max(500, 'Experience is too long').notRequired(),
   goals: yup.string().max(500, 'Goals is too long').notRequired(),
@@ -45,7 +48,7 @@ const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose, defaultT
     category: '',
     proficiency: 50,
     type: defaultType,
-      agenda: [],
+      agenda: ['', '', '', '', ''], // Start with 5 empty topic slots
       description: '',
       experience: '',
       goals: '',
@@ -58,8 +61,38 @@ const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose, defaultT
   if (!isOpen) return null;
 
   const onSubmit = (data: SkillRequest) => {
+    // Ensure we have exactly 5 sub topics before submitting
+    if (!data.agenda || data.agenda.length !== 5) {
+      toast({ 
+        title: 'Incomplete Skill', 
+        description: 'Please add exactly 5 sub topics before submitting.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
+    // Ensure no empty topics
+    const hasEmptyTopics = data.agenda.some(topic => !topic.trim());
+    if (hasEmptyTopics) {
+      toast({ 
+        title: 'Incomplete Topics', 
+        description: 'Please fill in all 5 sub topics before submitting.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     createSkill.mutate(data);
-    reset();
+    reset({
+      name: '',
+      category: '',
+      proficiency: 50,
+      type: defaultType,
+      agenda: ['', '', '', '', ''], // Reset with 5 empty slots
+      description: '',
+      experience: '',
+      goals: '',
+    });
     setTopicInput('');
   };
 
@@ -179,53 +212,79 @@ const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose, defaultT
               </div>
             </div>
 
-            {/* Optional Sub Topics or Domain Areas */}
+            {/* Required Sub Topics or Domain Areas */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Optional Sub Topics or Domain Areas (up to 5)
+                {watch('type') === 'teaching' ? 'Topics I can teach' : 'Topics I want to learn'} (Required: 5 topics)
               </label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={topicInput}
-                  onChange={e => setTopicInput(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="Add a sub topic or domain area and press +"
-                  maxLength={100}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTopic(); } }}
-                  disabled={agenda.length >= 5}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTopic}
-                  className="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none"
-                  title="Add sub topic"
-                  disabled={agenda.length >= 5}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+              <div className="space-y-3">
+                {agenda.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-400 w-8">#{index + 1}</span>
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => {
+                        const newAgenda = [...agenda];
+                        newAgenda[index] = e.target.value;
+                        setValue('agenda', newAgenda);
+                      }}
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      placeholder={watch('type') === 'teaching' 
+                        ? `Teaching topic ${index + 1} (e.g., React Hooks, State Management)`
+                        : `Learning topic ${index + 1} (e.g., Basic Syntax, Data Structures)`
+                      }
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTopic(item)}
+                      className="text-red-500 hover:text-red-400"
+                      disabled={agenda.length <= 1}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                {agenda.length < 5 && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-400 w-8">#{agenda.length + 1}</span>
+                    <input
+                      type="text"
+                      value={topicInput}
+                      onChange={(e) => setTopicInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTopic();
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      placeholder={watch('type') === 'teaching' 
+                        ? `Teaching topic ${agenda.length + 1} (press Enter to add)`
+                        : `Learning topic ${agenda.length + 1} (press Enter to add)`
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTopic}
+                      className="text-primary hover:text-primary/90"
+                      disabled={!topicInput.trim()}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              {agenda.length > 0 && (
-                <ul className="flex flex-wrap gap-2 mt-2">
-                  {agenda.map(topic => (
-                    <li key={topic} className="flex items-center bg-gray-700 text-white px-2 py-1 rounded">
-                      <span>{topic}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTopic(topic)}
-                        className="ml-2 text-gray-300 hover:text-red-400"
-                        title="Remove"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
               {errors.agenda && <p className="text-red-500 text-xs mt-1">{errors.agenda.message}</p>}
-              <p className="text-xs text-gray-500 mt-2">
-                You can add up to 5 sub topics or domain areas you want to focus on for this skill. This is optional.
-              </p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-500">
+                  Please provide exactly 5 specific topics or subtopics related to this skill.
+                </p>
+                <span className={`text-xs font-medium ${agenda.filter(topic => topic.trim()).length === 5 ? 'text-green-400' : 'text-orange-400'}`}>
+                  {agenda.filter(topic => topic.trim()).length}/5 topics
+                </span>
+              </div>
             </div>
 
             {/* Footer */}
@@ -239,10 +298,16 @@ const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose, defaultT
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+                className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                  agenda.length === 5 && agenda.every(topic => topic.trim()) 
+                    ? 'bg-primary hover:bg-primary/90' 
+                    : 'bg-gray-600 cursor-not-allowed opacity-50'
+                }`}
+                disabled={agenda.length !== 5 || !agenda.every(topic => topic.trim())}
               >
                 <Save className="w-4 h-4 mr-2" />
-                Add Skill
+                Add Skill {(agenda.length !== 5 || !agenda.every(topic => topic.trim())) && 
+                  `(${5 - agenda.filter(topic => topic.trim()).length} topics needed)`}
               </button>
             </div>
           </form>

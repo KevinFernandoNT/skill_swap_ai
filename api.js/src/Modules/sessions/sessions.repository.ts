@@ -48,6 +48,51 @@ export class SessionsRepository {
     };
   }
 
+  async findUpcomingSessions(userId: string, startDate: string, endDate: string, paginationDto?: PaginationDto): Promise<PaginatedResult<Session>> {
+    const { page = 1, limit = 10 } = paginationDto || {};
+    const skip = (page - 1) * limit;
+
+    const query = {
+      $and: [
+        {
+          $or: [
+            { hostId: userId },
+            { participants: userId }
+          ]
+        },
+        {
+          date: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        },
+        {
+          status: 'upcoming'
+        }
+      ]
+    };
+
+    const [data, total] = await Promise.all([
+      this.sessionModel
+        .find(query)
+        .populate('hostId', 'name email avatar')
+        .populate('participants', 'name email avatar')
+        .skip(skip)
+        .limit(limit)
+        .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
+        .exec(),
+      this.sessionModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async findPublic(paginationDto: PaginationDto): Promise<PaginatedResult<Session>> {
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;

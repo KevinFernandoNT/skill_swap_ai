@@ -11,6 +11,7 @@ import { MessagesModule } from './Modules/messages/messages.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module';
 import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-requests.module';
+import { ExchangeSessionsModule } from './Modules/exchange-sessions/exchange-sessions.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-req
     SessionsModule,
     MessagesModule,
     StreamChatModule,
-    ExchangeRequestsModule
+    ExchangeRequestsModule,
+    ExchangeSessionsModule
   ],
   controllers: [AppController],
   providers: [AppService],

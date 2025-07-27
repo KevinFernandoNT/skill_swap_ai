@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { User } from '../../types';
-import { ChevronRight, MessageSquare, UserPlus, Search, RefreshCw } from 'lucide-react';
+import { ChevronRight, MessageSquare, UserPlus, Search, RefreshCw, Loader2 } from 'lucide-react';
 import UserProfileModal from '../ui/UserProfileModal';
 import { StreamChat } from 'stream-chat';
 import { toast } from "@/components/ui/use-toast";
-import { useSuggestedUsers } from "@/hooks/useAuth";
+import { useGetSuggestedUsers, SuggestedUser } from "@/hooks/useGetSuggestedUsers";
 
 interface SuggestedConnectionsProps {
   connections: User[];
@@ -12,24 +12,22 @@ interface SuggestedConnectionsProps {
 }
 
 const SuggestedConnections: React.FC = () => {
-  const { data: connections = [], isLoading, isError } = useSuggestedUsers();
+  const { data: suggestedUsersResponse, isLoading, isError, refetch } = useGetSuggestedUsers();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredConnections, setFilteredConnections] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [filteredConnections, setFilteredConnections] = useState<SuggestedUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<SuggestedUser | null>(null);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingConnection, setPendingConnection] = useState<User | null>(null);
+  const [pendingConnection, setPendingConnection] = useState<SuggestedUser | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Extract suggested users from API response
+  const connections = suggestedUsersResponse?.data || [];
 
   // Update filteredConnections when connections change
   useEffect(() => {
-    // Map backend _id to id and ensure skills is always an array
-    const mapped = connections.map((user: any) => ({
-      ...user,
-      id: user._id || user.id,
-      skills: Array.isArray(user.skills) ? user.skills : [],
-    }));
-    setFilteredConnections(mapped);
-  }, []);
+    setFilteredConnections(connections);
+  }, [connections]);
 
   // Filter connections based on search term
   const handleSearch = (term: string) => {
@@ -40,7 +38,7 @@ const SuggestedConnections: React.FC = () => {
       const filtered = connections.filter(connection =>
         connection.name.toLowerCase().includes(term.toLowerCase()) ||
         connection.email.toLowerCase().includes(term.toLowerCase()) ||
-        connection.skills.some(skill => 
+        connection.matchingSkills.some(skill => 
           skill.name.toLowerCase().includes(term.toLowerCase()) ||
           skill.category.toLowerCase().includes(term.toLowerCase())
         )
@@ -49,17 +47,55 @@ const SuggestedConnections: React.FC = () => {
     }
   };
 
-  // Refresh suggestions (in a real app, this would fetch new data)
-  const handleRefresh = () => {
-    // Simulate refreshing by shuffling the array
-    const shuffled = [...connections].sort(() => Math.random() - 0.5);
-    setFilteredConnections(shuffled);
+  // Refresh suggestions with loading state
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     setSearchTerm('');
+    try {
+      await refetch();
+      toast({
+        title: "Suggestions refreshed",
+        description: "Your suggested connections have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Failed to refresh suggestions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const handleUserClick = (user: User) => {
+  const handleUserClick = (user: SuggestedUser) => {
     setSelectedUser(user);
     setIsUserProfileOpen(true);
+  };
+
+  // Convert SuggestedUser to User for the modal
+  const convertToUser = (suggestedUser: SuggestedUser | null): User | null => {
+    if (!suggestedUser) return null;
+    
+    return {
+      _id: suggestedUser._id,
+      name: suggestedUser.name,
+      email: suggestedUser.email,
+      avatar: suggestedUser.avatar || '/placeholder.svg',
+      skills: suggestedUser.matchingSkills.map(skill => ({
+        _id: skill._id,
+        name: skill.name,
+        category: skill.category,
+        proficiency: skill.proficiency,
+        type: skill.skillType, // Use the skillType from the API response
+        agenda: [],
+        description: skill.description,
+      })),
+      status: 'online' as const,
+      bio: `${suggestedUser.matchingType === 'mutual_match' ? 'Perfect match for skill exchange!' : 
+             suggestedUser.matchingType === 'can_teach' ? 'Can teach skills you want to learn' : 
+             'Wants to learn skills you can teach'} (${suggestedUser.matchingSkills.length} matching skills)`,
+    };
   };
 
   // Generate status label with proper styling
@@ -81,11 +117,47 @@ const SuggestedConnections: React.FC = () => {
       </span>
     );
   };
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="flex space-x-4 pb-2 overflow-x-auto hide-scrollbar">
+      {[...Array(4)].map((_, index) => (
+        <div 
+          key={index}
+          className="flex-shrink-0 w-48 bg-gray-800 rounded-lg border border-gray-700 p-4 animate-pulse"
+        >
+          <div className="flex flex-col items-center">
+            {/* Avatar skeleton */}
+            <div className="w-16 h-16 bg-gray-700 rounded-full mb-3"></div>
+            
+            {/* Name skeleton */}
+            <div className="w-20 h-4 bg-gray-700 rounded mb-1"></div>
+            
+            {/* Email skeleton */}
+            <div className="w-24 h-3 bg-gray-700 rounded mb-2"></div>
+            
+            {/* Matching type skeleton */}
+            <div className="w-24 h-6 bg-gray-700 rounded-full mb-3"></div>
+            
+            {/* Skills skeleton */}
+            <div className="w-full space-y-1">
+              <div className="w-16 h-3 bg-gray-700 rounded mx-auto"></div>
+              <div className="w-20 h-3 bg-gray-700 rounded mx-auto"></div>
+              <div className="w-14 h-3 bg-gray-700 rounded mx-auto"></div>
+            </div>
+            
+            {/* Button skeleton */}
+            <div className="w-8 h-8 bg-gray-700 rounded-full mt-2"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
   
   const apiKey = '4ngq5ws5e4b8';
 
   // Add this handler inside the component
-  const handleMessageClick = async (connection: User) => {
+  const handleMessageClick = async (connection: SuggestedUser) => {
     try {
       // Get current user from localStorage
       const storedUserData = localStorage.getItem('user');
@@ -112,7 +184,7 @@ const SuggestedConnections: React.FC = () => {
       const chatClient = StreamChat.getInstance(apiKey);
       await chatClient.connectUser(streamUser, streamChatToken);
   
-      const channelId = `sc_${connection.id}`;
+      const channelId = `sc_${connection._id}`;
       
       // Check if channel already exists
       const existingChannels = await chatClient.queryChannels({
@@ -177,7 +249,7 @@ const SuggestedConnections: React.FC = () => {
   
       await chatClient.connectUser(streamUser, streamChatToken);
   
-      const channelId = `sc_${pendingConnection.id}`;
+      const channelId = `sc_${pendingConnection._id}`;
       let channel;
     
       const existingChannels = await chatClient.queryChannels({
@@ -190,7 +262,7 @@ const SuggestedConnections: React.FC = () => {
         channel = existingChannels[0];
       } else {
         channel = chatClient.channel('messaging', channelId, {
-          members: [streamUser.id, pendingConnection.id],
+          members: [streamUser.id, pendingConnection._id],
         });
         await channel.create();
   
@@ -239,13 +311,6 @@ const SuggestedConnections: React.FC = () => {
     // Trigger navigation to messages page
     // Navigation logic can be handled here if needed
   
-  if (isLoading) {
-    return <div className="text-white">Loading suggested users...</div>;
-  }
-  if (isError) {
-    return <div className="text-red-500">Failed to load suggested users.</div>;
-  }
-
   return (
     <>
       <div className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6">
@@ -272,33 +337,72 @@ const SuggestedConnections: React.FC = () => {
               placeholder="Search users by name, email, or skills..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <button
             onClick={handleRefresh}
-            className="p-2 text-gray-400 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            disabled={isLoading || isRefreshing}
+            className={`p-2 text-gray-400 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 ${
+              isLoading || isRefreshing 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-gray-700 hover:text-primary'
+            }`}
             aria-label="Refresh suggestions"
           >
-            <RefreshCw className="w-4 h-4" />
+            {isRefreshing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            )}
           </button>
         </div>
         
-        <div className="flex space-x-4 pb-2 overflow-x-auto hide-scrollbar">
-          {filteredConnections.length > 0 ? (
-            filteredConnections.map(connection => (
+        {/* Content Area */}
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : isError ? (
+          <div className="w-full text-center py-12">
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <RefreshCw className="w-8 h-8 text-red-400" />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">Failed to load suggestions</h3>
+              <p className="text-gray-400 mb-4">We couldn't load your suggested connections. Please try again.</p>
+            </div>
+            <button 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </>
+              )}
+            </button>
+          </div>
+        ) : filteredConnections.length > 0 ? (
+          <div className="flex space-x-4 pb-2 overflow-x-auto hide-scrollbar">
+            {filteredConnections.map(connection => (
               <div 
-                key={connection.id}
-                className="flex-shrink-0 w-40 bg-gray-800 rounded-lg border border-gray-700 p-4 transition-shadow duration-300 hover:shadow-md hover:border-primary/50"
+                key={connection._id}
+                className="flex-shrink-0 w-48 bg-gray-800 rounded-lg border border-gray-700 p-4 transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-105"
               >
                 <div className="flex flex-col items-center">
                   <div className="relative mb-3">
                     <img 
-                      src={connection.avatar} 
+                      src={connection.avatar || '/placeholder.svg'} 
                       alt={connection.name}
                       className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => handleUserClick(connection)}
                     />
-                  
                   </div>
                   
                   <h3 
@@ -307,34 +411,90 @@ const SuggestedConnections: React.FC = () => {
                   >
                     {connection.name}
                   </h3>
-                  <p className="text-xs text-gray-400 text-center mb-3">{connection.email}</p>
+                  <p className="text-xs text-gray-400 text-center mb-2">{connection.email}</p>
                   
-                 
+                  {/* Matching Skills */}
+                  {connection.matchingSkills && connection.matchingSkills.length > 0 && (
+                    <div className="w-full mb-3">
+                      {/* Matching Type Indicator */}
+                      <div className="flex items-center justify-center mb-2">
+                        {connection.matchingType === 'mutual_match' && (
+                          <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30">
+                            ⚡ Perfect Match
+                          </span>
+                        )}
+                        {connection.matchingType === 'can_teach' && (
+                          <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-500/30">
+                            📚 Can Teach You
+                          </span>
+                        )}
+                        {connection.matchingType === 'wants_to_learn' && (
+                          <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/30">
+                            🎯 Wants to Learn
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Skills List */}
+                      <div className="max-h-20 overflow-y-auto">
+                        {connection.matchingSkills.slice(0, 3).map((skill) => (
+                          <div key={skill._id} className="text-xs text-gray-300 text-center mb-1 flex items-center justify-center">
+                            {skill.skillType === 'teaching' ? (
+                              <span className="text-green-400 mr-1">👨‍🏫</span>
+                            ) : (
+                              <span className="text-blue-400 mr-1">🎓</span>
+                            )}
+                            {skill.name}
+                          </div>
+                        ))}
+                        {connection.matchingSkills.length > 3 && (
+                          <div className="text-xs text-gray-400 text-center">
+                            +{connection.matchingSkills.length - 3} more skills
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   
-                  <div className="flex space-x-2 mt-4">
+                  <div className="flex space-x-2 mt-2">
                     <button 
-                      className="p-1.5 text-gray-400 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="p-1.5 text-gray-400 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
                       aria-label={`Message ${connection.name}`}
                       onClick={() => handleMessageClick(connection)}
                     >
                       <MessageSquare className="w-4 h-4" />
                     </button>
-                 
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="w-full text-center py-8">
-              <p className="text-gray-400">No users found matching your search.</p>
+            ))}
+          </div>
+        ) : (
+          <div className="w-full text-center py-12">
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">No connections found</h3>
+              <p className="text-gray-400">
+                {searchTerm ? 'No users match your search criteria.' : 'No suggested connections available at the moment.'}
+              </p>
             </div>
-          )}
-        </div>
+            {searchTerm && (
+              <button 
+                onClick={() => handleSearch('')}
+                className="text-primary hover:text-primary/80 text-sm"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* User Profile Modal */}
       <UserProfileModal
-        user={selectedUser}
+        user={selectedUser ? convertToUser(selectedUser) : null}
         isOpen={isUserProfileOpen}
         onClose={() => {
           setIsUserProfileOpen(false);
@@ -349,7 +509,7 @@ const SuggestedConnections: React.FC = () => {
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
                 <img 
-                  src={pendingConnection.avatar} 
+                  src={pendingConnection.avatar || '/placeholder.svg'} 
                   alt={pendingConnection.name}
                   className="w-full h-full object-cover"
                 />

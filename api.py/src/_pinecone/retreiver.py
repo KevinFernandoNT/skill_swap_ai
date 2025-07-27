@@ -161,6 +161,7 @@ def get_retrieval_results(queries: list[str]):
         # Filter documents based on score threshold (0.5)
         page_contents = []
         for doc in docs:
+            print(f"Document > {doc}")
             # Check if document has a score attribute and it's above 0.5
             if hasattr(doc, 'metadata') and 'score' in doc.metadata:
                 score = doc.metadata['score']
@@ -214,6 +215,242 @@ def upsert_text_to_pinecone(
     except Exception as e:
         print(f"Error during upsert to Pinecone: {e}")
         return False
+
+def query_keywords_from_pinecone(
+    keywords: List[str], 
+    similarity_threshold: float = 0.0,
+    namespace: str = ""
+) -> List[str]:
+    """
+    Query Pinecone index directly with keywords and return most relevant keywords from results.
+    
+    Args:
+        keywords: List of input keywords to search for
+        similarity_threshold: Minimum similarity score to include results
+        namespace: Pinecone namespace to search in
+        
+    Returns:
+        List of relevant keywords extracted from Pinecone results
+    """
+    if not isinstance(keywords, list) or not keywords:
+        raise ValueError("Input 'keywords' must be a non-empty list of strings.")
+    
+    if not all(isinstance(keyword, str) for keyword in keywords):
+        raise ValueError("All elements in 'keywords' list must be strings.")
+    
+    # Clean keywords
+    cleaned_keywords = [kw.strip() for kw in keywords if kw.strip()]
+    if not cleaned_keywords:
+        print("Warning: No valid keywords found after cleaning.")
+        return []
+    
+    print(f"\n[query_keywords_from_pinecone] Querying with keywords: {cleaned_keywords}")
+    print(f"[query_keywords_from_pinecone] Retrieving ALL results with threshold {similarity_threshold}")
+    
+    try:
+        # Get global instances
+        global _hf_embeddings, _pinecone_index
+        
+        if _hf_embeddings is None or _pinecone_index is None:
+            initialize_global_instances()
+        
+        # Create combined query from keywords
+        combined_query = " ".join(cleaned_keywords)
+        
+        # Generate embedding for the query
+        query_embedding = _hf_embeddings.embed_query(combined_query)
+        print(f"✓ Generated embedding for query: '{combined_query}'")
+        
+        # Query Pinecone index directly - set very high top_k to get all results
+        query_response = _pinecone_index.query(
+            vector=query_embedding,
+            top_k=100, 
+            include_metadata=True,
+            include_values=False,
+            namespace=""
+        )
+        print(f"✓ Pinecone returned {len(query_response.matches)} matches")
+        
+        # Extract and process results
+        relevant_keywords = []
+        for match in query_response.matches:
+            score = match.score
+            print(f"Match score: {score:.4f}")
+            
+            if score >= similarity_threshold:
+                # Extract text content from metadata
+                if hasattr(match, 'metadata') and match.metadata:
+                    # Try different possible text keys
+                    text_content = (
+                        match.metadata.get('text') or 
+                        match.metadata.get('content') or 
+                        match.metadata.get('page_content') or
+                        match.metadata.get('context') or
+                        str(match.metadata)
+                    )
+                    
+                    if text_content:
+                        print(f"✓ Found relevant content (score: {score:.4f}): {text_content[:100]}...")
+                        
+                        # Directly append the text content instead of extracting keywords
+                        relevant_keywords.append(text_content)
+                else:
+                    print(f"⚠ Match {match.id} has no metadata")
+            else:
+                print(f"✗ Excluded match with score {score:.4f} (below threshold {similarity_threshold})")
+        
+        # Remove duplicates and return unique keywords
+        unique_keywords = list(set(relevant_keywords))
+        print(f"Final result: {len(unique_keywords)} unique relevant keywords")
+        print(f"Relevant keywords: {unique_keywords}")
+        
+        return unique_keywords
+        
+    except Exception as e:
+        print(f"Error querying keywords from Pinecone: {e}")
+        return []
+
+
+def extract_keywords_from_text(text: str, original_keywords: List[str]) -> List[str]:
+    """
+    Extract relevant keywords from text content based on the original keywords.
+    
+    Args:
+        text: Text content to extract keywords from
+        original_keywords: Original input keywords for context
+        
+    Returns:
+        List of extracted keywords
+    """
+    if not text or not isinstance(text, str):
+        return []
+    
+    text_lower = text.lower()
+    extracted_keywords = []
+    
+    # Split text into potential keywords (words and phrases)
+    import re
+    
+    # Extract words (alphanumeric sequences)
+    words = re.findall(r'\b\w+\b', text_lower)
+    
+    # Extract phrases (2-3 word combinations)
+    word_list = text_lower.split()
+    phrases = []
+    for i in range(len(word_list) - 1):
+        # 2-word phrases
+        if i < len(word_list) - 1:
+            phrases.append(f"{word_list[i]} {word_list[i+1]}")
+        # 3-word phrases
+        if i < len(word_list) - 2:
+            phrases.append(f"{word_list[i]} {word_list[i+1]} {word_list[i+2]}")
+    
+    all_candidates = words + phrases
+    
+    # Filter candidates based on relevance to original keywords
+    for candidate in all_candidates:
+        candidate = candidate.strip()
+        if len(candidate) < 2:  # Skip very short words
+            continue
+            
+        # Check if candidate is related to any original keyword
+        is_relevant = False
+        for orig_keyword in original_keywords:
+            orig_lower = orig_keyword.lower()
+            # Check for exact match, substring, or shared words
+            if (candidate == orig_lower or 
+                candidate in orig_lower or 
+                orig_lower in candidate or
+                any(word in orig_lower for word in candidate.split()) or
+                any(word in candidate for word in orig_lower.split())):
+                is_relevant = True
+                break
+        
+        if is_relevant and candidate not in extracted_keywords:
+            extracted_keywords.append(candidate)
+    
+    # Limit the number of keywords returned
+    return extracted_keywords[:20]  # Return max 20 keywords per text
+
+
+def search_keywords(
+    keywords: List[str], 
+    top_k: int = 5, 
+    similarity_threshold: float = 0.5,
+    namespace: str = ""
+) -> List[str]:
+    """
+    Simple keyword search that returns raw text content from Pinecone matches.
+    
+    Args:
+        keywords: List of input keywords to search for
+        top_k: Number of top results to retrieve from Pinecone
+        similarity_threshold: Minimum similarity score to include results
+        namespace: Pinecone namespace to search in
+        
+    Returns:
+        List of text content from matching documents
+    """
+    if not isinstance(keywords, list) or not keywords:
+        raise ValueError("Input 'keywords' must be a non-empty list of strings.")
+    
+    if not all(isinstance(keyword, str) for keyword in keywords):
+        raise ValueError("All elements in 'keywords' list must be strings.")
+    
+    # Clean keywords
+    cleaned_keywords = [kw.strip() for kw in keywords if kw.strip()]
+    if not cleaned_keywords:
+        print("Warning: No valid keywords found after cleaning.")
+        return []
+    
+    print(f"\n[search_keywords] Searching with keywords: {cleaned_keywords}")
+    
+    try:
+        # Get global instances
+        global _hf_embeddings, _pinecone_index
+        
+        if _hf_embeddings is None or _pinecone_index is None:
+            initialize_global_instances()
+        
+        # Create combined query from keywords
+        combined_query = " ".join(cleaned_keywords)
+        
+        # Generate embedding for the query
+        query_embedding = _hf_embeddings.embed_query(combined_query)
+        
+        # Query Pinecone index directly
+        query_response = _pinecone_index.query(
+            vector=query_embedding,
+            top_k=top_k,
+            include_metadata=True,
+            include_values=False,
+            namespace=namespace
+        )
+        
+        # Extract text content from results
+        results = []
+        for match in query_response.matches:
+            score = match.score
+            
+            if score >= similarity_threshold:
+                # Extract text content from metadata
+                if hasattr(match, 'metadata') and match.metadata:
+                    text_content = (
+                        match.metadata.get('text') or 
+                        match.metadata.get('content') or 
+                        match.metadata.get('page_content')
+                    )
+                    
+                    if text_content and text_content not in results:
+                        results.append(text_content)
+                        print(f"✓ Added result (score: {score:.4f}): {text_content[:100]}...")
+        
+        print(f"Found {len(results)} relevant text results")
+        return results
+        
+    except Exception as e:
+        print(f"Error searching keywords in Pinecone: {e}")
+        return []
 
 
 

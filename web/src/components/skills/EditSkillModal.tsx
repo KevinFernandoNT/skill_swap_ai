@@ -31,7 +31,7 @@ const skillSchema = yup.object({
   category: yup.string().required('Category is required'),
   proficiency: yup.number().min(0).max(100).required('Proficiency is required'),
   type: yup.string().oneOf(['teaching', 'learning']).required('Type is required'),
-  agenda: yup.array().of(yup.string()).max(5, 'You can add up to 5 sub topics or domain areas').notRequired(),
+  agenda: yup.array().of(yup.string()).length(5, 'You must have exactly 5 sub topics').required('Sub topics are required'),
   description: yup.string().max(500, 'Description is too long').notRequired(),
   experience: yup.string().max(500, 'Experience is too long').notRequired(),
   goals: yup.string().max(500, 'Goals is too long').notRequired(),
@@ -89,7 +89,12 @@ const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose,
 
   const onSubmit = (data: SkillRequest) => {
     if (!skill) return;
-    updateSkill.mutate(data);
+    // Keep the original agenda unchanged during edit
+    const updatedData = {
+      ...data,
+      agenda: skill.agenda // Always use the original agenda
+    };
+    updateSkill.mutate(updatedData);
     setTopicInput('');
   };
 
@@ -209,67 +214,37 @@ const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose,
               </div>
             </div>
 
-            {/* Topics */}
+            {/* Read-only Sub Topics */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                {watch('type') === 'teaching' ? 'Topics I can teach' : 'Topics I want to learn'} (Required: 5 topics)
+                {watch('type') === 'teaching' ? 'Topics I can teach' : 'Topics I want to learn'} (Cannot be edited)
               </label>
               <div className="space-y-3">
                 {agenda.map((item, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <span className="text-sm text-gray-400 w-8">#{index + 1}</span>
-                    <input
-                      type="text"
-                      value={item}
-                      onChange={(e) => {
-                        const newAgenda = [...agenda];
-                        newAgenda[index] = e.target.value;
-                        setValue('agenda', newAgenda);
-                      }}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder={watch('type') === 'teaching' 
-                        ? `Teaching topic ${index + 1} (e.g., React Hooks, State Management)`
-                        : `Learning topic ${index + 1} (e.g., Basic Syntax, Data Structures)`
-                      }
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTopic(item)}
-                      className="text-red-500 hover:text-red-400"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-300 cursor-not-allowed">
+                      {item}
+                    </div>
+                    <div className="w-6 h-6 flex items-center justify-center text-gray-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                      </svg>
+                    </div>
                   </div>
                 ))}
-                {agenda.length < 5 && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={topicInput}
-                      onChange={(e) => setTopicInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddTopic();
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder="Add a new topic (press Enter to add)"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTopic}
-                      className="text-primary hover:text-primary/90"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
               </div>
-              {errors.agenda && <p className="text-red-500 text-xs mt-1">{errors.agenda.message}</p>}
-              <p className="text-xs text-gray-500 mt-2">
-                Please provide exactly 5 specific topics or subtopics related to this skill.
-              </p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 inline mr-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  Sub topics cannot be modified after skill creation
+                </p>
+                <span className="text-xs font-medium text-green-400">
+                  {agenda.length}/5 topics
+                </span>
+              </div>
             </div>
 
             {/* Footer */}
