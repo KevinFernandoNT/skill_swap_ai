@@ -83,4 +83,12 @@ export class UsersController {
   async findOne(@Param('id') id: string) {
     return this.usersService.findById(id);
   }
+
+  @Get(':id/stats')
+  @ApiOperation({ summary: 'Get user statistics' })
+  @ApiResponse({ status: 200, description: 'User statistics retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserStats(@Param('id') id: string) {
+    return this.usersService.getUserStats(id);
+  }
 }

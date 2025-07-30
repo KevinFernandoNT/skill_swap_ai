@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, MapPin, Mail, Star, Award } from 'lucide-react';
+import { X, MapPin, Mail, Star, Award, GraduationCap, BookOpen, Calendar, Users } from 'lucide-react';
 import { User } from '../../types';
+import { useGetUserStats } from '../../hooks/useGetUserStats';
 
 interface UserProfileModalProps {
   user: User | null;
@@ -9,6 +10,8 @@ interface UserProfileModalProps {
 }
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClose }) => {
+  const { data: userStats, isLoading: statsLoading } = useGetUserStats(user?._id || null);
+
   if (!isOpen || !user) return null;
 
   const getCategoryColor = (category: string) => {
@@ -80,13 +83,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
                   alt={user.name}
                   className="w-24 h-24 rounded-full object-cover"
                 />
-                {user.status && (
-                  <span 
-                    className={`absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}
-                  >
-                    {user.status}
-                  </span>
-                )}
               </div>
               
               <div className="flex-1">
@@ -109,49 +105,102 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
             </div>
 
             {/* Bio */}
-            {user.bio && (
+            {userStats?.user.bio && (
               <div>
                 <h4 className="text-lg font-semibold text-white mb-2">About</h4>
-                <p className="text-gray-300">{user.bio}</p>
+                <p className="text-gray-300">{userStats.user.bio}</p>
               </div>
             )}
 
             {/* Skills */}
             <div>
-              <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <Award className="w-5 h-5 mr-2" />
-                Skills & Expertise
-              </h4>
-              
               {user.skills.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {user.skills.map((skill) => (
-                    <div
-                      key={skill.id}
-                      className="bg-gray-800 rounded-lg p-4 border border-gray-700"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="font-medium text-white">{skill.name}</h5>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                          {skill.category}
-                        </span>
+                <div className="space-y-6">
+                  {/* Teaching Skills */}
+                  <div>
+                    <h5 className="text-md font-semibold text-white mb-3 flex items-center">
+                      <GraduationCap className="w-4 h-4 mr-2 text-green-400" />
+                      Skills that {user.name} can teach
+                    </h5>
+                    {user.skills.filter(skill => skill.type === 'teaching').length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {user.skills
+                          .filter(skill => skill.type === 'teaching')
+                          .map((skill) => (
+                            <div
+                              key={skill._id}
+                              className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h6 className="font-medium text-white">{skill.name}</h6>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                  {skill.category}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-400">Proficiency</span>
+                                <span className={`text-sm font-medium ${getProficiencyColor(skill.proficiency)}`}>
+                                  {skill.proficiency}%
+                                </span>
+                              </div>
+                              
+                              <div className="w-full bg-gray-700 rounded-full h-2">
+                                <div
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${skill.proficiency}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                      
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-400">Proficiency</span>
-                        <span className={`text-sm font-medium ${getProficiencyColor(skill.proficiency)}`}>
-                          {skill.proficiency}%
-                        </span>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No teaching skills listed yet.</p>
+                    )}
+                  </div>
+
+                  {/* Learning Skills */}
+                  <div>
+                    <h5 className="text-md font-semibold text-white mb-3 flex items-center">
+                      <BookOpen className="w-4 h-4 mr-2 text-blue-400" />
+                      Skills that {user.name} wants to learn
+                    </h5>
+                    {user.skills.filter(skill => skill.type === 'learning').length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {user.skills
+                          .filter(skill => skill.type === 'learning')
+                          .map((skill) => (
+                            <div
+                              key={skill._id}
+                              className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h6 className="font-medium text-white">{skill.name}</h6>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                  {skill.category}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-400">Current Level</span>
+                                <span className={`text-sm font-medium ${getProficiencyColor(skill.proficiency)}`}>
+                                  {skill.proficiency}%
+                                </span>
+                              </div>
+                              
+                              <div className="w-full bg-gray-700 rounded-full h-2">
+                                <div
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${skill.proficiency}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                      
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${skill.proficiency}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ) : (
+                      <p className="text-gray-400 text-sm">No learning goals listed yet.</p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <p className="text-gray-400">No skills listed yet.</p>
@@ -159,20 +208,69 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-800">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-800">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{user.skills.length}</div>
-                <div className="text-sm text-gray-400">Skills</div>
+                <div className="text-2xl font-bold text-green-400">{user.skills.filter(skill => skill.type === 'teaching').length}</div>
+                <div className="text-sm text-gray-400">Teaching</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">4.8</div>
+                <div className="text-2xl font-bold text-blue-400">{user.skills.filter(skill => skill.type === 'learning').length}</div>
+                <div className="text-sm text-gray-400">Learning</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400 flex items-center justify-center">
+                  {statsLoading ? (
+                    <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      {userStats?.stats.rating || 0}
+                      <Star className="w-4 h-4 ml-1 fill-current" />
+                    </>
+                  )}
+                </div>
                 <div className="text-sm text-gray-400">Rating</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">23</div>
+                <div className="text-2xl font-bold text-purple-400 flex items-center justify-center">
+                  {statsLoading ? (
+                    <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      {userStats?.stats.totalSessions || 0}
+                      <Calendar className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </div>
                 <div className="text-sm text-gray-400">Sessions</div>
               </div>
             </div>
+
+            {/* Additional Stats */}
+            {userStats && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-800">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-400 flex items-center justify-center">
+                    {userStats.stats.completedSessions}
+                    <Calendar className="w-4 h-4 ml-1" />
+                  </div>
+                  <div className="text-sm text-gray-400">Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-400 flex items-center justify-center">
+                    {userStats.stats.hostedSessions}
+                    <Users className="w-4 h-4 ml-1" />
+                  </div>
+                  <div className="text-sm text-gray-400">Hosted</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-400 flex items-center justify-center">
+                    {userStats.stats.participatedSessions}
+                    <Users className="w-4 h-4 ml-1" />
+                  </div>
+                  <div className="text-sm text-gray-400">Participated</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -182,9 +280,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
               className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
             >
               Close
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
-              Send Message
             </button>
           </div>
         </div>

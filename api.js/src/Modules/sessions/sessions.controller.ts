@@ -100,4 +100,11 @@ export class SessionsController {
   async leaveSession(@Request() req, @Param('id') id: string) {
     return this.sessionsService.leaveSession(req.user._id, id);
   }
+
+  @Get('suggested')
+  @ApiOperation({ summary: 'Get suggested sessions based on current user skills' })
+  @ApiResponse({ status: 200, description: 'Suggested sessions retrieved successfully' })
+  async getSuggestedSessions(@Request() req) {
+    return this.sessionsService.getSuggestedSessions(req.user._id);
+  }
 }

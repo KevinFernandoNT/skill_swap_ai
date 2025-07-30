@@ -199,4 +199,38 @@ export class SessionsRepository {
       .populate('participants', 'name email avatar')
       .exec();
   }
+
+  /**
+   * Find sessions that contain at least a minimum number of keywords in their metadata
+   * @param keywords Array of keywords to search for
+   * @param excludeUserId User ID to exclude from results (current user's sessions)
+   * @param minMatches Minimum number of keywords that must match
+   */
+  async findSessionsByKeywords(keywords: string[], excludeUserId: string, minMatches: number = 2): Promise<Session[]> {
+    // Create a query that finds sessions where metadata contains at least minMatches keywords
+    const query = {
+      hostId: { $ne: excludeUserId }, // Exclude current user's sessions
+      status: 'upcoming', // Only upcoming sessions
+      isPublic: true, // Only public sessions
+      metadata: { $exists: true, $ne: null }, // Sessions must have metadata
+      $expr: {
+        $gte: [
+          {
+            $size: {
+              $setIntersection: ['$metadata', keywords]
+            }
+          },
+          minMatches
+        ]
+      }
+    };
+
+    return this.sessionModel
+      .find(query)
+      .populate('hostId', 'name email avatar')
+      .populate('participants', 'name email avatar')
+      .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
+      .limit(20) // Limit to 20 results
+      .exec();
+  }
 }

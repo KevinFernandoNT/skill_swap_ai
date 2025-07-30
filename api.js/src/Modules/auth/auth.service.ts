@@ -28,7 +28,7 @@ export class AuthService {
   async login(user: any) {
     const payload = { email: user.email, sub: user._id };
     const access_token = this.jwtService.sign(payload);
-    const stream_chat_token = this.streamChatService.generateUserToken(user._id.toString());
+    const stream_chat_token = this.streamChatService.generateUserToken(String(user._id));
     return {
       access_token,
       user,
@@ -74,7 +74,7 @@ export class AuthService {
 
     // Create Stream Chat user
     try {
-      await this.streamChatService.updateUser(user._id.toString(), {
+      await this.streamChatService.updateUser(String(user._id), {
         name: user.name,
         image: avatarUrl || undefined,
         email: user.email,

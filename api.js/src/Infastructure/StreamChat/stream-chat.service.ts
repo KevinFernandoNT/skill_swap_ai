@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { StreamChat } from 'stream-chat';
-import configuration from 'src/config/configuration';
+import configuration from '../../config/configuration';
 
 @Injectable()
 export class StreamChatService {

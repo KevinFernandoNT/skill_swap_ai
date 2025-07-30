@@ -45,4 +45,37 @@ export class UsersService {
   async getFirst10Users(): Promise<User[]> {
     return this.usersRepository.getFirst10Users();
   }
+
+  async getUserStats(userId: string) {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get session statistics
+    const sessionStats = await this.usersRepository.getUserSessionStats(userId);
+    
+    // Calculate rating (mock data for now, can be enhanced with actual rating system)
+    const rating = 4.5 + (Math.random() * 0.5); // Random rating between 4.5-5.0
+    
+    return {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        status: user.status,
+        location: user.location,
+        bio: user.bio,
+        createdAt: user.createdAt
+      },
+      stats: {
+        rating: parseFloat(rating.toFixed(1)),
+        totalSessions: sessionStats.totalSessions,
+        completedSessions: sessionStats.completedSessions,
+        hostedSessions: sessionStats.hostedSessions,
+        participatedSessions: sessionStats.participatedSessions
+      }
+    };
+  }
 }

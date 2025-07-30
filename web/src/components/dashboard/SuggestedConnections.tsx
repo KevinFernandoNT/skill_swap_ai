@@ -416,43 +416,14 @@ const SuggestedConnections: React.FC = () => {
                   {/* Matching Skills */}
                   {connection.matchingSkills && connection.matchingSkills.length > 0 && (
                     <div className="w-full mb-3">
-                      {/* Matching Type Indicator */}
-                      <div className="flex items-center justify-center mb-2">
-                        {connection.matchingType === 'mutual_match' && (
-                          <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30">
-                            ⚡ Perfect Match
-                          </span>
-                        )}
-                        {connection.matchingType === 'can_teach' && (
-                          <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-500/30">
-                            📚 Can Teach You
-                          </span>
-                        )}
-                        {connection.matchingType === 'wants_to_learn' && (
-                          <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/30">
-                            🎯 Wants to Learn
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Skills List */}
-                      <div className="max-h-20 overflow-y-auto">
-                        {connection.matchingSkills.slice(0, 3).map((skill) => (
-                          <div key={skill._id} className="text-xs text-gray-300 text-center mb-1 flex items-center justify-center">
-                            {skill.skillType === 'teaching' ? (
-                              <span className="text-green-400 mr-1">👨‍🏫</span>
-                            ) : (
-                              <span className="text-blue-400 mr-1">🎓</span>
-                            )}
-                            {skill.name}
-                          </div>
-                        ))}
-                        {connection.matchingSkills.length > 3 && (
-                          <div className="text-xs text-gray-400 text-center">
-                            +{connection.matchingSkills.length - 3} more skills
-                          </div>
-                        )}
-                      </div>
+                                             {/* Matching Type Indicator - Only show for mutual matches */}
+                       {connection.matchingType === 'mutual_match' && (
+                         <div className="flex items-center justify-center mb-2">
+                           <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full border border-green-500/30 font-medium">
+                             Highly Recommended
+                           </span>
+                         </div>
+                       )}
                     </div>
                   )}
                   

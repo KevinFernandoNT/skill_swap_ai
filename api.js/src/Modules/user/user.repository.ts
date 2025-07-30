@@ -6,10 +6,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResult } from '../common/interfaces/paginated-result.interface';
+import { Session, SessionDocument } from '../sessions/schemas/session.schema';
 
 @Injectable()
 export class UsersRepository {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Session.name) private sessionModel: Model<SessionDocument>
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const user = new this.userModel(createUserDto);
@@ -84,6 +88,62 @@ export class UsersRepository {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getFirst10Users(): Promise<User[]> {
+    return this.userModel
+      .find()
+      .select('-password')
+      .limit(10)
+      .exec();
+  }
+
+  async getUserSessionStats(userId: string): Promise<{
+    totalSessions: number;
+    completedSessions: number;
+    hostedSessions: number;
+    participatedSessions: number;
+  }> {
+    const [totalSessions, completedSessions, hostedSessions, participatedSessions] = await Promise.all([
+      // Total sessions (hosted or participated)
+      this.sessionModel.countDocuments({
+        $or: [
+          { hostId: userId },
+          { participants: userId }
+        ]
+      }),
+      
+      // Completed sessions
+      this.sessionModel.countDocuments({
+        $and: [
+          {
+            $or: [
+              { hostId: userId },
+              { participants: userId }
+            ]
+          },
+          { status: 'completed' }
+        ]
+      }),
+      
+      // Hosted sessions
+      this.sessionModel.countDocuments({
+        hostId: userId
+      }),
+      
+      // Participated sessions (not hosted)
+      this.sessionModel.countDocuments({
+        participants: userId,
+        hostId: { $ne: userId }
+      })
+    ]);
+
+    return {
+      totalSessions,
+      completedSessions,
+      hostedSessions,
+      participatedSessions
     };
   }
 }

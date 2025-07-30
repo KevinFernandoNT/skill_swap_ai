@@ -7,6 +7,7 @@ import { SessionsRepository } from './sessions.repository';
 import { Session, SessionSchema } from './schemas/session.schema';
 import { Skill, SkillSchema } from '../skills/schemas/skill.schema';
 import { ExternalHttpService } from '../common/http.service';
+import { PythonApiService } from '../common/python-api.service';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ExternalHttpService } from '../common/http.service';
     SessionsService,
     SessionsRepository,
     ExternalHttpService,
+    PythonApiService,
   ],
   exports: [SessionsService, SessionsRepository, ExternalHttpService],
 })

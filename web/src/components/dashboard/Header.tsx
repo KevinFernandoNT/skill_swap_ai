@@ -33,9 +33,9 @@ const Header: React.FC = () => {
     { id: 'n3', content: 'Reminder: Python session with Michael tomorrow', time: '3 hours ago', isNew: false },
   ];
 
-  const handleCreateSession = (sessionData: Omit<Session, 'id' | 'participant' | 'status'>) => {
+  const handleCreateSession = () => {
     // In a real app, this would save to backend
-    console.log('Creating session:', sessionData);
+    console.log('Session created successfully');
     setIsCreateSessionOpen(false);
     // Show success message or redirect
   };
@@ -51,7 +51,7 @@ const Header: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold text-white">
-              Welcome back, {currentUser ? currentUser.name.split(' ')[0] : 'User'}
+              Welcome back, {currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}
             </h1>
             <p className="mt-1 text-sm text-gray-400">Here's what's happening with your skill exchange today.</p>
           </div>
@@ -168,7 +168,7 @@ const Header: React.FC = () => {
       <CreateSessionModal
         isOpen={isCreateSessionOpen}
         onClose={() => setIsCreateSessionOpen(false)}
-        onSubmit={handleCreateSession}
+        onSuccess={handleCreateSession}
       />
     </>
   );

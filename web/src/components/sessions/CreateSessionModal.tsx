@@ -28,7 +28,6 @@ const sessionSchema = yup.object({
   meetingLink: yup.string().url('Invalid meeting link').notRequired(),
   teachSkillId: yup.string().required('Please select a skill you want to teach'),
   teachSkillName: yup.string().notRequired(),
-  subTopics: yup.array().of(yup.string().required('Sub-topic is required')).length(5, 'Exactly 5 sub-topics are required'),
   focusKeywords: yup.array().of(yup.string()).max(5, 'Up to 5 focus keywords').notRequired(),
 });
 
@@ -77,7 +76,6 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       meetingLink: '',
       teachSkillId: '',
       teachSkillName: '',
-      subTopics: ['', '', '', '', ''],
       focusKeywords: [],
     },
   });
@@ -102,7 +100,6 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       isTeaching: data.isTeaching,
       teachSkillId: data.teachSkillId,
       teachSkillName: data.teachSkillName,
-      subTopics: data.subTopics,
       meetingLink: data.meetingLink,
       focusKeywords: data.focusKeywords,
     };
@@ -139,10 +136,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
-  const handleGeneralSubTopicChange = (idx: number, value: string) => {
-    const current = watch('subTopics') || ['', '', '', '', ''];
-    setValue('subTopics', current.map((t, i) => (i === idx ? value : t)));
-  };
+
 
   const handleAddFocusKeyword = () => {
     const current = watch('focusKeywords') || [];
@@ -274,28 +268,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
               {errors.teachSkillId && <p className="text-red-500 text-xs mt-1">{errors.teachSkillId.message}</p>}
             </div>
 
-            {/* General Sub-Topics */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                General Sub-Topics for this Session (5 required)
-              </label>
-              <div className="space-y-3">
-                {(watch('subTopics') || ['', '', '', '', '']).map((topic, idx) => (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400 w-8">#{idx + 1}</span>
-                    <input
-                      type="text"
-                      value={watch('subTopics')[idx] || ''}
-                      onChange={e => handleGeneralSubTopicChange(idx, e.target.value)}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder={`Sub-topic ${idx + 1}`}
-                    />
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Please provide exactly 5 general sub-topics for this session.</p>
-              {errors.subTopics && <p className="text-red-500 text-xs mt-1">{(errors.subTopics as any).message}</p>}
-            </div>
+
 
             {/* Skill Category */}
             <div>

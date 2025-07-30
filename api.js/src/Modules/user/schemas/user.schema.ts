@@ -25,6 +25,10 @@ export class User {
   @Prop({ default: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=150' ,required:true})
   avatar: string;
 
+  @ApiProperty({ required: false })
+  @Prop()
+  bio?: string;
+
   @ApiProperty({ required: false, enum: ['online', 'offline', 'busy', 'away'] })
   @Prop({ enum: ['online', 'offline', 'busy', 'away'], default: 'offline' })
   status: string;
