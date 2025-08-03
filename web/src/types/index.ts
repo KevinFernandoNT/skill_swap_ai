@@ -35,6 +35,7 @@ export interface Session {
   endTime: string;
   skillCategory: string;
   participant: User;
+  hostId: User;
   status: 'upcoming' | 'completed' | 'cancelled';
   isTeaching: boolean;
   description?: string;
@@ -47,6 +48,12 @@ export interface Session {
     swapPartner: string;
   };
   subTopics?: string[];
+  teachSkillId?: Skill[];
+  teachSkillName?: string;
+  meetingLink?: string;
+  focusKeywords?: string[];
+  metadata?: string[];
+  matchingType?: string;
 }
 
 // Analytics related types
@@ -83,17 +90,92 @@ export interface Activity {
 
 // Exchange Request related types
 export interface ExchangeRequest {
-  id: string;
-  sessionId: string;
-  session: Session;
-  requester: User;
-  recipient: User;
-  offeredSkill: string;
-  requestedSkill: string;
+  _id: string;
+  sessionId: {
+    _id: string;
+    title: string;
+    description: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    skillCategory: string;
+    status: string;
+    isTeaching: boolean;
+    maxParticipants: number;
+    isPublic: boolean;
+    hostId: string;
+    participants: any[];
+    teachSkillId: string[];
+    teachSkillName: string;
+    subTopics: string[];
+    meetingLink: string;
+    focusKeywords: string[];
+    metadata: string[];
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+  requester: {
+    _id: string;
+    name: string;
+    email: string;
+    password: string;
+    avatar: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+    location: string;
+  };
+  recipient: {
+    _id: string;
+    name: string;
+    email: string;
+    password: string;
+    avatar: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+    location: string;
+  };
+  offeredSkillId: {
+    _id: string;
+    name: string;
+    category: string;
+    proficiency: number;
+    type: string;
+    description: string;
+    experience: string;
+    goals: string;
+    agenda: string[];
+    metadata: string[];
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+  requestedSkillId: {
+    _id: string;
+    name: string;
+    category: string;
+    proficiency: number;
+    type: string;
+    description: string;
+    experience: string;
+    goals: string;
+    agenda: string[];
+    metadata: string[];
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
   message: string;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
   createdAt: string;
   updatedAt: string;
+  __v: number;
 }
 
 // Session creation request type (matches backend CreateSessionDto)
@@ -120,4 +202,23 @@ export interface NavItem {
   icon: string;
   path: string;
   isActive?: boolean;
+}
+
+export interface Notification {
+  _id: string;
+  recipient: string;
+  title: string;
+  message: string;
+  type: string;
+  exchangeRequestId?: string;
+  sessionId?: string;
+  sender?: {
+    _id: string;
+    name: string;
+    avatar: string;
+  };
+  isRead: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

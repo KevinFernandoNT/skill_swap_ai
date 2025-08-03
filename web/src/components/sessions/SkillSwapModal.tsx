@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, ArrowRightLeft, Send, User } from 'lucide-react';
+import { X, ArrowRightLeft, Send, User, ChevronDown, Loader2 } from 'lucide-react';
 import { Session, Skill } from '../../types';
-import { currentUser } from '../../data/mockData';
 import { useCreateExchangeRequest } from "@/hooks/useCreateExchangeRequest";
+import { useGetUserSkills } from "@/hooks/useGetUserSkills";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
 
@@ -19,15 +19,33 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
 }) => {
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [message, setMessage] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<null | React.FormEvent>(null);
   const { toast } = useToast();
-  const { mutate: createExchangeRequest, status } = useCreateExchangeRequest({
+
+  // Fetch user skills from API
+  const { data: userSkillsResponse, isLoading: isLoadingSkills, error: skillsError } = useGetUserSkills();
+  const userSkills: Skill[] = userSkillsResponse?.data || [];
+
+  // Filter user's teaching skills - show all teaching skills regardless of proficiency
+  const availableSkills = userSkills.filter(skill => 
+    skill.type === 'teaching'
+  );
+
+  const selectedSkill = availableSkills.find(skill => skill._id === selectedSkillId);
+
+  // Create exchange request hook
+  const { mutate: createExchangeRequest, status: createStatus } = useCreateExchangeRequest({
     onSuccess: () => {
       toast({
         title: "Swap Request Sent",
         description: "Your skill swap request has been sent successfully!"
       });
+      setSelectedSkillId('');
+      setMessage('');
+      setConfirmDialogOpen(false);
+      setPendingSubmit(null);
       onClose();
     },
     onError: (error: any) => {
@@ -41,11 +59,6 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
 
   if (!isOpen || !session) return null;
 
-  // Filter user's skills that could be swapped (teaching skills)
-  const availableSkills = currentUser.skills.filter(skill => 
-    skill.category === session.skillCategory || skill.proficiency >= 70
-  );
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSkillId) return;
@@ -55,17 +68,28 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
     
   const handleConfirmSwap = () => {
     if (!selectedSkillId || !session) return;
+    
+    // Get the session skill ID from the teachSkillId array
+    const sessionSkillId = session.teachSkillId && session.teachSkillId.length > 0 
+      ? session.teachSkillId[0]._id 
+      : null;
+    
+    if (!sessionSkillId) {
+      toast({
+        title: "Error",
+        description: "Session skill not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createExchangeRequest({
-      sessionId: session.id,
-      recipient: session.participant.id,
-      offeredSkill: availableSkills.find(s => s.id === selectedSkillId)?.name || '',
-      requestedSkill: (session as any).teachSkillName || session.title || session.skillCategory,
+      sessionId: session._id,
+      recipient: session.hostId._id,
+      offeredSkillId: selectedSkillId,
+      requestedSkillId: sessionSkillId,
       message
     });
-    setSelectedSkillId('');
-    setMessage('');
-    setConfirmDialogOpen(false);
-    setPendingSubmit(null);
   };
 
   const handleCancelSwap = () => {
@@ -89,6 +113,64 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
         return 'bg-gray-800 text-gray-300';
     }
   };
+
+  // Loading state for skills
+  if (isLoadingSkills) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="relative w-full max-w-2xl bg-gray-900 rounded-lg shadow-xl border border-gray-800">
+            <div className="flex items-center justify-center p-12">
+              <div className="flex items-center space-x-3">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                <span className="text-white">Loading your skills...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for skills
+  if (skillsError) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="relative w-full max-w-2xl bg-gray-900 rounded-lg shadow-xl border border-gray-800">
+            <div className="flex items-center justify-between p-6 border-b border-gray-800">
+              <h2 className="text-xl font-bold text-white flex items-center">
+                <ArrowRightLeft className="w-5 h-5 mr-2" />
+                Request Skill Swap
+              </h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 text-center">
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-white mb-2">Error Loading Skills</h3>
+                <p className="text-gray-400 mb-4">
+                  {skillsError?.response?.data?.message || "Could not load your skills. Please try again."}
+                </p>
+                <button
+                  onClick={onClose}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -119,19 +201,52 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
           <div className="p-6 space-y-6">
             {/* Session Info */}
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-              <h3 className="text-white font-medium mb-2">{session.title}</h3>
+              <h3 className="text-white font-medium text-[18px] mb-2">{session.title || 'Untitled Session'}</h3>
               <div className="flex items-center space-x-4 mb-3">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(session.skillCategory)}`}>
-                  {session.skillCategory}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(session.skillCategory || '')}`}>
+                  {session.skillCategory || 'General'}
                 </span>
                 <div className="flex items-center text-gray-400">
                   <User className="w-4 h-4 mr-1" />
-                  <span className="text-sm">with {session.participant.name}</span>
+                  <span className="text-sm">with {session.hostId?.name || 'Session Host'}</span>
                 </div>
               </div>
               <p className="text-sm text-gray-400">
-                {new Date(session.date).toLocaleDateString()} at {session.startTime} - {session.endTime}
+                {session.date ? new Date(session.date).toLocaleDateString() : 'Date TBD'} at {session.startTime || 'TBD'} - {session.endTime || 'TBD'}
               </p>
+              
+              {/* Session Host Details */}
+              {session.hostId && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden">
+                      <img 
+                        src={session.hostId.avatar} 
+                        alt={session.hostId.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initial if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                        <span className="text-white text-sm font-semibold">
+                          {session.hostId.name?.charAt(0) || 'H'}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-white font-medium">{session.hostId.name}</p>
+                      {session.hostId.email && (
+                        <p className="text-xs text-gray-400">{session.hostId.email}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Skill Selection */}
@@ -142,49 +257,66 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                 </label>
                 
                 {availableSkills.length > 0 ? (
-                  <div className="space-y-3">
-                    {availableSkills.map((skill) => (
-                      <label
-                        key={skill.id}
-                        className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                          selectedSkillId === skill.id
-                            ? 'border-primary bg-primary/10'
-                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="skill"
-                          value={skill.id}
-                          checked={selectedSkillId === skill.id}
-                          onChange={(e) => setSelectedSkillId(e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-white font-sm">{skill.name}</h4>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                              {skill.category}
+                  <div className="relative">
+                    {/* Dropdown Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full flex items-center justify-between p-4 bg-gray-800 border border-gray-700 rounded-lg text-left hover:border-gray-600 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        {selectedSkill ? (
+                          <>
+                            <span className="text-white font-medium">{selectedSkill.name}</span>
+                            <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedSkill.category)}`}>
+                              {selectedSkill.category}
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-400">Proficiency</span>
-                            <span className="text-sm font-medium text-primary">{skill.proficiency}%</span>
-                          </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
-                            <div
-                              className="bg-primary h-2 rounded-full"
-                              style={{ width: `${skill.proficiency}%` }}
-                            />
-                          </div>
-                        </div>
-                      </label>
-                    ))}
+                            <span className="ml-2 text-sm text-primary">{selectedSkill.proficiency}%</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-400">Select a skill to offer...</span>
+                        )}
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown Options */}
+                    {isDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {availableSkills.map((skill) => (
+                          <button
+                            key={skill._id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkillId(skill._id);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+                          >
+                            <div className="flex items-center">
+                              <span className="text-white font-medium">{skill.name}</span>
+                              <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                {skill.category}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-primary">{skill.proficiency}%</span>
+                              <div className="w-16 bg-gray-600 rounded-full h-2">
+                                <div
+                                  className="bg-primary h-2 rounded-full"
+                                  style={{ width: `${skill.proficiency}%` }}
+                                />
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-gray-400 mb-4">
-                      You don't have any skills that match this session category or meet the proficiency requirements.
+                      You don't have any teaching skills available. Add some skills to your profile first.
                     </p>
                     <button
                       type="button"
@@ -214,44 +346,70 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
               )}
 
               {/* Swap Preview */}
-              {selectedSkillId && (
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                  <h4 className="text-white font-medium mb-3">Swap Preview:</h4>
-                  <div className="flex items-center justify-center space-x-4">
+              {selectedSkill && (
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <h4 className="text-white font-medium mb-4 text-center">Skill Swap Preview</h4>
+                  <div className="flex items-center justify-center space-x-8">
                     <div className="text-center">
-                      <div className="text-sm text-gray-400 mb-1">You offer</div>
-                      <div className="text-white font-medium">
-                        {availableSkills.find(s => s.id === selectedSkillId)?.name}
+                      <div className="text-sm text-gray-400 mb-2">You Offer</div>
+                      <div className="bg-primary/20 rounded-lg p-4 border border-primary/30">
+                        <div className="text-white font-semibold text-sm">{selectedSkill.name}</div>
+                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedSkill.category)} mt-2`}>
+                          {selectedSkill.category}
+                        </div>
+                        <div className="text-sm text-primary mt-1">{selectedSkill.proficiency}% proficiency</div>
                       </div>
-                      {/* Agenda for offered skill */}
-                      {(() => {
-                        const skill = availableSkills.find(s => s.id === selectedSkillId) as any;
-                        return skill && skill.agenda && skill.agenda.length > 0 ? (
-                          <ul className="mt-1 text-xs text-gray-300 text-left inline-block">
-                            {skill.agenda.map((point: string, idx: number) => (
-                              <li key={idx}>• {point}</li>
-                            ))}
-                          </ul>
-                        ) : null;
-                      })()}
                     </div>
-                    <ArrowRightLeft className="w-5 h-5 text-primary" />
+                    
+                    <div className="flex flex-col items-center">
+                      <ArrowRightLeft className="w-6 h-6 text-primary" />
+                      <div className="text-xs text-gray-400 mt-1">Exchange</div>
+                    </div>
+                    
                     <div className="text-center">
-                      <div className="text-sm text-gray-400 mb-1">You learn</div>
-                      <div className="text-white font-medium">{session.title}</div>
-                      {/* Agenda for learning skill (from session.participant) */}
-                      {(() => {
-                        const learnSkill = session.participant.skills?.find(
-                          s => s.name.toLowerCase() === session.title.toLowerCase() && (s as any).agenda && (s as any).agenda.length > 0
-                        ) as any;
-                        return learnSkill && learnSkill.agenda && learnSkill.agenda.length > 0 ? (
-                          <ul className="mt-1 text-xs text-gray-300 text-left inline-block">
-                            {learnSkill.agenda.map((point: string, idx: number) => (
-                              <li key={idx}>• {point}</li>
-                            ))}
-                          </ul>
-                        ) : null;
-                      })()}
+                      <div className="text-sm text-gray-400 mb-2">You Learn</div>
+                      <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                        <div className="text-white font-semibold text-sm">
+                          {session.teachSkillId && session.teachSkillId.length > 0 
+                            ? session.teachSkillId[0].name 
+                            : session.title}
+                        </div>
+                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(session.skillCategory || '')} mt-2`}>
+                          {session.skillCategory || 'General'}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">Session Skill</div>
+                        {session.hostId && (
+                          <div className="mt-2 pt-2 border-t border-gray-600">
+                            <div className="flex items-center justify-center space-x-2">
+                              <div className="w-5 h-5 rounded-full overflow-hidden">
+                                <img 
+                                  src={session.hostId.avatar} 
+                                  alt={session.hostId.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback to initial if image fails to load
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'flex';
+                                  }}
+                                />
+                                <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                                  <span className="text-white text-xs font-semibold">
+                                    {session.hostId.name?.charAt(0) || 'H'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-300">
+                                <div className="font-medium">{session.hostId.name}</div>
+                                {session.hostId.email && (
+                                  <div className="text-gray-400">{session.hostId.email}</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -269,11 +427,20 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                   </button>
                   <button
                     type="submit"
-                    disabled={!selectedSkillId}
+                    disabled={!selectedSkillId || createStatus === 'pending'}
                     className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Swap Request
+                    {createStatus === 'pending' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Swap Request
+                      </>
+                    )}
                   </button>
                 </div>
               )}

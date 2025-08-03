@@ -1,5 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateExchangeRequestDto {
   @ApiProperty()
@@ -15,15 +15,15 @@ export class CreateExchangeRequestDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  offeredSkill: string;
+  offeredSkillId: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  requestedSkill: string;
+  requestedSkillId: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   message?: string;
 } 

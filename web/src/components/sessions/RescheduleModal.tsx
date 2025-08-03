@@ -28,21 +28,15 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
-  const handleReschedule = (e: React.FormEvent) => {
-    e.preventDefault();
-    onReschedule(session.id, newDate, newStartTime, newEndTime);
+  const handleReschedule = () => {
+    if (!newDate || !newStartTime || !newEndTime) return;
+    onReschedule(session._id, newDate, newStartTime, newEndTime);
     onClose();
-    // Reset form
-    setNewDate('');
-    setNewStartTime('');
-    setNewEndTime('');
   };
 
   const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel this session? This action cannot be undone.')) {
-      onCancel(session.id);
-      onClose();
-    }
+    onCancel(session._id);
+    onClose();
   };
 
   return (

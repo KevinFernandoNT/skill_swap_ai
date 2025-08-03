@@ -1,14 +1,13 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Request, UseGuards, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExchangeRequestsService } from './exchange-requests.service';
 import { CreateExchangeRequestDto } from './dto/create-exchange-request.dto';
 import { UpdateExchangeRequestDto } from './dto/update-exchange-request.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Exchange Requests')
 @Controller('exchange-requests')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class ExchangeRequestsController {
   constructor(private readonly service: ExchangeRequestsService) {}
 
@@ -26,6 +25,13 @@ export class ExchangeRequestsController {
     return this.service.findByUserId(req.user._id);
   }
 
+  @Get('hosted-sessions')
+  @ApiOperation({ summary: 'Get exchange requests for sessions hosted by current user' })
+  @ApiResponse({ status: 200, description: 'Hosted session exchange requests retrieved successfully' })
+  async findBySessionHost(@Request() req) {
+    return this.service.findBySessionHostId(req.user._id);
+  }
+
   @Get('all')
   @ApiOperation({ summary: 'Get all exchange requests (admin/debug)' })
   async findAll() {
@@ -39,8 +45,12 @@ export class ExchangeRequestsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update exchange request status or message' })
-  async update(@Request() req, @Param('id') id: string, @Body() dto: UpdateExchangeRequestDto) {
-    return this.service.update(req.user._id, id, dto);
+  @ApiOperation({ summary: 'Update exchange request status' })
+  @ApiResponse({ status: 200, description: 'Exchange request updated successfully' })
+  async updateStatus(@Param('id') id: string, @Body() dto: UpdateExchangeRequestDto, @Request() req) {
+    if (!dto.status) {
+      throw new BadRequestException('Status is required');
+    }
+    return this.service.updateStatus(id, dto.status);
   }
 } 

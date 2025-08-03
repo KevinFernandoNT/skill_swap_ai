@@ -3,15 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './Modules/user/user.module';
-import configuration from './config/configuration';
-import { AuthModule } from './Modules/auth/auth.module';
 import { SkillsModule } from './Modules/skills/skills.module';
 import { SessionsModule } from './Modules/sessions/sessions.module';
-import { MessagesModule } from './Modules/messages/messages.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module';
 import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-requests.module';
-import { ExchangeSessionsModule } from './Modules/exchange-sessions/exchange-sessions.module';
+import { NotificationsModule } from './Modules/notifications/notifications.module';
+import { MessagesModule } from './Modules/messages/messages.module';
+import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module';
+import configuration from './config/configuration';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './Modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -28,16 +28,14 @@ import { ExchangeSessionsModule } from './Modules/exchange-sessions/exchange-ses
         retryAttempts: 5,
       }),
     }),
-    UserModule,
     AuthModule,
+    UserModule,
     SkillsModule,
     SessionsModule,
     MessagesModule,
     StreamChatModule,
     ExchangeRequestsModule,
-    ExchangeSessionsModule
+    NotificationsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

@@ -19,12 +19,12 @@ export class ExchangeRequest {
   recipient: Types.ObjectId;
 
   @ApiProperty()
-  @Prop({ required: true })
-  offeredSkill: string;
+  @Prop({ type: Types.ObjectId, ref: 'Skill', required: true })
+  offeredSkillId: Types.ObjectId;
 
   @ApiProperty()
-  @Prop({ required: true })
-  requestedSkill: string;
+  @Prop({ type: Types.ObjectId, ref: 'Skill', required: true })
+  requestedSkillId: Types.ObjectId;
 
   @ApiProperty({ required: false })
   @Prop()

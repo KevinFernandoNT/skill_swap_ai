@@ -2,7 +2,7 @@ import { User, Skill, Session, AnalyticsData, Activity, ExchangeRequest } from '
 
 // Mock Users
 export const currentUser: User = {
-  id: 'u1',
+  _id: 'u1',
   name: 'Alex Johnson',
   avatar: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=150',
   email: 'alex.johnson@example.com',
@@ -17,7 +17,7 @@ export const currentUser: User = {
 
 export const users: User[] = [
   {
-    id: 'u2',
+    _id: 'u2',
     name: 'Sarah Williams',
     avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150',
     email: 'sarah.williams@example.com',
@@ -30,7 +30,7 @@ export const users: User[] = [
     status: 'online'
   },
   {
-    id: 'u3',
+    _id: 'u3',
     name: 'Michael Chen',
     avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150',
     email: 'michael.chen@example.com',
@@ -43,7 +43,7 @@ export const users: User[] = [
     status: 'busy'
   },
   {
-    id: 'u4',
+    _id: 'u4',
     name: 'Emma Roberts',
     avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
     email: 'emma.roberts@example.com',
@@ -56,7 +56,7 @@ export const users: User[] = [
     status: 'offline'
   },
   {
-    id: 'u5',
+    _id: 'u5',
     name: 'David Kim',
     avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150',
     email: 'david.kim@example.com',
@@ -69,7 +69,7 @@ export const users: User[] = [
     status: 'away'
   },
   {
-    id: 'u6',
+    _id: 'u6',
     name: 'Julia Martinez',
     avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
     email: 'julia.martinez@example.com',
@@ -86,7 +86,7 @@ export const users: User[] = [
 // Mock Sessions
 export const sessions: Session[] = [
   {
-    id: 'session1',
+    _id: 'session1',
     title: 'React Hooks Deep Dive',
     date: '2025-06-10',
     startTime: '10:00 AM',
@@ -100,92 +100,60 @@ export const sessions: Session[] = [
     isPublic: true
   },
   {
-    id: 'session2',
-    title: 'User Research Basics',
-    date: '2025-06-11',
+    _id: 'session2',
+    title: 'UX Design Fundamentals',
+    date: '2025-06-12',
     startTime: '2:00 PM',
-    endTime: '3:00 PM',
+    endTime: '3:30 PM',
     skillCategory: 'Design',
     participant: users[1],
     status: 'upcoming',
     isTeaching: true,
-    description: 'Introduction to user research methodologies and tools',
+    description: 'Introduction to user experience design principles and methodologies',
     maxParticipants: 8,
     isPublic: true
   },
   {
-    id: 'session3',
-    title: 'Introduction to Python',
-    date: '2025-06-12',
-    startTime: '3:30 PM',
-    endTime: '5:00 PM',
-    skillCategory: 'Programming',
-    participant: users[2],
-    status: 'upcoming',
-    isTeaching: false,
-    description: 'Python fundamentals for beginners',
-    maxParticipants: 1,
-    isPublic: false,
-    pin: '1234'
-  },
-  {
-    id: 'session4',
-    title: 'Agile Project Management',
+    _id: 'session3',
+    title: 'Machine Learning Basics',
     date: '2025-06-15',
-    startTime: '1:00 PM',
-    endTime: '2:30 PM',
-    skillCategory: 'Management',
-    participant: users[3],
-    status: 'upcoming',
-    isTeaching: false,
-    description: 'Learn agile methodologies and project management best practices',
-    maxParticipants: 1,
-    isPublic: false,
-    pin: '5678'
-  },
-  {
-    id: 'session5',
-    title: 'Mobile UI Best Practices',
-    date: '2025-06-08',
-    startTime: '11:00 AM',
-    endTime: '12:00 PM',
-    skillCategory: 'Design',
-    participant: users[4],
-    status: 'completed',
-    isTeaching: true,
-    description: 'Design principles for mobile applications',
-    maxParticipants: 6,
-    isPublic: true
-  },
-  {
-    id: 'session6',
-    title: 'Advanced Data Visualization',
-    date: '2025-06-17',
-    startTime: '4:00 PM',
-    endTime: '5:30 PM',
+    startTime: '9:00 AM',
+    endTime: '11:00 AM',
     skillCategory: 'Data Science',
     participant: users[2],
     status: 'upcoming',
     isTeaching: true,
-    description: 'Master D3.js and advanced charting techniques',
-    maxParticipants: 4,
-    isPublic: false,
-    pin: '9999'
+    description: 'Get started with machine learning algorithms and practical applications',
+    maxParticipants: 6,
+    isPublic: true
   },
   {
-    id: 'session7',
-    title: 'Product Strategy Workshop',
+    _id: 'session4',
+    title: 'Agile Project Management',
     date: '2025-06-18',
-    startTime: '9:00 AM',
-    endTime: '11:00 AM',
+    startTime: '1:00 PM',
+    endTime: '3:00 PM',
     skillCategory: 'Management',
     participant: users[3],
     status: 'upcoming',
     isTeaching: true,
-    description: 'Strategic product planning and roadmap development',
-    maxParticipants: 3,
-    isPublic: false,
-    pin: '4321'
+    description: 'Learn agile methodologies and project management best practices',
+    maxParticipants: 4,
+    isPublic: true
+  },
+  {
+    _id: 'session5',
+    title: 'iOS Development with Swift',
+    date: '2025-06-20',
+    startTime: '10:00 AM',
+    endTime: '12:00 PM',
+    skillCategory: 'Programming',
+    participant: users[4],
+    status: 'upcoming',
+    isTeaching: true,
+    description: 'Build iOS apps using Swift and modern development practices',
+    maxParticipants: 5,
+    isPublic: true
   }
 ];
 

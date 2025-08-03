@@ -125,6 +125,21 @@ export class SessionsService {
     }
     
     const updatedSession = await this.sessionsRepository.update(id, updateSessionDto);
+    
+    // Check if subTopics were updated and trigger background process if needed
+    if (updateSessionDto.subTopics && updateSessionDto.subTopics.length > 0 && session.teachSkillId) {
+      this.logger.log(`SubTopics updated for session: ${id}, triggering background process`);
+      this.logger.log(`teachSkillId: ${session.teachSkillId}`);
+      this.logger.log(`subTopics: ${JSON.stringify(updateSessionDto.subTopics)}`);
+
+      // Execute background process asynchronously
+      this.triggerBackgroundProcess(id, session.teachSkillId.toString(), updateSessionDto.subTopics);
+    } else {
+      this.logger.log(`No subTopics update detected or missing teachSkillId, skipping background process`);
+      this.logger.log(`subTopics provided: ${updateSessionDto.subTopics ? 'yes' : 'no'}`);
+      this.logger.log(`teachSkillId: ${session.teachSkillId}`);
+    }
+    
     return updatedSession;
   }
 
@@ -198,31 +213,23 @@ export class SessionsService {
   }
 
   /**
-   * Get suggested sessions based on current user's teachable and learnable skills
+   * Get suggested sessions based on current user's learnable skills
    */
   async getSuggestedSessions(userId: string) {
     this.logger.log(`Getting suggested sessions for user: ${userId}`);
 
     try {
-      // Step 1: Get current user's learnable skills (type: 'learning') and their metadata
+      // Get current user's learnable skills (type: 'learning') and their metadata
       const userLearningSkills = await this.skillModel.find({
         userId: userId,
         type: 'learning'
       }).exec();
 
-      // Step 1b: Get current user's teachable skills (type: 'teaching') and their metadata
-      const userTeachingSkills = await this.skillModel.find({
-        userId: userId,
-        type: 'teaching'
-      }).exec();
-
-      this.logger.log(`Found ${userLearningSkills.length} learning skills and ${userTeachingSkills.length} teaching skills for user`);
+      this.logger.log(`Found ${userLearningSkills.length} learning skills for user`);
 
       const allSuggestedSessions = new Map();
 
-      // ===========================================
-      // PART 1: Find sessions that match user's learning needs
-      // ===========================================
+      // Find sessions that match user's learning needs
       if (userLearningSkills.length > 0) {
         this.logger.log('Processing learning skills to find matching sessions...');
         
@@ -248,86 +255,32 @@ export class SessionsService {
 
             this.logger.log(`Expanded learning keywords: ${JSON.stringify(expandedLearningKeywords)}`);
 
-            // Find sessions that contain at least 2 of the expanded keywords in their metadata
+            // Find sessions that contain at least 1 of the expanded keywords in their metadata
             const matchingSessions = await this.sessionsRepository.findSessionsByKeywords(
               expandedLearningKeywords,
               userId, // Exclude current user's sessions
-              2 // Minimum 2 keywords must match
+              0 // Minimum 1 keyword must match
             );
 
             this.logger.log(`Found ${matchingSessions.length} matching sessions for user's learning needs`);
 
-                         // Add sessions to the suggested sessions map
-             matchingSessions.forEach(session => {
-               const sessionKey = (session as any)._id.toString();
-               if (!allSuggestedSessions.has(sessionKey)) {
-                 allSuggestedSessions.set(sessionKey, {
-                   ...(session as any).toObject(),
-                   matchingType: 'learning_match' // Sessions that match what user wants to learn
-                 });
-               }
-             });
-          }
-        }
-      }
-
-      // ===========================================
-      // PART 2: Find sessions that match user's teaching abilities
-      // ===========================================
-      if (userTeachingSkills.length > 0) {
-        this.logger.log('Processing teaching skills to find matching sessions...');
-        
-        // Extract all metadata keywords from user's teaching skills
-        const teachingMetadataKeywords = userTeachingSkills
-          .flatMap(skill => skill.metadata || [])
-          .filter(keyword => keyword && keyword.trim() !== '');
-
-        this.logger.log(`Extracted teaching metadata keywords: ${JSON.stringify(teachingMetadataKeywords)}`);
-
-        if (teachingMetadataKeywords.length > 0) {
-          // Call Python API to get matching keywords for teaching skills
-          const teachingMatchingKeywords = await this.pythonApiService.searchKeywords(teachingMetadataKeywords);
-          
-          this.logger.log(`Python API returned teaching matching keywords: ${JSON.stringify(teachingMatchingKeywords)}`);
-
-          if (teachingMatchingKeywords.length > 0) {
-            // Split each keyword by comma and flatten into a single array
-            const expandedTeachingKeywords = teachingMatchingKeywords
-              .flatMap(keyword => keyword.split(','))
-              .map(keyword => keyword.trim())
-              .filter(keyword => keyword !== '');
-
-            this.logger.log(`Expanded teaching keywords: ${JSON.stringify(expandedTeachingKeywords)}`);
-
-            // Find sessions that contain at least 2 of the expanded keywords in their metadata
-            const matchingSessions = await this.sessionsRepository.findSessionsByKeywords(
-              expandedTeachingKeywords,
-              userId, // Exclude current user's sessions
-              2 // Minimum 2 keywords must match
-            );
-
-            this.logger.log(`Found ${matchingSessions.length} matching sessions for user's teaching abilities`);
-
-                         // Add sessions to the suggested sessions map
-             matchingSessions.forEach(session => {
-               const sessionKey = (session as any)._id.toString();
-               if (!allSuggestedSessions.has(sessionKey)) {
-                 allSuggestedSessions.set(sessionKey, {
-                   ...(session as any).toObject(),
-                   matchingType: 'teaching_match' // Sessions that match what user can teach
-                 });
-               } else {
-                 // If session already exists, update matching type to indicate both scenarios
-                 allSuggestedSessions.get(sessionKey).matchingType = 'mutual_match';
-               }
-             });
+            // Add sessions to the suggested sessions map
+            matchingSessions.forEach(session => {
+              const sessionKey = (session as any)._id.toString();
+              if (!allSuggestedSessions.has(sessionKey)) {
+                allSuggestedSessions.set(sessionKey, {
+                  ...(session as any).toObject(),
+                  matchingType: 'learning_match' // Sessions that match what user wants to learn
+                });
+              }
+            });
           }
         }
       }
 
       const suggestedSessions = Array.from(allSuggestedSessions.values());
       
-      this.logger.log(`Returning ${suggestedSessions.length} total suggested sessions (from both learning and teaching matches)`);
+      this.logger.log(`Returning ${suggestedSessions.length} total suggested sessions based on learning needs`);
 
       return {
         success: true,

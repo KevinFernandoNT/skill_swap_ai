@@ -61,223 +61,263 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl bg-gray-900 rounded-lg shadow-xl border border-gray-800">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold text-white">User Profile</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+        <div className="relative w-full max-w-4xl bg-gray-900 rounded-xl shadow-2xl border border-gray-800 overflow-hidden">
+          {/* Enhanced Header */}
+          <div className="relative bg-gradient-to-r from-gray-800 to-gray-900 p-8 border-b border-gray-700">
+            <div className="flex items-center justify-between mb-6">
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* User Info */}
-            <div className="flex items-start space-x-6">
+            </div>
+            
+            {/* User Info Section */}
+            <div className="flex items-center space-x-6">
               <div className="relative">
                 <img
                   src={user.avatar}
                   alt={user.name}
-                  className="w-24 h-24 rounded-full object-cover"
+                  className="w-20 h-20 rounded-full object-cover border-4 border-gray-700 shadow-lg"
                 />
               </div>
               
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-2">{user.name}</h3>
+                <h3 className="text-3xl font-bold text-white mb-3">{user.name}</h3>
                 
                 <div className="space-y-2">
-                  <div className="flex items-center text-gray-400">
-                    <Mail className="w-4 h-4 mr-2" />
-                    <span className="text-sm">{user.email}</span>
+                  <div className="flex items-center text-gray-300">
+                    <Mail className="w-4 h-4 mr-3 text-gray-400" />
+                    <span className="text-sm font-medium">{user.email}</span>
                   </div>
                   
                   {user.location && (
-                    <div className="flex items-center text-gray-400">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{user.location}</span>
+                    <div className="flex items-center text-gray-300">
+                      <MapPin className="w-4 h-4 mr-3 text-gray-400" />
+                      <span className="text-sm font-medium">{user.location}</span>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Bio */}
+              {/* Quick Stats */}
+              <div className="hidden md:flex space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{user.skills.filter(skill => skill.type === 'teaching').length}</div>
+                  <div className="text-xs text-gray-400 font-medium">Teaching</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">{user.skills.filter(skill => skill.type === 'learning').length}</div>
+                  <div className="text-xs text-gray-400 font-medium">Learning</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400 flex items-center justify-center">
+                    {statsLoading ? (
+                      <div className="w-5 h-5 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        {userStats?.stats.rating || 0}
+                        <Star className="w-4 h-4 ml-1 fill-current" />
+                      </>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 font-medium">Rating</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="p-8">
+            {/* Bio Section */}
             {userStats?.user.bio && (
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-2">About</h4>
-                <p className="text-gray-300">{userStats.user.bio}</p>
+              <div className="mb-8">
+                <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-yellow-400" />
+                  About
+                </h4>
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                  <p className="text-gray-300 leading-relaxed">{userStats.user.bio}</p>
+                </div>
               </div>
             )}
 
-            {/* Skills */}
-            <div>
+            {/* Skills Section */}
+            <div className="space-y-6">
               {user.skills.length > 0 ? (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Teaching Skills */}
                   <div>
-                    <h5 className="text-md font-semibold text-white mb-3 flex items-center">
-                      <GraduationCap className="w-4 h-4 mr-2 text-green-400" />
-                      Skills that {user.name} can teach
-                    </h5>
+                    <div className="flex items-center mb-4">
+                      <div className="bg-green-100 rounded-lg p-3 mr-4">
+                        <GraduationCap className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h5 className="text-xl font-bold text-white mb-1">Skills I Can Teach</h5>
+                        <p className="text-sm text-gray-400">Expertise I'm ready to share</p>
+                      </div>
+                    </div>
                     {user.skills.filter(skill => skill.type === 'teaching').length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         {user.skills
                           .filter(skill => skill.type === 'teaching')
                           .map((skill) => (
                             <div
                               key={skill._id}
-                              className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                              className="flex items-center justify-between py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
                             >
-                              <div className="flex items-center justify-between mb-2">
-                                <h6 className="font-medium text-white">{skill.name}</h6>
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                                  {skill.category}
-                                </span>
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-1">
+                                  <h6 className="font-semibold text-white text-base">{skill.name}</h6>
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                    {skill.category}
+                                  </span>
+                                </div>
                               </div>
-                              
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-400">Proficiency</span>
-                                <span className={`text-sm font-medium ${getProficiencyColor(skill.proficiency)}`}>
+                              <div className="text-right">
+                                <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
                                   {skill.proficiency}%
-                                </span>
-                              </div>
-                              
-                              <div className="w-full bg-gray-700 rounded-full h-2">
-                                <div
-                                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${skill.proficiency}%` }}
-                                />
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium">Proficiency</div>
                               </div>
                             </div>
                           ))}
                       </div>
                     ) : (
-                      <p className="text-gray-400 text-sm">No teaching skills listed yet.</p>
+                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
+                        <BookOpen className="w-6 h-6 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-400 font-medium text-sm">No teaching skills listed yet.</p>
+                      </div>
                     )}
                   </div>
 
                   {/* Learning Skills */}
                   <div>
-                    <h5 className="text-md font-semibold text-white mb-3 flex items-center">
-                      <BookOpen className="w-4 h-4 mr-2 text-blue-400" />
-                      Skills that {user.name} wants to learn
-                    </h5>
+                    <div className="flex items-center mb-4">
+                      <div className="bg-blue-100 rounded-lg p-3 mr-4">
+                        <BookOpen className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h5 className="text-xl font-bold text-white mb-1">Skills I Want to Learn</h5>
+                        <p className="text-sm text-gray-400">Areas I'm looking to grow</p>
+                      </div>
+                    </div>
                     {user.skills.filter(skill => skill.type === 'learning').length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
                         {user.skills
                           .filter(skill => skill.type === 'learning')
                           .map((skill) => (
                             <div
                               key={skill._id}
-                              className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                              className="flex items-center justify-between py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
                             >
-                              <div className="flex items-center justify-between mb-2">
-                                <h6 className="font-medium text-white">{skill.name}</h6>
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                                  {skill.category}
-                                </span>
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-1">
+                                  <h6 className="font-semibold text-white text-base">{skill.name}</h6>
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                    {skill.category}
+                                  </span>
+                                </div>
                               </div>
-                              
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-400">Current Level</span>
-                                <span className={`text-sm font-medium ${getProficiencyColor(skill.proficiency)}`}>
+                              <div className="text-right">
+                                <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
                                   {skill.proficiency}%
-                                </span>
-                              </div>
-                              
-                              <div className="w-full bg-gray-700 rounded-full h-2">
-                                <div
-                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${skill.proficiency}%` }}
-                                />
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium">Current Level</div>
                               </div>
                             </div>
                           ))}
                       </div>
                     ) : (
-                      <p className="text-gray-400 text-sm">No learning goals listed yet.</p>
+                      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 text-center">
+                        <GraduationCap className="w-6 h-6 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-400 font-medium text-sm">No learning goals listed yet.</p>
+                      </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-400">No skills listed yet.</p>
+                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 text-center">
+                  <Award className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+                  <p className="text-gray-400 font-medium">No skills listed yet.</p>
+                </div>
               )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-800">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">{user.skills.filter(skill => skill.type === 'teaching').length}</div>
-                <div className="text-sm text-gray-400">Teaching</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">{user.skills.filter(skill => skill.type === 'learning').length}</div>
-                <div className="text-sm text-gray-400">Learning</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400 flex items-center justify-center">
-                  {statsLoading ? (
-                    <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      {userStats?.stats.rating || 0}
-                      <Star className="w-4 h-4 ml-1 fill-current" />
-                    </>
-                  )}
+            {/* Enhanced Stats Section */}
+            <div className="mt-8 pt-6 border-t border-gray-800">
+              <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Calendar className="w-5 h-5 mr-2 text-purple-400" />
+                Activity Statistics
+              </h4>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-green-400 mb-1">{user.skills.filter(skill => skill.type === 'teaching').length}</div>
+                  <div className="text-sm text-gray-400 font-medium">Teaching Skills</div>
                 </div>
-                <div className="text-sm text-gray-400">Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400 flex items-center justify-center">
-                  {statsLoading ? (
-                    <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      {userStats?.stats.totalSessions || 0}
-                      <Calendar className="w-4 h-4 ml-1" />
-                    </>
-                  )}
+                <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-blue-400 mb-1">{user.skills.filter(skill => skill.type === 'learning').length}</div>
+                  <div className="text-sm text-gray-400 font-medium">Learning Goals</div>
                 </div>
-                <div className="text-sm text-gray-400">Sessions</div>
+                <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-yellow-400 flex items-center justify-center mb-1">
+                    {statsLoading ? (
+                      <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        {userStats?.stats.rating || 0}
+                        <Star className="w-4 h-4 ml-1 fill-current" />
+                      </>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-400 font-medium">Average Rating</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                  <div className="text-2xl font-bold text-purple-400 flex items-center justify-center mb-1">
+                    {statsLoading ? (
+                      <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        {userStats?.stats.totalSessions || 0}
+                        <Calendar className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-400 font-medium">Total Sessions</div>
+                </div>
               </div>
-            </div>
 
-            {/* Additional Stats */}
-            {userStats && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-800">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-400 flex items-center justify-center">
-                    {userStats.stats.completedSessions}
-                    <Calendar className="w-4 h-4 ml-1" />
+              {/* Additional Stats */}
+              {userStats && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div className="text-lg font-bold text-green-400 flex items-center justify-center mb-1">
+                      {userStats.stats.completedSessions}
+                      <Calendar className="w-4 h-4 ml-1" />
+                    </div>
+                    <div className="text-sm text-gray-400 font-medium">Completed Sessions</div>
                   </div>
-                  <div className="text-sm text-gray-400">Completed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-400 flex items-center justify-center">
-                    {userStats.stats.hostedSessions}
-                    <Users className="w-4 h-4 ml-1" />
+                  <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div className="text-lg font-bold text-blue-400 flex items-center justify-center mb-1">
+                      {userStats.stats.hostedSessions}
+                      <Users className="w-4 h-4 ml-1" />
+                    </div>
+                    <div className="text-sm text-gray-400 font-medium">Hosted Sessions</div>
                   </div>
-                  <div className="text-sm text-gray-400">Hosted</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-400 flex items-center justify-center">
-                    {userStats.stats.participatedSessions}
-                    <Users className="w-4 h-4 ml-1" />
+                  <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div className="text-lg font-bold text-purple-400 flex items-center justify-center mb-1">
+                      {userStats.stats.participatedSessions}
+                      <Users className="w-4 h-4 ml-1" />
+                    </div>
+                    <div className="text-sm text-gray-400 font-medium">Participated Sessions</div>
                   </div>
-                  <div className="text-sm text-gray-400">Participated</div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-800">
+          {/* Enhanced Footer */}
+          <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-800 bg-gray-900">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+              className="px-6 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
             >
               Close
             </button>

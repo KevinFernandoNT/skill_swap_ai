@@ -61,6 +61,13 @@ export class SessionsController {
     return this.sessionsService.findUpcomingSessions(req.user._id, paginationDto);
   }
 
+  @Get('suggested')
+  @ApiOperation({ summary: 'Get suggested sessions based on current user skills' })
+  @ApiResponse({ status: 200, description: 'Suggested sessions retrieved successfully' })
+  async getSuggestedSessions(@Request() req) {
+    return this.sessionsService.getSuggestedSessions(req.user._id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get session by ID' })
   @ApiResponse({ status: 200, description: 'Session retrieved successfully' })
@@ -99,12 +106,5 @@ export class SessionsController {
   @ApiResponse({ status: 404, description: 'Session not found' })
   async leaveSession(@Request() req, @Param('id') id: string) {
     return this.sessionsService.leaveSession(req.user._id, id);
-  }
-
-  @Get('suggested')
-  @ApiOperation({ summary: 'Get suggested sessions based on current user skills' })
-  @ApiResponse({ status: 200, description: 'Suggested sessions retrieved successfully' })
-  async getSuggestedSessions(@Request() req) {
-    return this.sessionsService.getSuggestedSessions(req.user._id);
   }
 }

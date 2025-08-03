@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowRightLeft, Calendar, Clock, User, Star, Key } from 'lucide-react';
+import { Search, Filter, ArrowRightLeft, Calendar, Clock, User, Star, Key, Loader2 } from 'lucide-react';
 import { Session } from '../../types';
 import { sessions as mockSessions, users, currentUser } from '../../data/mockData';
 import SkillSwapModal from './SkillSwapModal';
-import SessionModal from '../dashboard/SessionModal';
+import SessionDetailsModal from './SessionDetailsModal';
+import { useGetSuggestedSessions, SuggestedSession } from '../../hooks/useGetSuggestedSessions';
+import { useToast } from '../../hooks/use-toast';
 
 const ConnectPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,73 +17,31 @@ const ConnectPage: React.FC = () => {
   const [pinCode, setPinCode] = useState('');
   const [pinError, setPinError] = useState('');
   const [foundPrivateSession, setFoundPrivateSession] = useState<Session | null>(null);
+  const { toast } = useToast();
 
-  // Filter out current user's sessions and only show public sessions
-  const availableSessions = mockSessions.filter(session => 
-    session.isPublic && 
-    session.status === 'upcoming' &&
-    session.participant.id !== currentUser.id
-  );
+  // Fetch suggested sessions from API
+  const { data: suggestedSessionsResponse, isLoading: isLoadingSuggestedSessions, error: suggestedSessionsError } = useGetSuggestedSessions();
 
-  // Add some mock recommended sessions based on user's learning interests
-  const recommendedSessions: Session[] = [
-    {
-      id: 'rec1',
-      title: 'Advanced UX Research Methods',
-      date: '2025-06-13',
-      startTime: '2:00 PM',
-      endTime: '3:30 PM',
-      skillCategory: 'Design',
-      participant: users[0],
-      status: 'upcoming',
-      isTeaching: true,
-      description: 'Deep dive into user research methodologies, usability testing, and data analysis',
-      maxParticipants: 6,
-      isPublic: true
-    },
-    {
-      id: 'rec2',
-      title: 'Machine Learning Fundamentals',
-      date: '2025-06-14',
-      startTime: '10:00 AM',
-      endTime: '12:00 PM',
-      skillCategory: 'Data Science',
-      participant: users[2],
-      status: 'upcoming',
-      isTeaching: true,
-      description: 'Introduction to ML algorithms, supervised learning, and practical applications',
-      maxParticipants: 8,
-      isPublic: true
-    },
-    {
-      id: 'rec3',
-      title: 'Product Strategy Workshop',
-      date: '2025-06-16',
-      startTime: '9:00 AM',
-      endTime: '11:00 AM',
-      skillCategory: 'Management',
-      participant: users[3],
-      status: 'upcoming',
-      isTeaching: true,
-      description: 'Learn product strategy, roadmap planning, and stakeholder management',
-      maxParticipants: 4,
-      isPublic: true
-    }
-  ];
+  // Get suggested sessions from API response
+  const suggestedSessions: SuggestedSession[] = suggestedSessionsResponse?.data || [];
 
-  const allSessions = [...availableSessions, ...recommendedSessions];
-
-  const filteredSessions = allSessions.filter(session => {
+  // Filter sessions based on search and category
+  const filteredSessions = suggestedSessions.filter(session => {
     const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          session.skillCategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         session.participant.name.toLowerCase().includes(searchTerm.toLowerCase());
+                         (session.participant?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || session.skillCategory.toLowerCase() === filterCategory.toLowerCase();
     
     return matchesSearch && matchesCategory;
   });
 
   const handleSwapRequest = (sessionId: string, selectedSkillId: string, message: string) => {
+    // This will be handled by the SkillSwapModal
+  };
 
+  const handleSessionClick = (session: Session) => {
+    setSelectedSession(session);
+    setIsSessionModalOpen(true);
   };
 
   const handleSwapClick = (session: Session, e: React.MouseEvent) => {
@@ -97,7 +57,7 @@ const ConnectPage: React.FC = () => {
     const privateSession = mockSessions.find(session => 
       session.pin === pinCode && 
       session.status === 'upcoming' &&
-      session.participant.id !== currentUser.id
+      session.participant._id !== currentUser._id
     );
 
     if (privateSession) {
@@ -132,6 +92,32 @@ const ConnectPage: React.FC = () => {
     }
   };
 
+  const getMatchingTypeColor = (matchingType: string) => {
+    switch (matchingType) {
+      case 'learning_match':
+        return 'bg-blue-900 text-blue-300';
+      case 'teaching_match':
+        return 'bg-green-900 text-green-300';
+      case 'mutual_match':
+        return 'bg-purple-900 text-purple-300';
+      default:
+        return 'bg-gray-800 text-gray-300';
+    }
+  };
+
+  const getMatchingTypeLabel = (matchingType: string) => {
+    switch (matchingType) {
+      case 'learning_match':
+        return 'Learning Match';
+      case 'teaching_match':
+        return 'Teaching Match';
+      case 'mutual_match':
+        return 'Perfect Match';
+      default:
+        return 'Match';
+    }
+  };
+
   const categories = ['All', 'Programming', 'Design', 'Management', 'Marketing', 'Data Science'];
 
   // Helper to get teaching skill with agenda for a user matching a session
@@ -146,6 +132,7 @@ const ConnectPage: React.FC = () => {
         Array.isArray(s.agenda) && s.agenda.length > 0
     );
   };
+  
   // Helper to get learning skill for a user
   const getLookingForSkill = (user, session) => {
     if (!user.skills) return null;
@@ -251,84 +238,131 @@ const ConnectPage: React.FC = () => {
             </div>
           </div>
 
-         
-
-          {/* All Recomended Sessions */}
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Recomended Sessions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSessions.filter(session => !recommendedSessions.some(rec => rec.id === session.id)).map((session) => (
-                <div
-                  key={session.id}
-                  className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 cursor-pointer"
-                >
-                  {/* Header */}
-                  <div className="mb-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(session.skillCategory)}`}>
-                      {session.skillCategory}
-                    </span>
-                    <h3 className="text-lg font-medium text-white mt-2">{session.title}</h3>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-gray-400 mb-4 line-clamp-2">{session.description}</p>
-
-                  {/* Skill Offer Section */}
-                  <div className="mb-4">
-              
-                    
-                        <div className="mb-2">
-                          <ul className="pl-4 list-disc text-xs text-gray-300">
-                            {["Advanced UX Models","AI with Figma","FIgma Basics"].map((topic, idx) => (
-                              <li key={idx}>{topic}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      
-                 
-                  </div>
-
-                  {/* Session Details */}
-                  <div className="space-y-2 text-sm text-gray-400 mb-4">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{new Date(session.date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{session.startTime} - {session.endTime}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 mr-2" />
-                      <span>with {session.participant.name}</span>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <button
-                    onClick={(e) => handleSwapClick(session, e)}
-                    className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-                  >
-                    <ArrowRightLeft className="w-4 h-4 mr-2" />
-                    Request Skill Swap
-                  </button>
-                </div>
-              ))}
+          {/* Loading State */}
+          {isLoadingSuggestedSessions && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin mr-3" />
+              <span className="text-white">Loading suggested sessions...</span>
             </div>
+          )}
 
-            {/* Empty State */}
-            {filteredSessions.length === 0 && (
-              <div className="text-center py-12">
-                <ArrowRightLeft className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No sessions found</h3>
-                <p className="text-gray-400">
-                  {searchTerm || filterCategory !== 'all'
-                    ? 'Try adjusting your search or filters'
-                    : 'No available sessions for skill swapping at the moment'}
+          {/* Error State */}
+          {suggestedSessionsError && (
+            <div className="text-center py-12">
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-white mb-2">Error Loading Sessions</h3>
+                <p className="text-gray-400 mb-4">
+                  {suggestedSessionsError?.response?.data?.message || "Could not load suggested sessions. Please try again."}
                 </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
+                >
+                  Try Again
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Suggested Sessions */}
+          {!isLoadingSuggestedSessions && !suggestedSessionsError && (
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-4">Suggested Sessions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredSessions.map((session) => (
+                  <div
+                    key={session._id}
+                    className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 cursor-pointer"
+                  >
+                    {/* Header */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(session.skillCategory || '')}`}>
+                          {session.skillCategory || 'General'}
+                        </span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMatchingTypeColor(session.matchingType || 'learning_match')}`}>
+                          {getMatchingTypeLabel(session.matchingType || 'learning_match')}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mt-2">{session.title || 'Untitled Session'}</h3>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">{session.description || 'No description available'}</p>
+
+                    {/* Session Details */}
+                    <div className="space-y-2 text-sm text-gray-400 mb-4">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{session.date ? new Date(session.date).toLocaleDateString() : 'Date TBD'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{session.startTime || 'TBD'} - {session.endTime || 'TBD'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2" />
+                        <span>with {session.hostId?.name || 'Session Host'}</span>
+                      </div>
+                    </div>
+
+                    {/* Host Details */}
+                    {session.hostId && (
+                      <div className="flex items-center space-x-3 mb-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
+                        <div className="w-8 h-8 rounded-full overflow-hidden">
+                          <img 
+                            src={session.hostId.avatar} 
+                            alt={session.hostId.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to initial if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                            <span className="text-white text-sm font-semibold">
+                              {session.hostId.name?.charAt(0) || 'H'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-white font-medium">{session.hostId.name}</p>
+                          {session.hostId.email && (
+                            <p className="text-xs text-gray-400">{session.hostId.email}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    <button
+                      onClick={(e) => handleSwapClick(session, e)}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+                    >
+                      <ArrowRightLeft className="w-4 h-4 mr-2" />
+                      Request Skill Swap
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Empty State */}
+              {filteredSessions.length === 0 && !isLoadingSuggestedSessions && (
+                <div className="text-center py-12">
+                  <ArrowRightLeft className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">No sessions found</h3>
+                  <p className="text-gray-400">
+                    {searchTerm || filterCategory !== 'all'
+                      ? 'Try adjusting your search or filters'
+                      : 'No suggested sessions available at the moment. Add more skills to your profile to get personalized recommendations.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -402,7 +436,7 @@ const ConnectPage: React.FC = () => {
       />
 
       {/* Session Details Modal */}
-      <SessionModal
+      <SessionDetailsModal
         session={selectedSession}
         isOpen={isSessionModalOpen}
         onClose={() => {

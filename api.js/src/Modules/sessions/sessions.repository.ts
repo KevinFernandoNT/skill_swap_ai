@@ -32,6 +32,7 @@ export class SessionsRepository {
         .find(query)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
+        .populate('teachSkillId', 'name category proficiency type description')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -77,6 +78,7 @@ export class SessionsRepository {
         .find(query)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
+        .populate('teachSkillId', 'name category proficiency type description')
         .skip(skip)
         .limit(limit)
         .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
@@ -102,6 +104,7 @@ export class SessionsRepository {
         .find({ isPublic: true, status: 'upcoming' })
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
+        .populate('teachSkillId', 'name category proficiency type description')
         .skip(skip)
         .limit(limit)
         .sort({ date: 1 })
@@ -123,6 +126,7 @@ export class SessionsRepository {
       .findById(id)
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
+      .populate('teachSkillId', 'name category proficiency type description')
       .exec();
   }
 
@@ -131,6 +135,7 @@ export class SessionsRepository {
       .findByIdAndUpdate(id, updateSessionDto, { new: true })
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
+      .populate('teachSkillId', 'name category proficiency type description')
       .exec();
   }
 
@@ -160,6 +165,7 @@ export class SessionsRepository {
         .find(searchQuery)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
+        .populate('teachSkillId', 'name category proficiency type description')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -185,6 +191,7 @@ export class SessionsRepository {
       )
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
+      .populate('teachSkillId', 'name category proficiency type description')
       .exec();
   }
 
@@ -197,6 +204,7 @@ export class SessionsRepository {
       )
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
+      .populate('teachSkillId', 'name category proficiency type description')
       .exec();
   }
 
@@ -206,8 +214,9 @@ export class SessionsRepository {
    * @param excludeUserId User ID to exclude from results (current user's sessions)
    * @param minMatches Minimum number of keywords that must match
    */
-  async findSessionsByKeywords(keywords: string[], excludeUserId: string, minMatches: number = 2): Promise<Session[]> {
+  async findSessionsByKeywords(keywords: string[], excludeUserId: string, minMatches: number = 0): Promise<Session[]> {
     // Create a query that finds sessions where metadata contains at least minMatches keywords
+
     const query = {
       hostId: { $ne: excludeUserId }, // Exclude current user's sessions
       status: 'upcoming', // Only upcoming sessions
@@ -229,6 +238,7 @@ export class SessionsRepository {
       .find(query)
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
+      .populate('teachSkillId', 'name category proficiency type description')
       .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
       .limit(20) // Limit to 20 results
       .exec();

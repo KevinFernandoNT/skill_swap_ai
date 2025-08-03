@@ -21,11 +21,23 @@ export class ExchangeRequestsRepository {
         { requester: userId },
         { recipient: userId }
       ]
-    }).populate('sessionId').populate('requester').populate('recipient').exec();
+    }).populate('sessionId').populate('requester').populate('recipient').populate('offeredSkillId').populate('requestedSkillId').exec();
+  }
+
+  async findBySessionHostId(hostId: string): Promise<ExchangeRequest[]> {
+    return this.exchangeRequestModel.find({
+      'sessionId.hostId': hostId
+    }).populate({
+      path: 'sessionId',
+      populate: {
+        path: 'hostId',
+        select: 'name email avatar'
+      }
+    }).populate('requester', 'name email avatar').populate('recipient', 'name email avatar').populate('offeredSkillId').populate('requestedSkillId').exec();
   }
 
   async findBySessionId(sessionId: string): Promise<ExchangeRequest[]> {
-    return this.exchangeRequestModel.find({ sessionId }).populate('requester').populate('recipient').exec();
+    return this.exchangeRequestModel.find({ sessionId }).populate('requester').populate('recipient').populate('offeredSkillId').populate('requestedSkillId').exec();
   }
 
   async updateStatus(id: string, status: string): Promise<ExchangeRequest | null> {
@@ -33,7 +45,7 @@ export class ExchangeRequestsRepository {
   }
 
   async findAll(): Promise<ExchangeRequest[]> {
-    return this.exchangeRequestModel.find().populate('sessionId').populate('requester').populate('recipient').exec();
+    return this.exchangeRequestModel.find().populate('sessionId').populate('requester').populate('recipient').populate('offeredSkillId').populate('requestedSkillId').exec();
   }
 
   async findById(id: string): Promise<ExchangeRequest | null> {

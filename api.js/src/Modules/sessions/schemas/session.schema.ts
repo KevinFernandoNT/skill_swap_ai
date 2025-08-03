@@ -54,9 +54,9 @@ export class Session {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   participants: Types.ObjectId[];
 
-  @ApiProperty({ required: false })
-  @Prop()
-  teachSkillId?: string;
+  @ApiProperty({ required: true })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Skill' }] })  
+  teachSkillId?: Types.ObjectId;
 
   @ApiProperty({ required: false })
   @Prop()

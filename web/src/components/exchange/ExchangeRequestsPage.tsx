@@ -1,17 +1,97 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, ArrowRightLeft, CheckCircle, XCircle, Clock as ClockIcon, MessageCircle } from 'lucide-react';
+import { Calendar, Clock, User, ArrowRightLeft, CheckCircle, XCircle, Clock as ClockIcon, MessageCircle, Loader2, Crown } from 'lucide-react';
 import { ExchangeRequest } from '../../types';
-import { exchangeRequests, currentUser } from '../../data/mockData';
+import { useGetExchangeRequests } from '../../hooks/useGetExchangeRequests';
+import { useGetHostedSessionExchangeRequests } from '../../hooks/useGetHostedSessionExchangeRequests';
+import { useUpdateExchangeRequest, useUpdateExchangeRequestById } from '../../hooks/useUpdateExchangeRequest';
+import { useToast } from '../../hooks/use-toast';
 
 const ExchangeRequestsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'received' | 'hosted'>('received');
+  const { toast } = useToast();
 
-  // Get all exchange requests where current user is either requester or recipient
-  const userExchangeRequests = exchangeRequests.filter(request => 
-    request.requester.id === currentUser.id || request.recipient.id === currentUser.id
-  );
+  // Get current user from localStorage
+  const getCurrentUserId = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return user._id || user.id;
+    }
+    return null;
+  };
 
-  const filteredRequests = userExchangeRequests.filter(request => {
+  const currentUserId = getCurrentUserId();
+
+  // Fetch regular exchange requests from API
+  const { data: exchangeRequestsResponse, isLoading: isLoadingExchangeRequests, error: exchangeRequestsError, refetch: refetchExchangeRequests } = useGetExchangeRequests();
+  const exchangeRequests: ExchangeRequest[] = Array.isArray(exchangeRequestsResponse?.data) ? exchangeRequestsResponse.data : Array.isArray(exchangeRequestsResponse) ? exchangeRequestsResponse : [];
+
+  // Fetch hosted session exchange requests from API
+  const { data: hostedExchangeRequestsResponse, isLoading: isLoadingHostedRequests, error: hostedRequestsError, refetch: refetchHostedRequests } = useGetHostedSessionExchangeRequests();
+  const hostedExchangeRequests: ExchangeRequest[] = Array.isArray(hostedExchangeRequestsResponse?.data) ? hostedExchangeRequestsResponse.data : Array.isArray(hostedExchangeRequestsResponse) ? hostedExchangeRequestsResponse : [];
+
+  // Update exchange request function
+  const updateExchangeRequestStatus = async (requestId: string, status: 'accepted' | 'rejected') => {
+    try {
+      const baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '/api';
+      const response = await fetch(`${baseURL}/exchange-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update exchange request');
+      }
+
+      toast({
+        title: `Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+        description: `Exchange request ${status} successfully!`
+      });
+
+      // Refetch data
+      refetchExchangeRequests();
+      refetchHostedRequests();
+    } catch (error: any) {
+      toast({
+        title: `${status === 'accepted' ? 'Accept' : 'Reject'} Failed`,
+        description: error?.message || `Could not ${status} exchange request.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAcceptRequest = (requestId: string) => {
+    updateExchangeRequestStatus(requestId, 'accepted');
+  };
+
+  const handleRejectRequest = (requestId: string) => {
+    updateExchangeRequestStatus(requestId, 'rejected');
+  };
+
+  // Get all exchange requests where current user is the recipient (not requester)
+  const userExchangeRequests = currentUserId 
+    ? exchangeRequests.filter(request => 
+        request.recipient._id === currentUserId
+      )
+    : [];
+
+  // Get hosted session exchange requests where current user is the session host
+  const hostedRequests = currentUserId 
+    ? hostedExchangeRequests.filter(request => 
+        request.recipient._id === currentUserId
+      )
+    : [];
+
+  const getCurrentRequests = () => {
+    return activeTab === 'received' ? userExchangeRequests : hostedRequests;
+  };
+
+  const filteredRequests = getCurrentRequests().filter(request => {
     if (filterStatus === 'all') return true;
     return request.status === filterStatus;
   });
@@ -46,24 +126,6 @@ const ExchangeRequestsPage: React.FC = () => {
     }
   };
 
-  const handleAcceptRequest = (requestId: string) => {
-    // In a real app, this would update the request status via API
-    console.log('Accepting request:', requestId);
-    alert('Request accepted! The session details will be shared with both parties.');
-  };
-
-  const handleRejectRequest = (requestId: string) => {
-    // In a real app, this would update the request status via API
-    console.log('Rejecting request:', requestId);
-    alert('Request rejected.');
-  };
-
-  const handleCancelRequest = (requestId: string) => {
-    // In a real app, this would update the request status via API
-    console.log('Cancelling request:', requestId);
-    alert('Request cancelled.');
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -75,8 +137,80 @@ const ExchangeRequestsPage: React.FC = () => {
   };
 
   const isRequester = (request: ExchangeRequest) => {
-    return request.requester.id === currentUser.id;
+    // Since we're only showing requests where current user is recipient, they are never the requester
+    return false;
   };
+
+  const isLoading = isLoadingExchangeRequests || isLoadingHostedRequests;
+  const error = exchangeRequestsError || hostedRequestsError;
+
+  // Check if user is logged in
+  if (!currentUserId) {
+    return (
+      <div className="bg-black min-h-screen">
+        <div className="px-4 py-6 border-b border-gray-800 lg:px-8">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-white">Exchange Requests</h1>
+            <p className="mt-1 text-sm text-gray-400">Manage your skill swap requests and responses</p>
+          </div>
+        </div>
+        <div className="text-center py-12">
+          <div className="bg-gray-900/20 border border-gray-500/30 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-white mb-2">Please Log In</h3>
+            <p className="text-gray-400 mb-4">
+              You need to be logged in to view your exchange requests.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-black min-h-screen">
+        <div className="px-4 py-6 border-b border-gray-800 lg:px-8">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-white">Exchange Requests</h1>
+            <p className="mt-1 text-sm text-gray-400">Manage your skill swap requests and responses</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mr-3" />
+          <span className="text-white">Loading exchange requests...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="bg-black min-h-screen">
+        <div className="px-4 py-6 border-b border-gray-800 lg:px-8">
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-white">Exchange Requests</h1>
+            <p className="mt-1 text-sm text-gray-400">Manage your skill swap requests and responses</p>
+          </div>
+        </div>
+        <div className="text-center py-12">
+          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-white mb-2">Error Loading Requests</h3>
+            <p className="text-gray-400 mb-4">
+              {error?.response?.data?.message || "Could not load exchange requests. Please try again."}
+            </p>
+            <button
+              onClick={() => refetchExchangeRequests()}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black min-h-screen">
@@ -85,6 +219,31 @@ const ExchangeRequestsPage: React.FC = () => {
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-white">Exchange Requests</h1>
           <p className="mt-1 text-sm text-gray-400">Manage your skill swap requests and responses</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('received')}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'received'
+                ? 'bg-primary text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Received Requests
+          </button>
+          <button
+            onClick={() => setActiveTab('hosted')}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'hosted'
+                ? 'bg-primary text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Crown className="w-4 h-4 inline mr-2" />
+            Exchange Sessions
+          </button>
         </div>
       </div>
 
@@ -99,7 +258,7 @@ const ExchangeRequestsPage: React.FC = () => {
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
-            All ({userExchangeRequests.length})
+            All ({getCurrentRequests().length})
           </button>
           <button
             onClick={() => setFilterStatus('pending')}
@@ -109,7 +268,7 @@ const ExchangeRequestsPage: React.FC = () => {
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
-            Pending ({userExchangeRequests.filter(r => r.status === 'pending').length})
+            Pending ({getCurrentRequests().filter(r => r.status === 'pending').length})
           </button>
           <button
             onClick={() => setFilterStatus('accepted')}
@@ -119,7 +278,7 @@ const ExchangeRequestsPage: React.FC = () => {
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
-            Accepted ({userExchangeRequests.filter(r => r.status === 'accepted').length})
+            Accepted ({getCurrentRequests().filter(r => r.status === 'accepted').length})
           </button>
           <button
             onClick={() => setFilterStatus('rejected')}
@@ -129,7 +288,7 @@ const ExchangeRequestsPage: React.FC = () => {
                 : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
             }`}
           >
-            Rejected ({userExchangeRequests.filter(r => r.status === 'rejected').length})
+            Rejected ({getCurrentRequests().filter(r => r.status === 'rejected').length})
           </button>
         </div>
 
@@ -137,7 +296,7 @@ const ExchangeRequestsPage: React.FC = () => {
         <div className="space-y-4">
           {filteredRequests.map((request) => (
             <div
-              key={request.id}
+              key={request._id}
               className="bg-gray-900 rounded-lg border border-gray-800 p-6 hover:border-gray-700 transition-colors"
             >
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -146,11 +305,11 @@ const ExchangeRequestsPage: React.FC = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-medium text-white mb-1">
-                        {request.session.title}
+                        {request.sessionId?.title || 'Session Title TBD'}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-400">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-300">
-                          {request.session.skillCategory}
+                          {request.sessionId?.skillCategory || 'Skill Category TBD'}
                         </span>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                           {getStatusIcon(request.status)}
@@ -165,15 +324,15 @@ const ExchangeRequestsPage: React.FC = () => {
                     <div className="space-y-2 text-sm text-gray-400">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>{new Date(request.session.date).toLocaleDateString()}</span>
+                        <span>{request.sessionId?.date ? new Date(request.sessionId.date).toLocaleDateString() : 'Date TBD'}</span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-2" />
-                        <span>{request.session.startTime} - {request.session.endTime}</span>
+                        <span>{request.sessionId?.startTime || 'TBD'} - {request.sessionId?.endTime || 'TBD'}</span>
                       </div>
                       <div className="flex items-center">
                         <User className="w-4 h-4 mr-2" />
-                        <span>with {request.session.participant.name}</span>
+                        <span>with {request.recipient?.name || 'Session Host'}</span>
                       </div>
                     </div>
 
@@ -182,58 +341,86 @@ const ExchangeRequestsPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <ArrowRightLeft className="w-4 h-4 text-primary" />
                         <span className="text-sm text-gray-300">
-                          {isRequester(request) ? 'You offer' : `${request.requester.name} offers`}: <span className="text-primary font-medium">{request.offeredSkill}</span>
+                          Offered : <span className="text-primary font-medium">{request.offeredSkillId?.name || 'Unknown Skill'}</span>
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <ArrowRightLeft className="w-4 h-4 text-primary" />
                         <span className="text-sm text-gray-300">
-                          {isRequester(request) ? 'You request' : `${request.requester.name} requests`}: <span className="text-primary font-medium">{request.requestedSkill}</span>
+                           For : <span className="text-primary font-medium">{request.requestedSkillId?.name || 'Unknown Skill'}</span>
                         </span>
+                      </div>
+                      
+                      {/* User details for the person offering the skill */}
+                      <div className="mt-3 pt-3 border-t border-gray-700">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full overflow-hidden">
+                            <img 
+                              src={request.requester?.avatar || ''} 
+                              alt={request.requester?.name || 'User'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                              <span className="text-white text-sm font-semibold">
+                                {request.requester?.name?.charAt(0) || 'U'}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm text-white font-medium">{request.requester?.name || 'User'}</p>
+                            {request.requester?.email && (
+                              <p className="text-xs text-gray-400">{request.requester.email}</p>
+                            )}
+                            <div className="mt-1">
+                              <span className="text-xs text-gray-500">Offering: </span>
+                              <span className="text-xs text-primary font-medium">{request.offeredSkillId?.name}</span>
+                              <span className="text-xs text-gray-500 ml-1">({request.offeredSkillId?.proficiency}% proficiency)</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Message */}
-                  <div className="bg-gray-800 rounded-md p-3 mb-4">
-                    <div className="flex items-start gap-2">
-                      <MessageCircle className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-gray-300">{request.message}</p>
+                  {request.message && (
+                    <div className="bg-gray-800 rounded-md p-3 mb-4">
+                      <div className="flex items-start gap-2">
+                        <MessageCircle className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-300">{request.message}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Timestamp */}
                   <p className="text-xs text-gray-500">
-                    {isRequester(request) ? 'Sent' : 'Received'} on {formatDate(request.createdAt)}
+                    Received on {formatDate(request.createdAt)}
                   </p>
                 </div>
 
                 {/* Right side - Actions */}
                 <div className="flex flex-col gap-2 lg:flex-shrink-0">
-                  {request.status === 'pending' && !isRequester(request) && (
+                  {request.status === 'pending' && (
                     <>
                       <button
-                        onClick={() => handleAcceptRequest(request.id)}
-                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        onClick={() => handleAcceptRequest(request._id)}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
                       >
-                        Accept
+                        Accept Request
                       </button>
                       <button
-                        onClick={() => handleRejectRequest(request.id)}
-                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        onClick={() => handleRejectRequest(request._id)}
+                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
                       >
-                        Reject
+                        Reject Request
                       </button>
                     </>
-                  )}
-                  
-                  {request.status === 'pending' && isRequester(request) && (
-                    <button
-                      onClick={() => handleCancelRequest(request.id)}
-                      className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    >
-                      Cancel Request
-                    </button>
                   )}
 
                   {request.status === 'accepted' && (
@@ -272,11 +459,18 @@ const ExchangeRequestsPage: React.FC = () => {
         {filteredRequests.length === 0 && (
           <div className="text-center py-12">
             <ArrowRightLeft className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No exchange requests found</h3>
+            <h3 className="text-lg font-medium text-white mb-2">
+              {activeTab === 'received' ? 'No exchange requests found' : 'No exchange session requests'}
+            </h3>
             <p className="text-gray-400">
-              {filterStatus === 'all'
-                ? 'You haven\'t made or received any exchange requests yet.'
-                : `No ${filterStatus} exchange requests found.`}
+              {activeTab === 'received' 
+                ? (filterStatus === 'all'
+                    ? 'You haven\'t made or received any exchange requests yet.'
+                    : `No ${filterStatus} exchange requests found.`)
+                : (filterStatus === 'all'
+                    ? 'No one has requested to swap skills for your hosted sessions yet.'
+                    : `No ${filterStatus} requests for your hosted sessions found.`)
+              }
             </p>
           </div>
         )}

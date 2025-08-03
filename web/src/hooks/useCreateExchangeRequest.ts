@@ -3,7 +3,12 @@ import { ExchangeRequest } from "@/types";
 
 export const useCreateExchangeRequest = (options?: any) =>
   usePostRequest<
-    Omit<ExchangeRequest, 'id' | 'session' | 'requester' | 'recipient' | 'status' | 'createdAt' | 'updatedAt'> & { sessionId: string; recipient: string },
+    Omit<ExchangeRequest, '_id' | 'sessionId' | 'requester' | 'recipient' | 'offeredSkillId' | 'requestedSkillId' | 'status' | 'createdAt' | 'updatedAt' | '__v'> & { 
+      sessionId: string; 
+      recipient: string; 
+      offeredSkillId: string;
+      requestedSkillId: string;
+    },
     any
   >(
     "/exchange-requests",
