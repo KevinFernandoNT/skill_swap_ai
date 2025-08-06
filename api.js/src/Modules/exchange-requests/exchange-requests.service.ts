@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ExchangeRequestsRepository } from './exchange-requests.repository';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ExchangeSessionsService } from '../exchange-sessions/exchange-sessions.service';
 import { CreateExchangeRequestDto } from './dto/create-exchange-request.dto';
 import { UpdateExchangeRequestDto } from './dto/update-exchange-request.dto';
 import { Types } from 'mongoose';
@@ -9,7 +10,8 @@ import { Types } from 'mongoose';
 export class ExchangeRequestsService {
   constructor(
     private repo: ExchangeRequestsRepository,
-    private notificationsService: NotificationsService
+    private notificationsService: NotificationsService,
+    private exchangeSessionsService: ExchangeSessionsService
   ) {}
 
   async create(userId: string, dto: CreateExchangeRequestDto) {
@@ -56,10 +58,46 @@ export class ExchangeRequestsService {
           isRead: false,
           isDeleted: false
         });
+
+        // Create exchange session if request is accepted
+        if (status === 'accepted') {
+          await this.createExchangeSessionFromRequest(exchangeRequest);
+        }
       }
     }
     
     return updatedRequest;
+  }
+
+  private async createExchangeSessionFromRequest(exchangeRequest: any) {
+    try {
+      // Create exchange session with basic data from the exchange request
+      const exchangeSessionData = {
+        title: `Exchange Session`,
+        description: `Skill exchange session based on accepted request`,
+        date: new Date().toISOString().split('T')[0], // Today's date
+        startTime: '10:00',
+        endTime: '11:00',
+        skillCategory: 'General',
+        isTeaching: true, // Exchange sessions are teaching sessions
+        maxParticipants: 2, // Exchange sessions are typically 1-on-1
+        isPublic: false, // Exchange sessions are private
+        skillId: exchangeRequest.offeredSkillId.toString(),
+        requestedSkillId: exchangeRequest.requestedSkillId.toString(),
+        requestedBy: exchangeRequest.requester.toString(),
+        subTopics: [],
+        meetingLink: ''
+      };
+
+      // Create the exchange session
+      await this.exchangeSessionsService.create(
+        exchangeRequest.recipient.toString(), // Host is the recipient (session host)
+        exchangeSessionData
+      );
+    } catch (error) {
+      console.error('Error creating exchange session:', error);
+      // Don't throw error to avoid breaking the main flow
+    }
   }
 
   async findAll() {
