@@ -30,8 +30,8 @@ export class ExchangeSession {
   @Prop({ required: true })
   skillCategory: string;
 
-  @ApiProperty({ enum: ['upcoming', 'completed', 'cancelled'] })
-  @Prop({ enum: ['upcoming', 'completed', 'cancelled'], default: 'upcoming' })
+  @ApiProperty({ enum: ['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'] })
+  @Prop({ enum: ['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'], default: 'upcoming' })
   status: string;
 
   @ApiProperty({ required: false })

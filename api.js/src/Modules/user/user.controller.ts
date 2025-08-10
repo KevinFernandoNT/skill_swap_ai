@@ -59,7 +59,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Change current user password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
-    const user = await this.usersService.findById(req.user._id);
+    // Fetch user with password for verification
+    const user = await this.usersService.findByIdWithPassword(req.user._id);
     if (!user) throw new Error('User not found');
     const isMatch = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
     if (!isMatch) throw new BadRequestException('Current password does not match, Please try again');

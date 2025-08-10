@@ -1,0 +1,47 @@
+[
+  {
+    "name": "React",
+    "category": "Programming",
+    "proficiency": 85,
+    "type": "teaching",
+    "description": "Build SPAs with React, hooks, and context.",
+    "experience": "5 years professional",
+    "agenda": ["Hooks", "State Mgmt", "Routing"],
+    "metadata": ["frontend", "javascript"],
+    "userEmail": "alice@example.com"
+  },
+  {
+    "name": "Node.js",
+    "category": "Programming",
+    "proficiency": 80,
+    "type": "teaching",
+    "description": "REST APIs with Express and JWT.",
+    "experience": "4 years professional",
+    "agenda": ["Express", "Mongoose", "Auth"],
+    "metadata": ["backend", "javascript"],
+    "userEmail": "bob@example.com"
+  },
+  {
+    "name": "NLP Basics",
+    "category": "Data Science",
+    "proficiency": 70,
+    "type": "teaching",
+    "description": "Tokenization, embeddings, transformers.",
+    "experience": "3 years",
+    "agenda": ["Tokenization", "Embeddings", "Transformers"],
+    "metadata": ["ml", "ai"],
+    "userEmail": "carol@example.com"
+  },
+  {
+    "name": "Design Systems",
+    "category": "Design",
+    "proficiency": 60,
+    "type": "learning",
+    "description": "Component libraries and tokens.",
+    "experience": "",
+    "agenda": ["Tokens", "Accessibility"],
+    "metadata": ["ui", "ux"],
+    "userEmail": "alice@example.com"
+  }
+]
+

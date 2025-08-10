@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "password": "$2a$12$B8b3cCBx3MkDYc3m5b9BSuQa6i2c4pF6y7W8v9x0yZ1a2b3c4d5e6", 
+    "location": "San Francisco, CA",
+    "bio": "Frontend engineer passionate about React and UX.",
+    "avatar": "https://i.pravatar.cc/150?img=1"
+  },
+  {
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "password": "$2a$12$B8b3cCBx3MkDYc3m5b9BSuQa6i2c4pF6y7W8v9x0yZ1a2b3c4d5e6",
+    "location": "New York, NY",
+    "bio": "Backend developer building scalable APIs.",
+    "avatar": "https://i.pravatar.cc/150?img=2"
+  },
+  {
+    "name": "Carol Lee",
+    "email": "carol@example.com",
+    "password": "$2a$12$B8b3cCBx3MkDYc3m5b9BSuQa6i2c4pF6y7W8v9x0yZ1a2b3c4d5e6",
+    "location": "London, UK",
+    "bio": "Data scientist focusing on NLP.",
+    "avatar": "https://i.pravatar.cc/150?img=3"
+  }
+]
+

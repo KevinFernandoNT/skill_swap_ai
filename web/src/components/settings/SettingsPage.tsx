@@ -34,7 +34,23 @@ const SettingsPage: React.FC = () => {
 
   const { data: user, refetch } = useCurrentUser();
   const updateProfile = useUpdateProfile({
-    onSuccess: () => { toast({ title: 'Profile updated!' }); refetch(); },
+    onSuccess: async () => {
+      toast({ title: 'Profile updated!' });
+      // Refetch fresh user from API
+      const refreshed = await refetch();
+      const latestUser = (refreshed?.data as any) || null;
+      if (latestUser) {
+        // Preserve access and stream chat tokens
+        const accessToken = localStorage.getItem('token');
+        const streamToken = localStorage.getItem('stream_chat_token');
+        localStorage.setItem('user', JSON.stringify(latestUser));
+        if (accessToken) localStorage.setItem('token', accessToken);
+        if (streamToken) localStorage.setItem('stream_chat_token', streamToken);
+
+        // Broadcast real-time user update event so other components update immediately
+        window.dispatchEvent(new CustomEvent('userUpdated', { detail: { user: latestUser } }));
+      }
+    },
     onError: (error) => { toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update profile', variant: 'destructive' }); },
   });
   const changePassword = useChangePassword({

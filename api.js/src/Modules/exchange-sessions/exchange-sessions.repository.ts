@@ -161,7 +161,7 @@ export class ExchangeSessionsRepository {
       ],
     };
 
-    if (status && ['upcoming', 'completed', 'cancelled'].includes(status)) {
+    if (status && ['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'].includes(status)) {
       searchQuery.status = status;
     }
 
@@ -220,5 +220,20 @@ export class ExchangeSessionsRepository {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async expirePendingSessions(todayStr: string, currentTime: string): Promise<number> {
+    // Expire sessions that are still upcoming but their start has passed
+    const res = await this.exchangeSessionModel.updateMany(
+      {
+        status: 'upcoming',
+        $or: [
+          { date: { $lt: todayStr } },
+          { date: todayStr, startTime: { $lt: currentTime } },
+        ],
+      },
+      { $set: { status: 'expired' } }
+    ).exec();
+    return res.modifiedCount || 0;
   }
 } 

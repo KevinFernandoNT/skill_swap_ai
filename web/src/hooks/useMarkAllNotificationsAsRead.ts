@@ -1,7 +1,7 @@
-import usePutRequest from "@/hooks/usePutRequest";
+import usePatchRequest from "@/hooks/usePatchRequest";
 
 export const useMarkAllNotificationsAsRead = (options?: any) =>
-  usePutRequest<any, any>(
+  usePatchRequest<any, any>(
     "/notifications/mark-all-read",
     options
   ); 

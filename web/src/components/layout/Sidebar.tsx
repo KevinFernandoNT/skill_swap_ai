@@ -22,13 +22,22 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Get current user from localStorage
+  // Get current user from localStorage and subscribe for real-time updates
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setCurrentUser(user);
-    }
+    const applyUserFromStorage = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setCurrentUser(user);
+        } catch {}
+      }
+    };
+    applyUserFromStorage();
+
+    const onUserUpdated = (e: Event) => applyUserFromStorage();
+    window.addEventListener('userUpdated', onUserUpdated as EventListener);
+    return () => window.removeEventListener('userUpdated', onUserUpdated as EventListener);
   }, []);
 
   // Use prop user if provided, otherwise use current user from localStorage
@@ -40,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'My Skills', icon: 'Lightbulb', path: 'skills', isActive: currentPage === 'skills' },
     { name: 'Connect', icon: 'Users', path: 'connect', isActive: currentPage === 'connect' },
     { name: 'Exchange Requests', icon: 'ArrowRightLeft', path: 'exchange-requests', isActive: currentPage === 'exchange-requests' },
+    { name: 'Exchange Sessions', icon: 'ArrowRightLeft', path: 'exchange-sessions', isActive: currentPage === 'exchange-sessions' },
     { name: 'Messages', icon: 'MessageCircle', path: 'messages', isActive: currentPage === 'messages' },
     { name: 'Settings', icon: 'Settings', path: 'settings', isActive: currentPage === 'settings' }
   ];

@@ -7,6 +7,7 @@ import SettingsPage from '../settings/SettingsPage';
 import SkillsPage from '../skills/SkillsPage';
 import ConnectPage from '../sessions/ConnectPage';
 import ExchangeRequestsPage from '../exchange/ExchangeRequestsPage';
+import ExchangeSessionsPage from '../exchange/ExchangeSessionsPage';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -15,6 +16,7 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -32,9 +34,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     };
 
     window.addEventListener('navigateToTab', handleNavigateEvent as EventListener);
+    const onUserUpdated = () => setCurrentUser(JSON.parse(localStorage.getItem('user') || 'null'));
+    window.addEventListener('userUpdated', onUserUpdated as EventListener);
     
     return () => {
       window.removeEventListener('navigateToTab', handleNavigateEvent as EventListener);
+      window.removeEventListener('userUpdated', onUserUpdated as EventListener);
     };
   }, []);
 
@@ -52,6 +57,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         return <ConnectPage />;
       case 'exchange-requests':
         return <ExchangeRequestsPage />;
+      case 'exchange-sessions':
+        return <ExchangeSessionsPage />;
       case 'settings':
         return <SettingsPage />;
       default:

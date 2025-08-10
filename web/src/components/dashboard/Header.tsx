@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Plus, MessageSquare, UserPlus, LogOut, Check, X } from 'lucide-react';
+import { Bell, Plus, LogOut, Check } from 'lucide-react';
 import CreateSessionModal from '../sessions/CreateSessionModal';
 import { Session } from '../../types';
 import { useGetUnreadNotifications } from '../../hooks/useGetUnreadNotifications';
@@ -23,13 +23,22 @@ const Header: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
 
-  // Get current user from localStorage
+  // Get current user from localStorage and subscribe for real-time updates
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setCurrentUser(user);
-    }
+    const applyUserFromStorage = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setCurrentUser(user);
+        } catch {}
+      }
+    };
+    applyUserFromStorage();
+
+    const onUserUpdated = (e: Event) => applyUserFromStorage();
+    window.addEventListener('userUpdated', onUserUpdated as EventListener);
+    return () => window.removeEventListener('userUpdated', onUserUpdated as EventListener);
   }, []);
 
   // Fetch unread notifications and count
@@ -64,25 +73,29 @@ const Header: React.FC = () => {
     window.location.href = '/login';
   };
 
+
+  const { mutate: markOneAsRead } = useMarkNotificationAsRead({
+    onSuccess: () => {
+      refetchNotifications();
+      refetchCount();
+      toast({
+        title: "Notification marked as read",
+        description: "The notification has been marked as read.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description:
+          error?.response?.data?.message ||
+          "Could not mark notification as read.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleMarkAsRead = (notificationId: string) => {
-    const updateHook = useMarkNotificationAsRead(notificationId);
-    updateHook.mutate({}, {
-      onSuccess: () => {
-        refetchNotifications();
-        refetchCount();
-        toast({
-          title: "Notification marked as read",
-          description: "The notification has been marked as read.",
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error?.response?.data?.message || "Could not mark notification as read.",
-          variant: "destructive",
-        });
-      },
-    });
+    markOneAsRead({ id: notificationId });
   };
 
   const formatDate = (dateString: string) => {
@@ -116,14 +129,6 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             {/* Quick actions */}
             <div className="hidden md:flex space-x-2">
-          
-              <button 
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
-                aria-label="Connect with users"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Connect
-              </button>
               <button
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ml-2"
                 onClick={() => setIsLogoutModalOpen(true)}

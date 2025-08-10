@@ -1,0 +1,41 @@
+[
+  {
+    "title": "React Hooks Deep Dive",
+    "description": "Understanding useState, useEffect, custom hooks",
+    "date": "2025-08-15",
+    "startTime": "10:00",
+    "endTime": "11:30",
+    "skillCategory": "Programming",
+    "status": "upcoming",
+    "isTeaching": true,
+    "maxParticipants": 5,
+    "isPublic": true,
+    "hostEmail": "alice@example.com",
+    "participantsEmails": ["bob@example.com"],
+    "teachSkillName": "React",
+    "subTopics": ["Hooks", "State Mgmt"],
+    "meetingLink": "https://meet.example.com/react-hooks",
+    "focusKeywords": ["react", "hooks"],
+    "metadata": ["frontend", "spa"]
+  },
+  {
+    "title": "REST APIs with Node.js",
+    "description": "Express, Mongoose, and best practices",
+    "date": "2025-08-18",
+    "startTime": "14:00",
+    "endTime": "15:30",
+    "skillCategory": "Programming",
+    "status": "upcoming",
+    "isTeaching": true,
+    "maxParticipants": 8,
+    "isPublic": false,
+    "hostEmail": "bob@example.com",
+    "participantsEmails": ["alice@example.com"],
+    "teachSkillName": "Node.js",
+    "subTopics": ["Express", "Auth"],
+    "meetingLink": "https://meet.example.com/node-rest",
+    "focusKeywords": ["node", "express"],
+    "metadata": ["backend", "api"]
+  }
+]
+

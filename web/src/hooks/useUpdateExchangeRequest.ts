@@ -1,4 +1,4 @@
-import usePutRequest from "@/hooks/usePutRequest";
+import usePatchRequest from "@/hooks/usePatchRequest";
 import { ExchangeRequest } from "@/types";
 
 export interface UpdateExchangeRequestData {
@@ -7,13 +7,13 @@ export interface UpdateExchangeRequestData {
 }
 
 export const useUpdateExchangeRequest = (options?: any) =>
-  usePutRequest<UpdateExchangeRequestData, ExchangeRequest>(
+  usePatchRequest<UpdateExchangeRequestData, ExchangeRequest>(
     "/exchange-requests",
     options
   );
 
 export const useUpdateExchangeRequestById = (requestId: string, options?: any) =>
-  usePutRequest<UpdateExchangeRequestData, ExchangeRequest>(
+  usePatchRequest<UpdateExchangeRequestData, ExchangeRequest>(
     `/exchange-requests/${requestId}`,
     options
-  ); 
+  );

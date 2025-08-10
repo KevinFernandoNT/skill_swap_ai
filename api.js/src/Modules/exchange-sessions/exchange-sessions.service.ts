@@ -9,6 +9,7 @@ import { PaginatedResult } from '../common/interfaces/paginated-result.interface
 import { ExchangeSession, ExchangeSessionDocument } from './schemas/exchange-session.schema';
 import { Skill, SkillDocument } from '../skills/schemas/skill.schema';
 import mongoose from 'mongoose';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ExchangeSessionsService {
@@ -107,6 +108,28 @@ export class ExchangeSessionsService {
     
     const updatedSession = await this.exchangeSessionsRepository.update(id, updateExchangeSessionDto);
     return updatedSession;
+  }
+
+  async expirePendingSessionsNow(): Promise<number> {
+    // Set status to 'expired' for sessions where status is 'upcoming' and start datetime < now
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0,5);
+    // Note: implement in repository using an updateMany with date < today OR (date == today AND startTime < currentTime)
+    const result = await (this.exchangeSessionsRepository as any).expirePendingSessions(todayStr, currentTime);
+    return result;
+  }
+
+  // Run every day at 6:00 AM server time
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async expirePendingSessionsCron() {
+    try {
+      this.logger.log('Running cron to expire pending exchange sessions');
+      const modified = await this.expirePendingSessionsNow();
+      this.logger.log(`Expired ${modified} pending exchange sessions`);
+    } catch (error) {
+      this.logger.error('Error expiring pending exchange sessions', error as any);
+    }
   }
 
   async remove(userId: string, id: string): Promise<void> {

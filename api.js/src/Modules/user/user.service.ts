@@ -26,6 +26,14 @@ export class UsersService {
     return user;
   }
 
+  async findByIdWithPassword(id: string): Promise<User> {
+    const user = await this.usersRepository.findByIdWithPassword(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user as unknown as User;
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
   }

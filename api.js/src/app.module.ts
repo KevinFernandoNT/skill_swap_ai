@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './Modules/user/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SkillsModule } from './Modules/skills/skills.module';
 import { SessionsModule } from './Modules/sessions/sessions.module';
 import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-requests.module';
@@ -20,6 +21,7 @@ import { AuthModule } from './Modules/auth/auth.module';
       load: [configuration],
       envFilePath:'.env.development',
     }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

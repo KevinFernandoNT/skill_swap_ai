@@ -47,6 +47,11 @@ export class UsersRepository {
     return this.userModel.findById(id).select('-password').lean().exec();
   }
 
+  async findByIdWithPassword(id: string): Promise<User | null> {
+    // Used internally where password verification is required
+    return this.userModel.findById(id).lean().exec();
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.userModel.findOne({ email }).lean().exec();
   }

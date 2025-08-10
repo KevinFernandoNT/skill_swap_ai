@@ -122,6 +122,13 @@
   }
 }
 
+/* Dark mode class support */
+@layer base {
+  .dark body {
+    @apply text-white bg-black;
+  }
+}
+
 /* Typing animation for chat */
 .typing-animation .dot {
   animation: typing-dot 1.4s infinite ease-in-out both;

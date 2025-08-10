@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UseGuards, Request, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ExchangeSessionsService } from './exchange-sessions.service';
 import { CreateExchangeSessionDto } from './dto/create-exchange-session.dto';
@@ -102,6 +102,20 @@ export class ExchangeSessionsController {
   @ApiResponse({ status: 404, description: 'Exchange session not found' })
   async update(@Request() req, @Param('id') id: string, @Body() updateExchangeSessionDto: UpdateExchangeSessionDto) {
     return this.exchangeSessionsService.update(req.user._id, id, updateExchangeSessionDto);
+  }
+
+  @Patch(':id/start')
+  @ApiOperation({ summary: 'Start an exchange session (sets status to ongoing)' })
+  @ApiResponse({ status: 200, description: 'Exchange session started' })
+  async start(@Request() req, @Param('id') id: string) {
+    return this.exchangeSessionsService.update(req.user._id, id, { status: 'ongoing' } as any);
+  }
+
+  @Patch(':id/complete')
+  @ApiOperation({ summary: 'Complete an exchange session (sets status to completed)' })
+  @ApiResponse({ status: 200, description: 'Exchange session completed' })
+  async complete(@Request() req, @Param('id') id: string) {
+    return this.exchangeSessionsService.update(req.user._id, id, { status: 'completed' } as any);
   }
 
   @Delete(':id')

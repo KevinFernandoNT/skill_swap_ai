@@ -19,7 +19,7 @@ const NotificationDropdown: React.FC = () => {
   const unreadCount: number = unreadCountResponse?.data || 0;
 
   // Mark notification as read
-  const { mutate: markAsRead } = useMarkNotificationAsRead('', {
+  const { mutate: markAsRead } = useMarkNotificationAsRead({
     onSuccess: () => {
       refetchNotifications();
       refetchCount();
@@ -27,7 +27,9 @@ const NotificationDropdown: React.FC = () => {
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error?.response?.data?.message || "Could not mark notification as read.",
+        description:
+          error?.response?.data?.message ||
+          "Could not mark notification as read.",
         variant: "destructive",
       });
     },
@@ -53,20 +55,7 @@ const NotificationDropdown: React.FC = () => {
   });
 
   const handleMarkAsRead = (notificationId: string) => {
-    const updateHook = useMarkNotificationAsRead(notificationId);
-    updateHook.mutate({}, {
-      onSuccess: () => {
-        refetchNotifications();
-        refetchCount();
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error?.response?.data?.message || "Could not mark notification as read.",
-          variant: "destructive",
-        });
-      },
-    });
+    markAsRead({ id: notificationId });
   };
 
   const handleMarkAllAsRead = () => {

@@ -48,9 +48,9 @@ export class UpdateExchangeSessionDto {
   @IsBoolean()
   isPublic?: boolean;
 
-  @ApiPropertyOptional({ enum: ['upcoming', 'completed', 'cancelled'] })
+  @ApiPropertyOptional({ enum: ['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'] })
   @IsOptional()
-  @IsEnum(['upcoming', 'completed', 'cancelled'])
+  @IsEnum(['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'])
   status?: string;
 
   @ApiPropertyOptional({ type: [String] })
