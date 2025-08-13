@@ -13,6 +13,18 @@ const ExchangeSessionsPage: React.FC = () => {
   const { data, isLoading, error, refetch } = useGetExchangeSessions();
   const sessions: ExchangeSession[] = data?.data || [];
 
+  // Ensure only sessions where the current user is host or requester are shown
+  const currentUserId = (() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      const u = JSON.parse(userStr);
+      return u._id || u.id || null;
+    } catch {
+      return null;
+    }
+  })();
+
   const { toast } = useToast();
 
   const handleStart = (id: string) => {
@@ -32,7 +44,14 @@ const ExchangeSessionsPage: React.FC = () => {
   };
 
   const filtered = useMemo(() => {
-    return sessions.filter((s) => {
+    const visible = sessions.filter((s) => {
+      if (!currentUserId) return false;
+      const hostId = (s as any).hostId?._id || (s as any).hostId;
+      const requestedById = (s as any).requestedBy?._id || (s as any).requestedBy;
+      return hostId === currentUserId || requestedById === currentUserId;
+    });
+
+    return visible.filter((s) => {
       const matchesStatus = statusFilter === "all" || s.status === statusFilter;
       const matchesSearch =
         s.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,7 +60,7 @@ const ExchangeSessionsPage: React.FC = () => {
         s.requestedSkillId.name.toLowerCase().includes(search.toLowerCase());
       return matchesStatus && matchesSearch;
     });
-  }, [sessions, statusFilter, search]);
+  }, [sessions, statusFilter, search, currentUserId]);
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {

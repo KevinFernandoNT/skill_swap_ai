@@ -243,13 +243,14 @@ const Header: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setIsLogoutModalOpen(false)}
+              className="text-black hover:text-black"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-black hover:text-black"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout

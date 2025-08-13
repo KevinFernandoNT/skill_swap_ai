@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Calendar, Clock, User, ArrowRightLeft, CheckCircle, XCircle, Clock as ClockIcon, MessageCircle, Loader2, Crown } from 'lucide-react';
 import { ExchangeRequest } from '../../types';
 import { useGetExchangeRequests } from '../../hooks/useGetExchangeRequests';
-import { useGetHostedSessionExchangeRequests } from '../../hooks/useGetHostedSessionExchangeRequests';
 import { useUpdateExchangeRequest, useUpdateExchangeRequestById } from '../../hooks/useUpdateExchangeRequest';
 import { useToast } from '../../hooks/use-toast';
 
 const ExchangeRequestsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'received' | 'hosted'>('received');
+  // Single list view: only received requests for the current user
   const { toast } = useToast();
 
   // Get current user from localStorage
@@ -27,9 +26,7 @@ const ExchangeRequestsPage: React.FC = () => {
   const { data: exchangeRequestsResponse, isLoading: isLoadingExchangeRequests, error: exchangeRequestsError, refetch: refetchExchangeRequests } = useGetExchangeRequests();
   const exchangeRequests: ExchangeRequest[] = Array.isArray(exchangeRequestsResponse?.data) ? exchangeRequestsResponse.data : Array.isArray(exchangeRequestsResponse) ? exchangeRequestsResponse : [];
 
-  // Fetch hosted session exchange requests from API
-  const { data: hostedExchangeRequestsResponse, isLoading: isLoadingHostedRequests, error: hostedRequestsError, refetch: refetchHostedRequests } = useGetHostedSessionExchangeRequests();
-  const hostedExchangeRequests: ExchangeRequest[] = Array.isArray(hostedExchangeRequestsResponse?.data) ? hostedExchangeRequestsResponse.data : Array.isArray(hostedExchangeRequestsResponse) ? hostedExchangeRequestsResponse : [];
+  // Hosted session requests tab removed from this page
 
   // Update exchange request function
   const updateExchangeRequestStatus = async (requestId: string, status: 'accepted' | 'rejected') => {
@@ -55,7 +52,6 @@ const ExchangeRequestsPage: React.FC = () => {
 
       // Refetch data
       refetchExchangeRequests();
-      refetchHostedRequests();
     } catch (error: any) {
       toast({
         title: `${status === 'accepted' ? 'Accept' : 'Reject'} Failed`,
@@ -80,16 +76,8 @@ const ExchangeRequestsPage: React.FC = () => {
       )
     : [];
 
-  // Get hosted session exchange requests where current user is the session host
-  const hostedRequests = currentUserId 
-    ? hostedExchangeRequests.filter(request => 
-        request.recipient._id === currentUserId
-      )
-    : [];
-
-  const getCurrentRequests = () => {
-    return activeTab === 'received' ? userExchangeRequests : hostedRequests;
-  };
+  // Single source of truth for this page
+  const getCurrentRequests = () => userExchangeRequests;
 
   const filteredRequests = getCurrentRequests().filter(request => {
     if (filterStatus === 'all') return true;
@@ -141,8 +129,8 @@ const ExchangeRequestsPage: React.FC = () => {
     return false;
   };
 
-  const isLoading = isLoadingExchangeRequests || isLoadingHostedRequests;
-  const error = exchangeRequestsError || hostedRequestsError;
+  const isLoading = isLoadingExchangeRequests;
+  const error = exchangeRequestsError;
 
   // Check if user is logged in
   if (!currentUserId) {
@@ -221,30 +209,7 @@ const ExchangeRequestsPage: React.FC = () => {
           <p className="mt-1 text-sm text-gray-400">Manage your skill swap requests and responses</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
-          <button
-            onClick={() => setActiveTab('received')}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'received'
-                ? 'bg-primary text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Received Requests
-          </button>
-          <button
-            onClick={() => setActiveTab('hosted')}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'hosted'
-                ? 'bg-primary text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Crown className="w-4 h-4 inline mr-2" />
-            Exchange Sessions
-          </button>
-        </div>
+        {/* Tabs removed: this page now only shows received requests */}
       </div>
 
       <div className="px-4 py-6 lg:px-8">
@@ -459,19 +424,8 @@ const ExchangeRequestsPage: React.FC = () => {
         {filteredRequests.length === 0 && (
           <div className="text-center py-12">
             <ArrowRightLeft className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">
-              {activeTab === 'received' ? 'No exchange requests found' : 'No exchange session requests'}
-            </h3>
-            <p className="text-gray-400">
-              {activeTab === 'received' 
-                ? (filterStatus === 'all'
-                    ? 'You haven\'t made or received any exchange requests yet.'
-                    : `No ${filterStatus} exchange requests found.`)
-                : (filterStatus === 'all'
-                    ? 'No one has requested to swap skills for your hosted sessions yet.'
-                    : `No ${filterStatus} requests for your hosted sessions found.`)
-              }
-            </p>
+            <h3 className="text-lg font-medium text-white mb-2">No exchange requests found</h3>
+            <p className="text-gray-400">{filterStatus === 'all' ? "You haven't received any exchange requests yet." : `No ${filterStatus} exchange requests found.`}</p>
           </div>
         )}
       </div>

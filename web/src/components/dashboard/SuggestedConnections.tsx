@@ -393,7 +393,7 @@ const SuggestedConnections: React.FC = () => {
             {filteredConnections.map(connection => (
               <div 
                 key={connection._id}
-                className="flex-shrink-0 w-48 bg-gray-800 rounded-lg border border-gray-700 p-4 transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-105"
+                className="flex-shrink-0 w-48 bg-gray-800 rounded-lg border border-gray-700 p-4 transition-all duration-300 hover:shadow-md hover:border-green-500"
               >
                 <div className="flex flex-col items-center">
                   <div className="relative mb-3">

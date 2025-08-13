@@ -55,7 +55,12 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         maxParticipants: session.maxParticipants || 5,
         isTeaching: session.isTeaching || true
       });
-      setGeneralSubTopics(session.subTopics && session.subTopics.length === 5 ? [...session.subTopics] : ['', '', '', '', '']);
+      // Prefer focused topics if present; otherwise, use saved subTopics
+      const focusedTopics = Array.isArray((session as any).focusKeywords) ? (session as any).focusKeywords : [];
+      const savedSubTopics = Array.isArray((session as any).subTopics) ? (session as any).subTopics : [];
+      const sourceTopics = focusedTopics.length > 0 ? focusedTopics : savedSubTopics;
+      const normalizedTopics = Array.from({ length: 5 }, (_, i) => sourceTopics[i] ?? '');
+      setGeneralSubTopics(normalizedTopics);
     }
   }, [session]);
 
@@ -254,6 +259,8 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                 ))}
               </div>
             </div>
+
+            {/* Focused topics are prefilled into the 5 inputs above; no duplicate list below. */}
 
             {/* Footer */}
             <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-800">

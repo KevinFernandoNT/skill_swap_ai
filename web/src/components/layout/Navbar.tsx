@@ -29,7 +29,7 @@ export const Navbar = () => {
         
           </div>
           <div className="flex space-x-3">
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="text-black hover:text-black">
               <Link to="/login">Log in</Link>
             </Button>
             <Button asChild>
@@ -72,7 +72,7 @@ export const Navbar = () => {
                 )
               ))}
               <div className="flex flex-col space-y-3 pt-4">
-                <Button variant="outline" asChild className="w-full bg-gray-800">
+                <Button variant="outline" asChild className="w-full bg-gray-800 text-black hover:text-black">
                   <Link className="font-bold" to="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
                 </Button>
                 <Button asChild className="w-full">

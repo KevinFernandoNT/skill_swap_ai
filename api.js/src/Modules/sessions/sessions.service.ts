@@ -31,13 +31,13 @@ export class SessionsService {
     this.logger.log(`Session created successfully with ID: ${(session as any)._id}`);
 
     // Trigger background process if we have teachSkillId and focusKeywords
-    if (createSessionDto.teachSkillId && createSessionDto.subTopics && createSessionDto.subTopics.length > 0) {
+    if (createSessionDto.teachSkillId && createSessionDto.focusKeywords && createSessionDto.focusKeywords.length > 0) {
       this.logger.log(`Triggering background process for session: ${(session as any)._id}`);
       this.logger.log(`teachSkillId: ${createSessionDto.teachSkillId}`);
       this.logger.log(`focusKeywords: ${JSON.stringify(createSessionDto.focusKeywords)}`);
 
       // Execute background process asynchronously
-      this.triggerBackgroundProcess((session as any)._id, createSessionDto.teachSkillId, createSessionDto.subTopics);
+      this.triggerBackgroundProcess((session as any)._id, createSessionDto.teachSkillId, createSessionDto.focusKeywords);
     } else {
       this.logger.log(`Skipping background process - missing teachSkillId or focusKeywords`);
       this.logger.log(`teachSkillId: ${createSessionDto.teachSkillId}`);
@@ -127,16 +127,16 @@ export class SessionsService {
     const updatedSession = await this.sessionsRepository.update(id, updateSessionDto);
     
     // Check if subTopics were updated and trigger background process if needed
-    if (updateSessionDto.subTopics && updateSessionDto.subTopics.length > 0 && session.teachSkillId) {
+    if (updateSessionDto.focusKeywords && updateSessionDto.focusKeywords.length > 0 && session.teachSkillId) {
       this.logger.log(`SubTopics updated for session: ${id}, triggering background process`);
       this.logger.log(`teachSkillId: ${session.teachSkillId}`);
-      this.logger.log(`subTopics: ${JSON.stringify(updateSessionDto.subTopics)}`);
+      this.logger.log(`subTopics: ${JSON.stringify(updateSessionDto.focusKeywords)}`);
 
       // Execute background process asynchronously
-      this.triggerBackgroundProcess(id, session.teachSkillId.toString(), updateSessionDto.subTopics);
+      this.triggerBackgroundProcess(id, session.teachSkillId.toString(), updateSessionDto.focusKeywords);
     } else {
       this.logger.log(`No subTopics update detected or missing teachSkillId, skipping background process`);
-      this.logger.log(`subTopics provided: ${updateSessionDto.subTopics ? 'yes' : 'no'}`);
+      this.logger.log(`subTopics provided: ${updateSessionDto.focusKeywords ? 'yes' : 'no'}`);
       this.logger.log(`teachSkillId: ${session.teachSkillId}`);
     }
     

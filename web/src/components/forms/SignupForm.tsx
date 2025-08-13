@@ -51,6 +51,15 @@ export const SignupForm = () => {
     }
   }, []);
 
+  // Revoke object URL when preview changes or component unmounts to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const registerMutation = useRegister({
     onSuccess: (data) => {
       toast({
@@ -211,8 +220,8 @@ export const SignupForm = () => {
                 <FormLabel className="text-gray-400">Add a Profile Picture</FormLabel>
                 <div className="flex items-center gap-4 mb-2">
                   {avatarPreview && (
-                    <div className="w-30 h-32 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
-                      <img src={avatarPreview} alt="Avatar Preview" className="object-cover w-24 h-24" />
+                    <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
+                      <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
                   <FormControl>
@@ -223,7 +232,8 @@ export const SignupForm = () => {
                       onChange={e => {
                         if (e.target.files && e.target.files[0]) {
                           setAvatarFile(e.target.files[0]);
-                          setAvatarPreview(URL.createObjectURL(e.target.files[0]));
+                          const url = URL.createObjectURL(e.target.files[0]);
+                          setAvatarPreview(url);
                         } else {
                           setAvatarFile(null);
                           setAvatarPreview(null);

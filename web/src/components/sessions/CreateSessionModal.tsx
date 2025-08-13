@@ -306,7 +306,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
             {/* Focus Keywords (optional, up to 5) */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Focus Keywords (optional, up to 5)
+                What are the Focused Topics for this session ? (optional, up to 5)
               </label>
               <div className="flex space-x-2 mb-3">
                 <input
@@ -342,7 +342,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-2">You can provide up to 5 focus keywords for this session (optional).</p>
+              <p className="text-xs text-gray-500 mt-2">You can provide up to 5 focus topics for this session (optional).</p>
             </div>
 
             {/* Session Preview */}

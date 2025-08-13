@@ -83,7 +83,7 @@ export const LoginForm = () => {
           <div>
             <label className="text-gray-400 block mb-1">Email</label>
             <Input
-              className="bg-gray-200"
+              className="bg-gray-200 text-black"
               type="email"
               placeholder="Enter your email"
               {...register('email')}
