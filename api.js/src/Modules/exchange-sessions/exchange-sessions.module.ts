@@ -5,6 +5,7 @@ import { ExchangeSessionsService } from './exchange-sessions.service';
 import { ExchangeSessionsRepository } from './exchange-sessions.repository';
 import { ExchangeSession, ExchangeSessionSchema } from './schemas/exchange-session.schema';
 import { Skill, SkillSchema } from '../skills/schemas/skill.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { Skill, SkillSchema } from '../skills/schemas/skill.schema';
       { name: ExchangeSession.name, schema: ExchangeSessionSchema },
       { name: Skill.name, schema: SkillSchema }
     ]),
+    NotificationsModule,
   ],
   controllers: [ExchangeSessionsController],
   providers: [

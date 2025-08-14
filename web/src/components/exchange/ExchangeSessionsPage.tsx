@@ -3,37 +3,29 @@ import { Calendar, Clock, ArrowRightLeft } from "lucide-react";
 import { useGetExchangeSessions } from "@/hooks/useGetExchangeSessions";
 import { ExchangeSession } from "@/hooks/useGetUpcomingExchangeSessions";
 import UserProfile from "@/components/ui/UserProfile";
-import { useStartExchangeSession, useCompleteExchangeSession } from "@/hooks/useUpdateExchangeSessionStatus";
+import { useCompleteExchangeSession } from "@/hooks/useUpdateExchangeSessionStatus";
 import { useToast } from "@/hooks/use-toast";
 
 const ExchangeSessionsPage: React.FC = () => {
-  const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "completed" | "cancelled">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "completed" | "expired">("all");
   const [search, setSearch] = useState("");
 
   const { data, isLoading, error, refetch } = useGetExchangeSessions();
   const sessions: ExchangeSession[] = data?.data || [];
 
-  // Ensure only sessions where the current user is host or requester are shown
+  // Determine current user id for display purposes (to show "You")
   const currentUserId = (() => {
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr) return null;
       const u = JSON.parse(userStr);
-      return u._id || u.id || null;
+      return u?._id || u?.id || null;
     } catch {
       return null;
     }
   })();
 
   const { toast } = useToast();
-
-  const handleStart = (id: string) => {
-    const { mutate } = useStartExchangeSession(id, {
-      onSuccess: () => { toast({ title: 'Session started' }); refetch(); },
-      onError: (e: any) => toast({ title: 'Failed to start', description: e?.response?.data?.message || 'Error', variant: 'destructive' })
-    });
-    mutate({});
-  };
 
   const handleComplete = (id: string) => {
     const { mutate } = useCompleteExchangeSession(id, {
@@ -44,14 +36,7 @@ const ExchangeSessionsPage: React.FC = () => {
   };
 
   const filtered = useMemo(() => {
-    const visible = sessions.filter((s) => {
-      if (!currentUserId) return false;
-      const hostId = (s as any).hostId?._id || (s as any).hostId;
-      const requestedById = (s as any).requestedBy?._id || (s as any).requestedBy;
-      return hostId === currentUserId || requestedById === currentUserId;
-    });
-
-    return visible.filter((s) => {
+    return sessions.filter((s) => {
       const matchesStatus = statusFilter === "all" || s.status === statusFilter;
       const matchesSearch =
         s.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,7 +45,7 @@ const ExchangeSessionsPage: React.FC = () => {
         s.requestedSkillId.name.toLowerCase().includes(search.toLowerCase());
       return matchesStatus && matchesSearch;
     });
-  }, [sessions, statusFilter, search, currentUserId]);
+  }, [sessions, statusFilter, search]);
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
@@ -96,7 +81,7 @@ const ExchangeSessionsPage: React.FC = () => {
             <option value="all">All Status</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
           </select>
         </div>
 
@@ -160,29 +145,27 @@ const ExchangeSessionsPage: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-gray-800">
                   <div>
                     <div className="text-xs text-gray-400 mb-1">Host</div>
-                    <UserProfile user={session.hostId} showEmail={false} />
+                    <UserProfile 
+                      user={{ ...session.hostId, name: (currentUserId && session.hostId?._id === currentUserId) ? 'You' : session.hostId?.name }} 
+                      showEmail={false} 
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-gray-400 mb-1">Requested by</div>
-                    <UserProfile user={session.requestedBy} showEmail={false} />
+                    <UserProfile 
+                      user={{ ...session.requestedBy, name: (currentUserId && session.requestedBy?._id === currentUserId) ? 'You' : session.requestedBy?.name }} 
+                      showEmail={false} 
+                    />
                   </div>
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  {session.status === 'upcoming' && (
-                    <button
-                      onClick={() => handleStart(session._id)}
-                      className="px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
-                    >
-                      Start Session
-                    </button>
-                  )}
-                  {session.status === 'ongoing' && (
+                  {session.status !== 'completed' && session.status !== 'cancelled' && session.status !== 'expired' && (
                     <button
                       onClick={() => handleComplete(session._id)}
                       className="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
                     >
-                      Complete Session
+                      Mark as Complete
                     </button>
                   )}
                 </div>

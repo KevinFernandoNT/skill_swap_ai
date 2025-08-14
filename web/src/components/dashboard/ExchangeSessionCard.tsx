@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Calendar, Clock, ArrowRightLeft } from 'lucide-react';
 import { ExchangeSession } from '../../hooks/useGetUpcomingExchangeSessions';
 import UserProfile from '../ui/UserProfile';
+import { useCompleteExchangeSession } from '@/hooks/useUpdateExchangeSessionStatus';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ExchangeSessionCardProps {
   session: ExchangeSession;
@@ -8,7 +12,32 @@ interface ExchangeSessionCardProps {
   onRescheduleClick?: () => void;
 }
 
-const ExchangeSessionCard: React.FC<ExchangeSessionCardProps> = ({ session, onClick, onRescheduleClick }) => {
+const ExchangeSessionCard: React.FC<ExchangeSessionCardProps> = ({ session, onClick }) => {
+  const { toast } = useToast();
+
+  // Determine current user id to optionally render "You"
+  const currentUserId = (() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      const u = JSON.parse(userStr);
+      return u?._id || u?.id || null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const { mutate: completeSession, status: completeStatus } = useCompleteExchangeSession(session._id, {
+    onSuccess: () => {
+      toast({ title: 'Session marked as completed' });
+      // Trigger a quick refresh so the card disappears from "upcoming"
+      try { window.location.reload(); } catch {}
+    },
+    onError: (e: any) => toast({ title: 'Failed to complete', description: e?.response?.data?.message || 'Error', variant: 'destructive' })
+  });
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const getFormattedDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', { 
@@ -78,9 +107,15 @@ const ExchangeSessionCard: React.FC<ExchangeSessionCardProps> = ({ session, onCl
 
         <div className="flex flex-col items-end space-y-2">
           <div className="text-xs text-gray-400">Host:</div>
-          <UserProfile user={session.hostId} showEmail={false} />
+          <UserProfile 
+            user={{ ...session.hostId, name: (currentUserId && session.hostId?._id === currentUserId) ? 'You' : session.hostId?.name }} 
+            showEmail={false} 
+          />
           <div className="text-xs text-gray-400">Requested by:</div>
-          <UserProfile user={session.requestedBy} showEmail={false} />
+          <UserProfile 
+            user={{ ...session.requestedBy, name: (currentUserId && session.requestedBy?._id === currentUserId) ? 'You' : session.requestedBy?.name }} 
+            showEmail={false} 
+          />
         </div>
       </div>
 
@@ -90,16 +125,61 @@ const ExchangeSessionCard: React.FC<ExchangeSessionCardProps> = ({ session, onCl
         </div>
         
         <div className="flex space-x-2">
-          <button 
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-gray-900"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onRescheduleClick) onRescheduleClick();
-            }}
-            aria-label="Reschedule"
-          >
-            Reschedule
-          </button>
+          {session.meetingLink && session.meetingLink.trim() !== '' && (
+            <a
+              href={session.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-gray-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Join Now
+            </a>
+          )}
+          {session.status !== 'completed' && session.status !== 'cancelled' && (
+            <>
+              <button 
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 focus:ring-offset-gray-900 disabled:opacity-60"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmOpen(true);
+                }}
+                disabled={completeStatus === 'pending'}
+                aria-label="Mark as Complete"
+              >
+                Mark as Complete
+              </button>
+
+              <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <DialogContent className="bg-gray-900 border border-gray-800 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Mark session as complete?</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-gray-300">
+                    This will set the status of "{session.title}" to completed. You can’t undo this action.
+                  </p>
+                  <DialogFooter>
+                    <button
+                      className="px-3 py-1.5 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700"
+                      onClick={() => setConfirmOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60"
+                      onClick={() => {
+                        completeSession({} as any);
+                        setConfirmOpen(false);
+                      }}
+                      disabled={completeStatus === 'pending'}
+                    >
+                      {completeStatus === 'pending' ? 'Completing...' : 'Confirm'}
+                    </button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
     </div>

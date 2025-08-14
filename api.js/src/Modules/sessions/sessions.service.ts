@@ -159,6 +159,16 @@ export class SessionsService {
     return this.sessionsRepository.search(query, status, paginationDto);
   }
 
+  /**
+   * Find a session by a short 4-character code derived from the ObjectId
+   */
+  async findByCode(code: string): Promise<Session | null> {
+    if (!code || code.length < 4) {
+      throw new BadRequestException('Invalid session code');
+    }
+    return this.sessionsRepository.findByCode(code);
+  }
+
   async joinSession(userId: string, sessionId: string): Promise<Session | null> {
     const session = await this.sessionsRepository.findById(sessionId);
     if (!session) {

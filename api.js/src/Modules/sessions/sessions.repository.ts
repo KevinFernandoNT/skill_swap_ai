@@ -182,6 +182,33 @@ export class SessionsRepository {
     };
   }
 
+  /**
+   * Find a session by a short 4-character code derived from the ObjectId
+   * - Matches either the last 4 hex characters of the _id
+   * - Or an exact 4-character suffix match on the _id string (case-insensitive)
+   */
+  async findByCode(code: string): Promise<Session | null> {
+    // Normalize code to lowercase for hex comparisons
+    const normalized = (code || '').toLowerCase();
+
+    // Aggregate to compute last 4 hex of ObjectId and match
+    const results = await (this.sessionModel as any).aggregate([
+      { $addFields: { idStr: { $toString: '$_id' } } },
+      { $addFields: { last4Hex: { $substr: ['$idStr', 20, 4] } } },
+      { $match: { $or: [
+        { last4Hex: normalized },
+        { idStr: { $regex: `${normalized}$`, $options: 'i' } },
+      ] } },
+      { $limit: 1 },
+    ]).exec();
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    const foundId = results[0]._id;
+    return this.findById(String(foundId));
+  }
   async addParticipant(sessionId: string, userId: string): Promise<Session | null> {
     return this.sessionModel
       .findByIdAndUpdate(

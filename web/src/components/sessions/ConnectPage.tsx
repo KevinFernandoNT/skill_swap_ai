@@ -17,6 +17,7 @@ const ConnectPage: React.FC = () => {
   const [pinCode, setPinCode] = useState('');
   const [pinError, setPinError] = useState('');
   const [foundPrivateSession, setFoundPrivateSession] = useState<Session | null>(null);
+  const [isSearchingCode, setIsSearchingCode] = useState(false);
   const { toast } = useToast();
 
   // Fetch suggested sessions from API
@@ -50,22 +51,53 @@ const ConnectPage: React.FC = () => {
     setIsSwapModalOpen(true);
   };
 
-  const handlePinSubmit = () => {
+  const handlePinSubmit = async () => {
     setPinError('');
-    
-    // Find session with matching PIN
-    const privateSession = mockSessions.find(session => 
-      session.pin === pinCode && 
-      session.status === 'upcoming' &&
-      session.participant._id !== currentUser._id
-    );
+    setIsSearchingCode(true);
+    try {
+      const baseURL = import.meta.env.MODE === 'development' ? 'http://localhost:3000' : '/api';
+      const res = await fetch(`${baseURL}/sessions/code/${encodeURIComponent(pinCode)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
+      const data = await res.json();
+      const session = data?.data as any;
+      if (session) {
+        // Normalize to frontend Session shape minimally required for modals
+        const normalized: Session = {
+          _id: session._id,
+          title: session.title,
+          date: session.date,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          skillCategory: session.skillCategory,
+          participant: session.participants?.[0] || session.hostId, // placeholder usage
+          hostId: session.hostId,
+          status: session.status,
+          isTeaching: session.isTeaching,
+          description: session.description,
+          maxParticipants: session.maxParticipants,
+          isPublic: session.isPublic,
+          subTopics: session.subTopics,
+          teachSkillId: session.teachSkillId,
+          teachSkillName: session.teachSkillName,
+          meetingLink: session.meetingLink,
+          focusKeywords: session.focusKeywords,
+          metadata: session.metadata,
+        } as Session;
 
-    if (privateSession) {
-      setFoundPrivateSession(privateSession);
-      setIsPinModalOpen(false);
-      setPinCode('');
-    } else {
-      setPinError('Invalid PIN code. Please try again.');
+        setFoundPrivateSession(normalized);
+        setIsPinModalOpen(false);
+        setPinCode('');
+      } else {
+        setFoundPrivateSession(null);
+        setPinError('No session matched that code.');
+      }
+    } catch (e: any) {
+      setPinError(e?.message || 'Failed to search by code.');
+    } finally {
+      setIsSearchingCode(false);
     }
   };
 
@@ -415,10 +447,10 @@ const ConnectPage: React.FC = () => {
               </button>
               <button
                 onClick={handlePinSubmit}
-                disabled={pinCode.length !== 4}
+                disabled={pinCode.length < 4 || isSearchingCode}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Connect
+                {isSearchingCode ? 'Searching...' : 'Search'}
               </button>
             </div>
           </div>

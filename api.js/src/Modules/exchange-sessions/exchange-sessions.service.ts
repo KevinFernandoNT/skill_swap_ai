@@ -44,14 +44,19 @@ export class ExchangeSessionsService {
   async findUpcomingExchangeSessions(userId: string, paginationDto?: PaginationDto): Promise<PaginatedResult<ExchangeSession>> {
     this.logger.log(`Finding upcoming exchange sessions for user: ${userId}`);
     
-    // Calculate date range for next 7 days
+    // Calculate date range for next 7 days using local timezone (avoid UTC off-by-one)
+    const formatLocalYMD = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const today = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(today.getDate() + 7);
-    
-    // Format dates as YYYY-MM-DD strings
-    const todayStr = today.toISOString().split('T')[0];
-    const sevenDaysStr = sevenDaysFromNow.toISOString().split('T')[0];
+    const sevenDaysFromNow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
+
+    const todayStr = formatLocalYMD(today);
+    const sevenDaysStr = formatLocalYMD(sevenDaysFromNow);
     
     this.logger.log(`Date range: ${todayStr} to ${sevenDaysStr}`);
     
@@ -61,16 +66,21 @@ export class ExchangeSessionsService {
   async findUpcomingExchangeSessionsForDashboard(userId: string, paginationDto?: PaginationDto): Promise<PaginatedResult<ExchangeSession>> {
     this.logger.log(`Finding upcoming exchange sessions for dashboard for user: ${userId}`);
     
-    // Calculate date range for next 3 days (for dashboard)
+    // Calculate date range for next 3 days (for dashboard) using local timezone
+    const formatLocalYMD = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const today = new Date();
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(today.getDate() + 3);
+    const threeDaysFromNow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
+
+    const todayStr = formatLocalYMD(today);
+    const threeDaysStr = formatLocalYMD(threeDaysFromNow);
     
-    // Format dates as YYYY-MM-DD strings
-    const todayStr = today.toISOString().split('T')[0];
-    const threeDaysStr = threeDaysFromNow.toISOString().split('T')[0];
-    
-    this.logger.log(`Dashboard date range: ${todayStr} to ${threeDaysStr}`);
+   console.log(`Dashboard date range: ${todayStr} to ${threeDaysStr}`);
     
     return this.exchangeSessionsRepository.findUpcomingExchangeSessions(userId, todayStr, threeDaysStr, paginationDto);
   }

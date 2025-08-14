@@ -17,13 +17,13 @@ export class ExchangeSessionsRepository {
   }
 
   async findByUserId(userId: string, paginationDto: PaginationDto): Promise<PaginatedResult<ExchangeSession>> {
-    const { page, limit } = paginationDto;
+    const { page = 1, limit = 10 } = paginationDto || {} as PaginationDto;
     const skip = (page - 1) * limit;
 
     const query = {
       $or: [
-        { hostId: userId },
-        { requestedBy: userId }
+        { hostId: userId.toString() },
+        { requestedBy: userId.toString() }
       ]
     };
 
@@ -58,8 +58,8 @@ export class ExchangeSessionsRepository {
       $and: [
         {
           $or: [
-            { hostId: userId },
-            { requestedBy: userId }
+            { hostId: userId.toString() },
+            { requestedBy: userId.toString() }
           ]
         },
         {
@@ -98,7 +98,7 @@ export class ExchangeSessionsRepository {
   }
 
   async findPublic(paginationDto: PaginationDto): Promise<PaginatedResult<ExchangeSession>> {
-    const { page, limit } = paginationDto;
+    const { page = 1, limit = 10 } = paginationDto || {} as PaginationDto;
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([

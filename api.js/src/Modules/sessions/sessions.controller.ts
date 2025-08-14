@@ -53,6 +53,14 @@ export class SessionsController {
     return this.sessionsService.search(query, status, paginationDto);
   }
 
+  @Get('code/:code')
+  @ApiOperation({ summary: 'Find a session by short code (last 4 of id)' })
+  @ApiResponse({ status: 200, description: 'Session found or null' })
+  async findByCode(@Param('code') code: string) {
+    const session = await this.sessionsService.findByCode(code);
+    return { success: true, data: session };
+  }
+
   @Get('upcoming')
   @ApiOperation({ summary: 'Get upcoming sessions for the next 3 days' })
   @ApiResponse({ status: 200, description: 'Upcoming sessions retrieved successfully' })
