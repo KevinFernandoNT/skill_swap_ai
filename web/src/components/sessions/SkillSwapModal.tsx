@@ -19,6 +19,7 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
 }) => {
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [message, setMessage] = useState('');
+  const [meetingLink, setMeetingLink] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<null | React.FormEvent>(null);
@@ -44,6 +45,7 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
       });
       setSelectedSkillId('');
       setMessage('');
+      setMeetingLink('');
       setConfirmDialogOpen(false);
       setPendingSubmit(null);
       onClose();
@@ -88,7 +90,8 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
       recipient: session.hostId._id,
       offeredSkillId: selectedSkillId,
       requestedSkillId: sessionSkillId,
-      message
+      message,
+      meetingLink: meetingLink.trim() || undefined
     });
   };
 
@@ -215,6 +218,21 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                 {session.date ? new Date(session.date).toLocaleDateString() : 'Date TBD'} at {session.startTime || 'TBD'} - {session.endTime || 'TBD'}
               </p>
               
+              {/* Display session focus keywords if available */}
+              {session.focusKeywords && session.focusKeywords.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="text-sm text-gray-300 font-medium mb-2">Session Focus Keywords</div>
+                  <ul className="text-sm text-gray-400 space-y-1">
+                    {session.focusKeywords.map((keyword, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="text-primary mr-2 mt-1">•</span>
+                        <span>{keyword}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
               {/* Session Host Details */}
               {session.hostId && (
                 <div className="mt-3 pt-3 border-t border-gray-700">
@@ -291,23 +309,36 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                               setSelectedSkillId(skill._id);
                               setIsDropdownOpen(false);
                             }}
-                            className="w-full flex items-center justify-between p-4 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+                            className="w-full flex flex-col items-start p-4 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
                           >
-                            <div className="flex items-center">
-                              <span className="text-white font-medium">{skill.name}</span>
-                              <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                                {skill.category}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-primary">{skill.proficiency}%</span>
-                              <div className="w-16 bg-gray-600 rounded-full h-2">
-                                <div
-                                  className="bg-primary h-2 rounded-full"
-                                  style={{ width: `${skill.proficiency}%` }}
-                                />
+                            <div className="flex items-center justify-between w-full mb-2">
+                              <div className="flex items-center">
+                                <span className="text-white font-medium">{skill.name}</span>
+                                <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                  {skill.category}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-primary">{skill.proficiency}%</span>
+                                <div className="w-16 bg-gray-600 rounded-full h-2">
+                                  <div
+                                    className="bg-primary h-2 rounded-full"
+                                    style={{ width: `${skill.proficiency}%` }}
+                                  />
+                                </div>
                               </div>
                             </div>
+                            
+                            {/* Show agenda preview if available */}
+                            {skill.agenda && skill.agenda.length > 0 && (
+                              <div className="w-full">
+                                <div className="text-xs text-gray-400 mb-1">Agenda preview:</div>
+                                <div className="text-xs text-gray-300 line-clamp-2">
+                                  {skill.agenda.slice(0, 2).join(', ')}
+                                  {skill.agenda.length > 2 && ` +${skill.agenda.length - 2} more`}
+                                </div>
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -345,6 +376,25 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                 </div>
               )}
 
+              {/* Meeting Link */}
+              {availableSkills.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Meeting Link (optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx or https://zoom.us/j/xxxxx"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Provide a meeting link for the exchange session (optional)
+                  </p>
+                </div>
+              )}
+
               {/* Swap Preview */}
               {selectedSkill && (
                 <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -358,6 +408,21 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                           {selectedSkill.category}
                         </div>
                         <div className="text-sm text-primary mt-1">{selectedSkill.proficiency}% proficiency</div>
+                        
+                        {/* Display agenda if available */}
+                        {selectedSkill.agenda && selectedSkill.agenda.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-primary/30">
+                            <div className="text-xs text-primary/80 mb-1">Agenda</div>
+                            <ul className="text-xs text-primary/90 space-y-1">
+                              {selectedSkill.agenda.slice(0, 3).map((item, idx) => (
+                                <li key={idx} className="text-left">• {item}</li>
+                              ))}
+                              {selectedSkill.agenda.length > 3 && (
+                                <li className="text-primary/70 text-left">+{selectedSkill.agenda.length - 3} more items</li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -378,6 +443,24 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
                           {session.skillCategory || 'General'}
                         </div>
                         <div className="text-sm text-gray-400 mt-1">Session Skill</div>
+                        
+                        {/* Display agenda if available */}
+                        {session.teachSkillId && session.teachSkillId.length > 0 && 
+                         session.teachSkillId[0].agenda && 
+                         session.teachSkillId[0].agenda.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-gray-600">
+                            <div className="text-xs text-gray-400 mb-1">Agenda</div>
+                            <ul className="text-xs text-gray-300 space-y-1">
+                              {session.teachSkillId[0].agenda.slice(0, 3).map((item, idx) => (
+                                <li key={idx} className="text-left">• {item}</li>
+                              ))}
+                              {session.teachSkillId[0].agenda.length > 3 && (
+                                <li className="text-gray-400 text-left">+{session.teachSkillId[0].agenda.length - 3} more items</li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                        
                         {session.hostId && (
                           <div className="mt-2 pt-2 border-t border-gray-600">
                             <div className="flex items-center justify-center space-x-2">

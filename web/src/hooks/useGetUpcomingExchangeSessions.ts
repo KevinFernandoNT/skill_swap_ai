@@ -19,6 +19,7 @@ export interface ExchangeSession {
   };
   subTopics?: string[];
   meetingLink?: string;
+  focusKeywords?: string[];
   skillId: {
     _id: string;
     name: string;

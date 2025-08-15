@@ -86,11 +86,29 @@ const ExchangeSessionCard: React.FC<ExchangeSessionCardProps> = ({ session, onCl
           {/* Skills Exchange Information */}
           <div className="mt-2 mb-3 p-2 bg-gray-800 rounded-md">
             <div className="text-xs text-gray-400 mb-1">Skill Exchange:</div>
-            <div className="flex items-center text-sm">
+            <div className="flex items-center text-sm mb-2">
               <span className="text-green-400">{session.skillId.name}</span>
               <ArrowRightLeft className="w-3 h-3 mx-2 text-gray-500" />
               <span className="text-orange-400">{session.requestedSkillId.name}</span>
             </div>
+            
+            {/* Display focus keywords if available */}
+            {session.focusKeywords && session.focusKeywords.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-700">
+                <div className="text-xs text-gray-400 font-medium mb-1">Session Focus Keywords:</div>
+                <ul className="text-xs text-gray-300 space-y-1">
+                  {session.focusKeywords.slice(0, 3).map((keyword, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="text-primary mr-1 mt-0.5">•</span>
+                      <span className="line-clamp-1">{keyword}</span>
+                    </li>
+                  ))}
+                  {session.focusKeywords.length > 3 && (
+                    <li className="text-gray-400 text-xs">+{session.focusKeywords.length - 3} more keywords</li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col space-y-1 text-sm text-gray-400">

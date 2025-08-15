@@ -13,6 +13,7 @@ export interface SuggestedUser {
     proficiency: number;
     description?: string;
     metadata?: string[];
+    agenda?: string[]; // Include agenda field
     skillType: 'teaching' | 'learning';
   }>;
 }

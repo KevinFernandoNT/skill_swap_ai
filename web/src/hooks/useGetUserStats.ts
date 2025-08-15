@@ -18,6 +18,9 @@ export interface UserStats {
     completedSessions: number;
     hostedSessions: number;
     participatedSessions: number;
+    // Exchange-session specific stats returned by backend (optional for backward compatibility)
+    completedExchangeSessions?: number;
+    hostedExchangeSessions?: number;
   };
 }
 

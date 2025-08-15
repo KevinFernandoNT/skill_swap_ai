@@ -52,6 +52,11 @@ export class CreateExchangeSessionDto {
   @IsString()
   meetingLink?: string;
 
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  focusKeywords?: string[];
+
   // New fields for exchange sessions
   @ApiProperty()
   @IsMongoId()

@@ -32,7 +32,7 @@ export class SessionsRepository {
         .find(query)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
-        .populate('teachSkillId', 'name category proficiency type description')
+        .populate('teachSkillId', 'name category proficiency type description agenda')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -78,7 +78,7 @@ export class SessionsRepository {
         .find(query)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
-        .populate('teachSkillId', 'name category proficiency type description')
+        .populate('teachSkillId', 'name category proficiency type description agenda')
         .skip(skip)
         .limit(limit)
         .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
@@ -104,7 +104,7 @@ export class SessionsRepository {
         .find({ isPublic: true, status: 'upcoming' })
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
-        .populate('teachSkillId', 'name category proficiency type description')
+        .populate('teachSkillId', 'name category proficiency type description agenda')
         .skip(skip)
         .limit(limit)
         .sort({ date: 1 })
@@ -126,7 +126,7 @@ export class SessionsRepository {
       .findById(id)
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
-      .populate('teachSkillId', 'name category proficiency type description')
+      .populate('teachSkillId', 'name category proficiency type description agenda')
       .exec();
   }
 
@@ -135,7 +135,7 @@ export class SessionsRepository {
       .findByIdAndUpdate(id, updateSessionDto, { new: true })
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
-      .populate('teachSkillId', 'name category proficiency type description')
+      .populate('teachSkillId', 'name category proficiency type description agenda')
       .exec();
   }
 
@@ -165,7 +165,7 @@ export class SessionsRepository {
         .find(searchQuery)
         .populate('hostId', 'name email avatar')
         .populate('participants', 'name email avatar')
-        .populate('teachSkillId', 'name category proficiency type description')
+        .populate('teachSkillId', 'name category proficiency type description agenda')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -218,7 +218,7 @@ export class SessionsRepository {
       )
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
-      .populate('teachSkillId', 'name category proficiency type description')
+      .populate('teachSkillId', 'name category proficiency type description agenda')
       .exec();
   }
 
@@ -231,7 +231,7 @@ export class SessionsRepository {
       )
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
-      .populate('teachSkillId', 'name category proficiency type description')
+      .populate('teachSkillId', 'name category proficiency type description agenda')
       .exec();
   }
 
@@ -265,7 +265,7 @@ export class SessionsRepository {
       .find(query)
       .populate('hostId', 'name email avatar')
       .populate('participants', 'name email avatar')
-      .populate('teachSkillId', 'name category proficiency type description')
+      .populate('teachSkillId', 'name category proficiency type description agenda')
       .sort({ date: 1, startTime: 1 }) // Sort by date and time ascending
       .limit(20) // Limit to 20 results
       .exec();

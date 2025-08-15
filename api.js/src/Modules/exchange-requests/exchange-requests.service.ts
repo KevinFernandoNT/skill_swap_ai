@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ExchangeRequestsRepository } from './exchange-requests.repository';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ExchangeSessionsService } from '../exchange-sessions/exchange-sessions.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { CreateExchangeRequestDto } from './dto/create-exchange-request.dto';
 import { UpdateExchangeRequestDto } from './dto/update-exchange-request.dto';
 import { Types } from 'mongoose';
@@ -11,7 +12,8 @@ export class ExchangeRequestsService {
   constructor(
     private repo: ExchangeRequestsRepository,
     private notificationsService: NotificationsService,
-    private exchangeSessionsService: ExchangeSessionsService
+    private exchangeSessionsService: ExchangeSessionsService,
+    private sessionsService: SessionsService
   ) {}
 
   async create(userId: string, dto: CreateExchangeRequestDto) {
@@ -71,22 +73,26 @@ export class ExchangeRequestsService {
 
   private async createExchangeSessionFromRequest(exchangeRequest: any) {
     try {
-      // Create exchange session with basic data from the exchange request
+      // Get the original session to preserve its meeting link and other details
+      const originalSession = await this.sessionsService.findById(exchangeRequest.sessionId.toString());
+      
+      // Create exchange session with data from the original session and exchange request
       const exchangeSessionData = {
         title: `Exchange Session`,
         description: `Skill exchange session based on accepted request`,
-        date: new Date().toISOString().split('T')[0], // Today's date
-        startTime: '10:00',
-        endTime: '11:00',
-        skillCategory: 'General',
+        date: originalSession.date,
+        startTime: originalSession.startTime,
+        endTime: originalSession.endTime,
+        skillCategory: originalSession.skillCategory,
         isTeaching: true, // Exchange sessions are teaching sessions
         maxParticipants: 2, // Exchange sessions are typically 1-on-1
         isPublic: false, // Exchange sessions are private
         skillId: exchangeRequest.offeredSkillId.toString(),
         requestedSkillId: exchangeRequest.requestedSkillId.toString(),
         requestedBy: exchangeRequest.requester.toString(),
-        subTopics: [],
-        meetingLink: ''
+        subTopics: originalSession.subTopics || [],
+        meetingLink: exchangeRequest.meetingLink || originalSession.meetingLink || '',
+        focusKeywords: originalSession.focusKeywords || []
       };
 
       // Create the exchange session

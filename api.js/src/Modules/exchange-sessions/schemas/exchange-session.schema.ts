@@ -54,6 +54,10 @@ export class ExchangeSession {
   @Prop()
   meetingLink?: string;
 
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  focusKeywords?: string[];
+
   // New fields for exchange sessions
   @ApiProperty()
   @Prop({ type: Types.ObjectId, ref: 'Skill', required: true })

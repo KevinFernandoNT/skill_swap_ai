@@ -88,7 +88,7 @@ const SuggestedConnections: React.FC = () => {
         category: skill.category,
         proficiency: skill.proficiency,
         type: skill.skillType, // Use the skillType from the API response
-        agenda: [],
+        agenda: skill.agenda || [], // Use agenda from API response
         description: skill.description,
       })),
       status: 'online' as const,

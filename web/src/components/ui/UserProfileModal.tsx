@@ -158,25 +158,37 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
                         {user.skills
                           .filter(skill => skill.type === 'teaching')
                           .map((skill) => (
-                            <div
-                              key={skill._id}
-                              className="flex items-center justify-between py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="flex-1">
-                                  <h6 className="font-semibold text-white text-base">{skill.name}</h6>
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                                    {skill.category}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
-                                  {skill.proficiency}%
-                                </div>
-                                <div className="text-xs text-gray-400 font-medium">Proficiency</div>
-                              </div>
-                            </div>
+                                                         <div
+                               key={skill._id}
+                               className="py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
+                             >
+                               <div className="flex items-center justify-between">
+                                 <div className="flex items-center space-x-3">
+                                   <div className="flex-1">
+                                     <h6 className="font-semibold text-white text-base">{skill.name}</h6>
+                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                       {skill.category}
+                                     </span>
+                                   </div>
+                                 </div>
+                                 <div className="text-right">
+                                   <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
+                                     {skill.proficiency}%
+                                   </div>
+                                   <div className="text-xs text-gray-400 font-medium">Proficiency</div>
+                                 </div>
+                               </div>
+                               {Array.isArray(skill.agenda) && skill.agenda.length > 0 && (
+                                 <div className="mt-3 pt-3 border-t border-gray-700">
+                                   <div className="text-xs text-gray-400 mb-2">Agenda</div>
+                                   <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                                     {skill.agenda.map((item, idx) => (
+                                       <li key={idx}>{item}</li>
+                                     ))}
+                                   </ul>
+                                 </div>
+                               )}
+                             </div>
                           ))}
                       </div>
                     ) : (
@@ -203,25 +215,37 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
                         {user.skills
                           .filter(skill => skill.type === 'learning')
                           .map((skill) => (
-                            <div
-                              key={skill._id}
-                              className="flex items-center justify-between py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="flex-1">
-                                  <h6 className="font-semibold text-white text-base">{skill.name}</h6>
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
-                                    {skill.category}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
-                                  {skill.proficiency}%
-                                </div>
-                                <div className="text-xs text-gray-400 font-medium">Current Level</div>
-                              </div>
-                            </div>
+                                                         <div
+                               key={skill._id}
+                               className="py-3 px-4 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200"
+                             >
+                               <div className="flex items-center justify-between">
+                                 <div className="flex items-center space-x-3">
+                                   <div className="flex-1">
+                                     <h6 className="font-semibold text-white text-base">{skill.name}</h6>
+                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(skill.category)}`}>
+                                       {skill.category}
+                                     </span>
+                                   </div>
+                                 </div>
+                                 <div className="text-right">
+                                   <div className={`text-lg font-bold ${getProficiencyColor(skill.proficiency)}`}>
+                                     {skill.proficiency}%
+                                   </div>
+                                   <div className="text-xs text-gray-400 font-medium">Current Level</div>
+                                 </div>
+                               </div>
+                               {Array.isArray(skill.agenda) && skill.agenda.length > 0 && (
+                                 <div className="mt-3 pt-3 border-t border-gray-700">
+                                   <div className="text-xs text-gray-400 mb-2">Agenda</div>
+                                   <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                                     {skill.agenda.map((item, idx) => (
+                                       <li key={idx}>{item}</li>
+                                     ))}
+                                   </ul>
+                                 </div>
+                               )}
+                             </div>
                           ))}
                       </div>
                     ) : (
@@ -269,44 +293,29 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, isOpen, onClo
                   </div>
                   <div className="text-sm text-gray-400 font-medium">Average Rating</div>
                 </div>
-                <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
-                  <div className="text-2xl font-bold text-purple-400 flex items-center justify-center mb-1">
-                    {statsLoading ? (
-                      <div className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <>
-                        {userStats?.stats.totalSessions || 0}
-                        <Calendar className="w-4 h-4 ml-1" />
-                      </>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-400 font-medium">Total Sessions</div>
-                </div>
+              
               </div>
 
               {/* Additional Stats */}
               {userStats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 
+                 
+                 
+                  {/* Exchange-session specific stats */}
                   <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
-                    <div className="text-lg font-bold text-green-400 flex items-center justify-center mb-1">
-                      {userStats.stats.completedSessions}
+                    <div className="text-lg font-bold text-green-300 flex items-center justify-center mb-1">
+                      {userStats.stats.completedExchangeSessions ?? 0}
                       <Calendar className="w-4 h-4 ml-1" />
                     </div>
-                    <div className="text-sm text-gray-400 font-medium">Completed Sessions</div>
+                    <div className="text-sm text-gray-400 font-medium">Completed Exchange Sessions</div>
                   </div>
                   <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
-                    <div className="text-lg font-bold text-blue-400 flex items-center justify-center mb-1">
-                      {userStats.stats.hostedSessions}
+                    <div className="text-lg font-bold text-blue-300 flex items-center justify-center mb-1">
+                      {userStats.stats.hostedExchangeSessions ?? 0}
                       <Users className="w-4 h-4 ml-1" />
                     </div>
-                    <div className="text-sm text-gray-400 font-medium">Hosted Sessions</div>
-                  </div>
-                  <div className="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
-                    <div className="text-lg font-bold text-purple-400 flex items-center justify-center mb-1">
-                      {userStats.stats.participatedSessions}
-                      <Users className="w-4 h-4 ml-1" />
-                    </div>
-                    <div className="text-sm text-gray-400 font-medium">Participated Sessions</div>
+                    <div className="text-sm text-gray-400 font-medium">Hosted Exchange Sessions</div>
                   </div>
                 </div>
               )}

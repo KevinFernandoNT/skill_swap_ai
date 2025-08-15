@@ -6,12 +6,14 @@ import { UsersRepository } from './users.repository';
 import { User, UserSchema } from './schemas/user.schema';
 import { Session, SessionSchema } from '../sessions/schemas/session.schema';
 import { CloudinaryService } from '../common/cloudinary.service';
+import { ExchangeSession, ExchangeSessionSchema } from '../exchange-sessions/schemas/exchange-session.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
-      { name: Session.name, schema: SessionSchema }
+      { name: Session.name, schema: SessionSchema },
+      { name: ExchangeSession.name, schema: ExchangeSessionSchema },
     ]),
   ],
   controllers: [UsersController],

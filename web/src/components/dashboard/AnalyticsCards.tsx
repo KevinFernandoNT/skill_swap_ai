@@ -85,10 +85,41 @@ const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
       >
         <div className="space-y-2 mt-3">
           {!statsLoading && stats.uniqueExchangePartners > 0 && (
-            <div className="text-xs text-gray-300">
-              <div className="font-medium">🤝 {stats.uniqueExchangePartners} unique partner{stats.uniqueExchangePartners !== 1 ? 's' : ''}</div>
-              <div className="text-gray-400">Growing your network</div>
-            </div>
+            <>
+              <div className="text-xs text-gray-300">
+                <div className="font-medium">🤝 {stats.uniqueExchangePartners} unique partner{stats.uniqueExchangePartners !== 1 ? 's' : ''}</div>
+                <div className="text-gray-400">Growing your network</div>
+              </div>
+              
+              {/* Recent Partners */}
+              {stats.recentExchangePartners && stats.recentExchangePartners.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="text-xs text-gray-400 mb-2">Recent connections:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {stats.recentExchangePartners.map((partner, index) => (
+                      <div key={partner._id} className="flex items-center space-x-1">
+                        <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                          {partner.avatar ? (
+                            <img 
+                              src={partner.avatar} 
+                              alt={partner.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-300 font-medium">
+                              {partner.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-300 truncate max-w-16" title={partner.name}>
+                          {partner.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {!statsLoading && stats.uniqueExchangePartners === 0 && (
             <div className="text-xs text-gray-500">No exchange partners yet</div>

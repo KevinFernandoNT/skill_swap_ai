@@ -26,4 +26,9 @@ export class CreateExchangeRequestDto {
   @IsString()
   @IsOptional()
   message?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  meetingLink?: string;
 } 

@@ -216,6 +216,7 @@ export class SkillsService {
                   proficiency: skill.proficiency,
                   description: skill.description,
                   metadata: skill.metadata,
+                  agenda: skill.agenda, // Include agenda in the response
                   skillType: 'teaching'
                 });
               }
@@ -289,6 +290,7 @@ export class SkillsService {
                   proficiency: skill.proficiency,
                   description: skill.description,
                   metadata: skill.metadata,
+                  agenda: skill.agenda, // Include agenda in the response
                   skillType: 'learning'
                 });
               }

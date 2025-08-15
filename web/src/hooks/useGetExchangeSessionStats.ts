@@ -4,6 +4,11 @@ export interface ExchangeSessionStats {
   completedExchangeSessions: number;
   scheduledExchangeSessions: number;
   uniqueExchangePartners: number;
+  recentExchangePartners?: Array<{
+    _id: string;
+    name: string;
+    avatar?: string;
+  }>;
 }
 
 export interface StatsApiResponse {
