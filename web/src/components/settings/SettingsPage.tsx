@@ -7,12 +7,9 @@ type ProfileData = {
   name: string;
   email: string;
   phone: string;
-  location: string;
-  bio: string;
   website: string;
   linkedin: string;
   github: string;
-  timezone: string;
   avatar: string | File;
 };
 
@@ -64,12 +61,9 @@ const SettingsPage: React.FC = () => {
     name: '',
     email: '',
     phone: '+94 (555) 123-4567',
-    location: '',
-    bio: 'Passionate software developer with 5+ years of experience in React and Node.js. Love sharing knowledge and learning from others.',
     website: 'https://alexjohnson.dev',
     linkedin: 'https://linkedin.com/in/alexjohnson',
     github: 'https://github.com/alexjohnson',
-    timezone: 'America/Los_Angeles',
     avatar: ''
   });
 
@@ -80,7 +74,6 @@ const SettingsPage: React.FC = () => {
         ...prev,
         name: user.name || '',
         email: user.email || '',
-        location: user.location || '',
         avatar: user.avatar || ''
       }));
     }
@@ -159,17 +152,7 @@ const SettingsPage: React.FC = () => {
     { id: 'notifications', name: 'Notifications', icon: Mail }
   ];
 
-  const timezones = [
-    'America/Los_Angeles',
-    'America/Denver',
-    'America/Chicago',
-    'America/New_York',
-    'Europe/London',
-    'Europe/Paris',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney'
-  ];
+
 
   return (
     <div className="bg-black min-h-screen">
@@ -271,43 +254,18 @@ const SettingsPage: React.FC = () => {
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleProfileChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={profileData.location}
-                      onChange={handleProfileChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Bio
-                    </label>
-                    <textarea
-                      name="bio"
-                      value={profileData.bio}
-                      onChange={handleProfileChange}
-                      rows={3}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder="Tell others about yourself..."
-                    />
-                  </div>
+                                     <div>
+                     <label className="block text-sm font-medium text-gray-300 mb-2">
+                       Phone Number
+                     </label>
+                     <input
+                       type="tel"
+                       name="phone"
+                       value={profileData.phone}
+                       onChange={handleProfileChange}
+                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                     />
+                   </div>
                 </div>
               </div>
 
@@ -353,21 +311,6 @@ const SettingsPage: React.FC = () => {
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                       placeholder="https://github.com/username"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Timezone
-                    </label>
-                    <select
-                      name="timezone"
-                      value={profileData.timezone}
-                      onChange={handleProfileChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    >
-                      {timezones.map(tz => (
-                        <option key={tz} value={tz}>{tz}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>

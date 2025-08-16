@@ -3,8 +3,9 @@ import { Calendar, Clock, ArrowRightLeft } from "lucide-react";
 import { useGetExchangeSessions } from "@/hooks/useGetExchangeSessions";
 import { ExchangeSession } from "@/hooks/useGetUpcomingExchangeSessions";
 import UserProfile from "@/components/ui/UserProfile";
-import { useCompleteExchangeSession } from "@/hooks/useUpdateExchangeSessionStatus";
+
 import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
 
 const ExchangeSessionsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "completed" | "expired">("all");
@@ -26,13 +27,29 @@ const ExchangeSessionsPage: React.FC = () => {
   })();
 
   const { toast } = useToast();
+  const [completingSessions, setCompletingSessions] = useState<Set<string>>(new Set());
 
-  const handleComplete = (id: string) => {
-    const { mutate } = useCompleteExchangeSession(id, {
-      onSuccess: () => { toast({ title: 'Session completed' }); refetch(); },
-      onError: (e: any) => toast({ title: 'Failed to complete', description: e?.response?.data?.message || 'Error', variant: 'destructive' })
-    });
-    mutate({});
+  // Use a single completion handler that works with any session
+  const handleComplete = async (sessionId: string) => {
+    setCompletingSessions(prev => new Set(prev).add(sessionId));
+    
+    try {
+      await api.patch(`/exchange-sessions/${sessionId}/complete`);
+      toast({ title: 'Session completed' });
+      refetch();
+    } catch (error: any) {
+      toast({ 
+        title: 'Failed to complete', 
+        description: error?.response?.data?.message || 'Network error', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setCompletingSessions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(sessionId);
+        return newSet;
+      });
+    }
   };
 
   const filtered = useMemo(() => {
@@ -128,20 +145,17 @@ const ExchangeSessionsPage: React.FC = () => {
                     <span className="text-orange-400">{session.requestedSkillId.name}</span>
                   </div>
                   
-                  {/* Display focus keywords if available */}
+                  {/* Display session agenda if available */}
                   {session.focusKeywords && session.focusKeywords.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-700">
-                      <div className="text-xs text-gray-400 font-medium mb-1">Session Focus Keywords:</div>
+                      <div className="text-xs text-gray-400 font-medium mb-1">Session Agenda:</div>
                       <ul className="text-xs text-gray-300 space-y-1">
-                        {session.focusKeywords.slice(0, 3).map((keyword, idx) => (
+                        {session.focusKeywords.map((keyword, idx) => (
                           <li key={idx} className="flex items-start">
                             <span className="text-primary mr-1 mt-0.5">•</span>
                             <span className="line-clamp-1">{keyword}</span>
                           </li>
                         ))}
-                        {session.focusKeywords.length > 3 && (
-                          <li className="text-gray-400 text-xs">+{session.focusKeywords.length - 3} more keywords</li>
-                        )}
                       </ul>
                     </div>
                   )}
@@ -191,9 +205,10 @@ const ExchangeSessionsPage: React.FC = () => {
                   {session.status !== 'completed' && session.status !== 'cancelled' && session.status !== 'expired' && (
                     <button
                       onClick={() => handleComplete(session._id)}
-                      className="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                      disabled={completingSessions.has(session._id)}
+                      className="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Mark as Complete
+                      {completingSessions.has(session._id) ? 'Completing...' : 'Mark as Complete'}
                     </button>
                   )}
                 </div>

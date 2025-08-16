@@ -25,7 +25,6 @@ const signupSchema = z.object({
   phone: z.string().min(10, "Phone number is required"),
   dob: z.string().min(1, "Date of birth is required"),
   nic: z.string().min(1, "NIC is required"),
-  address: z.string().min(5, "Address is required"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -86,7 +85,6 @@ export const SignupForm = () => {
       phone: '',
       dob: '',
       nic: '',
-      address: '',
       password: ''
     },
   });
@@ -98,7 +96,6 @@ export const SignupForm = () => {
     formData.append('lastName', data.lastName);
     formData.append('email', data.email);
     formData.append('password', data.password);
-    formData.append('address', data.address);
     formData.append('phone', data.phone);
     formData.append('dob', data.dob);
     formData.append('nic', data.nic);
@@ -201,26 +198,13 @@ export const SignupForm = () => {
           />
           <FormField
             control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem className="col-span-full">
-                <FormLabel className="text-gray-400">Address</FormLabel>
-                <FormControl>
-                  <Input className="w-full bg-gray-200 text-black" placeholder="Enter your address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="avatar"
             render={() => (
               <FormItem className="col-span-full">
                 <FormLabel className="text-gray-400">Add a Profile Picture</FormLabel>
                 <div className="flex items-center gap-4 mb-2">
                   {avatarPreview && (
-                    <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
+                    <div className="max-w-[150px] max-h-[150px] rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
                       <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
                     </div>
                   )}
