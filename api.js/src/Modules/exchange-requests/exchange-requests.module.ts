@@ -7,6 +7,7 @@ import { ExchangeRequest, ExchangeRequestSchema } from './exchange-request.schem
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ExchangeSessionsModule } from '../exchange-sessions/exchange-sessions.module';
 import { SessionsModule } from '../sessions/sessions.module';
+import { SkillsModule } from '../skills/skills.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { SessionsModule } from '../sessions/sessions.module';
     ]),
     NotificationsModule,
     ExchangeSessionsModule,
-    SessionsModule
+    SessionsModule,
+    SkillsModule
   ],
   controllers: [ExchangeRequestsController],
   providers: [ExchangeRequestsService, ExchangeRequestsRepository],

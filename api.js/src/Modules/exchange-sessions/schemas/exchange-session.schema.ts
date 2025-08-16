@@ -71,6 +71,15 @@ export class ExchangeSession {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   requestedBy: Types.ObjectId;
 
+  // New fields for session agenda and requested skill focus keywords
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  sessionAgenda?: string[];
+
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  requestedSkillFocusKeywords?: string[];
+
   @ApiProperty()
   createdAt: Date;
 

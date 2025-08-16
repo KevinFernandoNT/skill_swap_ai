@@ -146,13 +146,28 @@ const ExchangeSessionsPage: React.FC = () => {
                   </div>
                   
                   {/* Display session agenda if available */}
-                  {session.focusKeywords && session.focusKeywords.length > 0 && (
+                  {session.sessionAgenda && session.sessionAgenda.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-700">
                       <div className="text-xs text-gray-400 font-medium mb-1">Session Agenda:</div>
                       <ul className="text-xs text-gray-300 space-y-1">
-                        {session.focusKeywords.map((keyword, idx) => (
+                        {session.sessionAgenda.map((keyword, idx) => (
                           <li key={idx} className="flex items-start">
                             <span className="text-primary mr-1 mt-0.5">•</span>
+                            <span className="line-clamp-1">{keyword}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Display requested skill focus keywords if available */}
+                  {session.requestedSkillFocusKeywords && session.requestedSkillFocusKeywords.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-700">
+                      <div className="text-xs text-gray-400 font-medium mb-1">Requested Skill Focus:</div>
+                      <ul className="text-xs text-gray-300 space-y-1">
+                        {session.requestedSkillFocusKeywords.map((keyword, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-orange-400 mr-1 mt-0.5">•</span>
                             <span className="line-clamp-1">{keyword}</span>
                           </li>
                         ))}

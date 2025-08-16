@@ -36,6 +36,9 @@ export interface ExchangeSession {
     email: string;
     avatar?: string;
   };
+  // New fields for session agenda and requested skill focus keywords
+  sessionAgenda?: string[];
+  requestedSkillFocusKeywords?: string[];
   createdAt: string;
   updatedAt: string;
 }

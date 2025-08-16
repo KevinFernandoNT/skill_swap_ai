@@ -69,4 +69,15 @@ export class CreateExchangeSessionDto {
   @ApiProperty()
   @IsMongoId()
   requestedBy: string;
+
+  // New fields for session agenda and requested skill focus keywords
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  sessionAgenda?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsString({ each: true })
+  requestedSkillFocusKeywords?: string[];
 } 

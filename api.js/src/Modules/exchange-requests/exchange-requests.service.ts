@@ -3,6 +3,7 @@ import { ExchangeRequestsRepository } from './exchange-requests.repository';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ExchangeSessionsService } from '../exchange-sessions/exchange-sessions.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { SkillsService } from '../skills/skills.service';
 import { CreateExchangeRequestDto } from './dto/create-exchange-request.dto';
 import { UpdateExchangeRequestDto } from './dto/update-exchange-request.dto';
 import { Types } from 'mongoose';
@@ -13,7 +14,8 @@ export class ExchangeRequestsService {
     private repo: ExchangeRequestsRepository,
     private notificationsService: NotificationsService,
     private exchangeSessionsService: ExchangeSessionsService,
-    private sessionsService: SessionsService
+    private sessionsService: SessionsService,
+    private skillsService: SkillsService
   ) {}
 
   async create(userId: string, dto: CreateExchangeRequestDto) {
@@ -76,6 +78,9 @@ export class ExchangeRequestsService {
       // Get the original session to preserve its meeting link and other details
       const originalSession = await this.sessionsService.findById(exchangeRequest.sessionId.toString());
       
+      // Get the requested skill to extract its focus keywords/agenda
+      const requestedSkill = await this.skillsService.findById(exchangeRequest.requestedSkillId.toString());
+      
       // Create exchange session with data from the original session and exchange request
       const exchangeSessionData = {
         title: `Exchange Session`,
@@ -92,7 +97,11 @@ export class ExchangeRequestsService {
         requestedBy: exchangeRequest.requester.toString(),
         subTopics: originalSession.subTopics || [],
         meetingLink: exchangeRequest.meetingLink || originalSession.meetingLink || '',
-        focusKeywords: originalSession.focusKeywords || []
+        focusKeywords: originalSession.focusKeywords || [],
+        // Store the session agenda (from original session focus keywords)
+        sessionAgenda: originalSession.focusKeywords || [],
+        // Store the requested skill's focus keywords/agenda
+        requestedSkillFocusKeywords: requestedSkill?.agenda || requestedSkill?.metadata || []
       };
 
       // Create the exchange session
