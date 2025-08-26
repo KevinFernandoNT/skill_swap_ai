@@ -17,7 +17,7 @@ export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="py-4 px-6 md:px-8 lg:px-12 relative z-50 bg-white border-b border-gray-100">
+    <nav className="py-4 px-6 md:px-8 lg:px-12 relative z-50 bg-background border-b border-border">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="z-10">
           <Logo />
@@ -29,7 +29,7 @@ export const Navbar = () => {
         
           </div>
           <div className="flex space-x-3">
-            <Button variant="outline" asChild className="text-black hover:text-black">
+            <Button variant="outline" asChild className="text-foreground hover:text-foreground border-border">
               <Link to="/login">Log in</Link>
             </Button>
             <Button asChild>
@@ -40,7 +40,7 @@ export const Navbar = () => {
         
         {/* Mobile Navigation Toggle */}
         <button 
-          className="md:hidden z-10 text-gray-700"
+          className="md:hidden z-10 text-foreground"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -48,14 +48,14 @@ export const Navbar = () => {
         
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 bg-white pt-20 px-6 md:hidden animate-fade-in">
+          <div className="fixed inset-0 bg-background pt-20 px-6 md:hidden animate-fade-in">
             <div className="flex flex-col space-y-6">
               {navItems.map((item) => (
                 item.href.startsWith("/") ? (
                   <Link 
                     key={item.href} 
                     to={item.href}
-                    className="text-gray-700 hover:text-primary text-lg font-medium py-2"
+                    className="text-foreground hover:text-primary text-lg font-medium py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}
@@ -64,7 +64,7 @@ export const Navbar = () => {
                   <a 
                     key={item.href} 
                     href={item.href}
-                    className="text-gray-700 hover:text-primary text-lg font-medium py-2"
+                    className="text-foreground hover:text-primary text-lg font-medium py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.label}
@@ -72,7 +72,7 @@ export const Navbar = () => {
                 )
               ))}
               <div className="flex flex-col space-y-3 pt-4">
-                <Button variant="outline" asChild className="w-full bg-gray-800 text-black hover:text-black">
+                <Button variant="outline" asChild className="w-full bg-card text-foreground hover:text-foreground border-border">
                   <Link className="font-bold" to="/login" onClick={() => setIsMenuOpen(false)}>Log in</Link>
                 </Button>
                 <Button asChild className="w-full">

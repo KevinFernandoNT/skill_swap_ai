@@ -67,26 +67,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans antialiased">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
+    <div className="flex h-screen bg-background text-foreground font-open-sans antialiased">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar}
         currentPage={currentPage}
         onNavigate={handleNavigate}
+        user={currentUser}
       />
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-background">
           {children || renderCurrentPage()}
         </main>
       </div>

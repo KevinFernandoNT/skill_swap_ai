@@ -16,9 +16,9 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Dashboard Header */}
-      <header className="bg-primary text-white p-6">
+      <header className="bg-primary text-primary-foreground p-6">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-4">
@@ -26,10 +26,10 @@ const Dashboard = () => {
               <span>Welcome, User</span>
             </div>
             <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
-              <span className="font-medium text-sm">U</span>
+              <span className="font-medium text-sm text-secondary-foreground">U</span>
             </div>
             <button
-              className="ml-4 px-4 py-2 bg-white text-primary rounded hover:bg-gray-100 border border-primary transition"
+              className="ml-4 px-4 py-2 bg-background text-foreground rounded hover:bg-muted border border-border transition-colors"
               onClick={() => {
                 localStorage.clear();
                 window.location.href = '/login';
@@ -45,47 +45,47 @@ const Dashboard = () => {
       <main className="container mx-auto p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-card text-card-foreground border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Hours Studied</CardTitle>
               <Clock className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">18.5</div>
-              <p className="text-xs text-gray-500">+12% from last week</p>
+              <p className="text-xs text-muted-foreground">+12% from last week</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card text-card-foreground border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Study Sessions</CardTitle>
               <Layout className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-gray-500">+2 from last week</p>
+              <p className="text-xs text-muted-foreground">+2 from last week</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card text-card-foreground border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Collaborations</CardTitle>
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-gray-500">+1 this week</p>
+              <p className="text-xs text-muted-foreground">+1 this week</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card text-card-foreground border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Messages</CardTitle>
               <MessageSquare className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-gray-500">8 unread</p>
+              <p className="text-xs text-muted-foreground">8 unread</p>
             </CardContent>
           </Card>
         </div>
@@ -93,7 +93,7 @@ const Dashboard = () => {
         {/* Chart and Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Weekly Learning Activity Chart */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 bg-card text-card-foreground border-border">
             <CardHeader>
               <CardTitle>Weekly Learning Activity</CardTitle>
             </CardHeader>
@@ -101,9 +101,9 @@ const Dashboard = () => {
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={learningData}>
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Bar dataKey="hours" fill="#1E8E3E" />
+                    <XAxis dataKey="day" stroke="#888888" />
+                    <YAxis stroke="#888888" />
+                    <Bar dataKey="hours" fill="rgb(53, 151, 118)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -111,7 +111,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Upcoming Sessions */}
-          <Card>
+          <Card className="bg-card text-card-foreground border-border">
             <CardHeader>
               <CardTitle>Upcoming Sessions</CardTitle>
             </CardHeader>
@@ -123,7 +123,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h3 className="font-medium">React Advanced Concepts</h3>
-                    <p className="text-sm text-gray-500">Today, 3:00 PM</p>
+                    <p className="text-sm text-muted-foreground">Today, 3:00 PM</p>
                   </div>
                 </div>
                 
@@ -133,7 +133,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h3 className="font-medium">Data Science Study Group</h3>
-                    <p className="text-sm text-gray-500">Tomorrow, 5:30 PM</p>
+                    <p className="text-sm text-muted-foreground">Tomorrow, 5:30 PM</p>
                   </div>
                 </div>
                 
@@ -143,7 +143,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h3 className="font-medium">AI Ethics Discussion</h3>
-                    <p className="text-sm text-gray-500">Friday, 2:00 PM</p>
+                    <p className="text-sm text-muted-foreground">Friday, 2:00 PM</p>
                   </div>
                 </div>
               </div>
