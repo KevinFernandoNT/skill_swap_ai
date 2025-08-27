@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Calendar, Clock, MoreVertical, Trash2 } from 'lucide-react';
-import { Session } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Calendar, Clock, Edit, MoreVertical, Search, Trash2, Filter, Plus } from 'lucide-react';
+import { useGetSessions } from '@/hooks/useGetSessions';
+import { useUpdateSession } from '@/hooks/useUpdateSession';
+import { useDeleteSession } from '@/hooks/useDeleteSession';
 import SessionEditModal from './SessionEditModal';
 import CreateSessionModal from './CreateSessionModal';
 import RescheduleModal from './RescheduleModal';
+import { Session } from '@/types';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
-import { useGetSessions } from '@/hooks/useGetSessions';
 import { useNavigate } from 'react-router-dom';
-import { useDeleteSession } from '@/hooks/useDeleteSession';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -203,17 +208,17 @@ const SessionsPage: React.FC = () => {
 
   return (
     <>
-      <div className="bg-black min-h-screen">
+      <div className="bg-background min-h-screen">
         {/* Header */}
-        <div className="px-4 py-6 border-b border-gray-800 lg:px-8">
+        <div className="px-4 py-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="mb-4 sm:mb-0">
-              <h1 className="text-2xl font-bold text-white">Session Management</h1>
-              <p className="mt-1 text-sm text-gray-400">Manage your teaching and learning sessions</p>
+              <h1 className="text-2xl font-bold text-foreground">Session Management</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Manage your teaching and learning sessions</p>
             </div>
             <button 
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Session
@@ -227,137 +232,174 @@ const SessionsPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             {/* Search */}
             <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search className="w-4 h-4 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+                <Search className="w-4 h-4 text-muted-foreground" />
               </div>
-              <input
+              <Input
                 type="text"
-                className="block w-full py-2 pl-10 pr-3 text-sm bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Search sessions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
             </div>
             {/* Status Filter */}
-            <select
-              className="px-3 py-2 text-sm bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
-            >
-              <option value="all">All Status</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[180px]">
+                  Status: {filterStatus === 'all' ? 'All' : filterStatus}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => setFilterStatus('all')}>All Status</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterStatus('upcoming')}>Upcoming</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterStatus('completed')}>Completed</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterStatus('cancelled')}>Cancelled</DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {/* Visibility Filter */}
-            <select
-              className="px-3 py-2 text-sm bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              value={filterVisibility}
-              onChange={(e) => setFilterVisibility(e.target.value as any)}
-            >
-              <option value="all">All Visibility</option>
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[180px]">
+                  Visibility: {filterVisibility === 'all' ? 'All' : filterVisibility}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => setFilterVisibility('all')}>All Visibility</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterVisibility('public')}>Public</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterVisibility('private')}>Private</DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           {/* Sessions Grid */}
           {sessionsLoading ? (
-            <div className="text-center py-12 text-gray-400">Loading sessions...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading sessions...</div>
           ) : sessionsError ? (
-            <div className="text-center py-12 text-red-500">Failed to load sessions.</div>
+            <div className="text-center py-12 text-destructive">Failed to load sessions.</div>
           ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSessions.map((session) => (
-              <div
-                key={session._id}
-                className="bg-gray-900 rounded-lg shadow-sm border border-gray-800 p-6 transition-all duration-300 hover:shadow-md hover:border-primary/50 relative cursor-pointer"
-                onClick={() => handleEditSession(session)}
-              >
-                {/* Hamburger Edit Icon */}
-                <button
-                  className="absolute top-4 right-4 text-gray-400 hover:text-primary focus:outline-none"
-                  onClick={e => { e.stopPropagation(); handleEditSession(session); }}
-                  title="Edit Session"
-                >
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-                {/* Session Code */}
-                <div className="mb-2 text-xs text-gray-400">
-                  Session Code: <span className="text-primary font-mono">{(session._id && typeof session._id === 'string'
-  ? (session._id.match(/\d{4}$/)?.[0] || session._id.slice(-4).padStart(4, '0'))
-  : '----')}</span>
-                </div>
-                {/* Title */}
-                <h3 className="text-lg font-medium text-white mb-2">{session.title}</h3>
-                {/* Skill & Agenda */}
-                <div className="mb-4">
-                  <div className="text-xs text-primary font-semibold mb-1">Skill: {session.skillCategory}</div>
-                  {/* Agenda/subtopics: mock for now */}
-                  <ul className="pl-4 list-disc text-xs text-gray-300">
-                    {[
-                      'Fundamentals',
-                      'Best Practices',
-                      'Hands-on Practice',
-                      'Q&A',
-                      'Resources'
-                    ].map((topic: string, idx: number) => (
-                      <li key={idx}>{topic}</li>
-                    ))}
-                  </ul>
-                </div>
-                {/* Description */}
-                <p className="text-sm text-gray-400 mb-4 line-clamp-2">{session.description}</p>
-                {/* Session Details */}
-                <div className="space-y-2 text-sm text-gray-400 mb-4">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>{new Date(session.date).toLocaleDateString()}</span>
+                             <Card
+                 key={session._id}
+                 className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group overflow-hidden relative"
+                 onClick={() => handleEditSession(session)}
+               >
+                                   {/* Top right icon with date and category */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(session.date).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                    <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center">
+                      <Calendar className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+                      {session.skillCategory}
+                    </span>
                   </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span>{session.startTime} - {session.endTime}</span>
-                  </div>
-                </div>
-                {/* Mark as Completed & Cancel Session Buttons */}
-                {(session.status !== 'completed' && session.status !== 'cancelled') && (
-                  <div className="flex gap-2 mt-4 items-center">
-                    {/* Edit Session Button */}
-                    <button
-                      onClick={e => { e.stopPropagation(); handleEditSession(session); }}
-                      className="flex items-center px-3 py-2 text-sm font-medium text-primary bg-gray-800 border border-primary rounded-md hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 transition"
-                      title="Edit Session"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </button>
+
+                 <CardContent className="p-6">
+                                       {/* Title */}
+                    <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors pr-12">
+                      {session.title}
+                    </h3>
                     
-                    {/* Delete Session Button with Trash Icon */}
-                    <button
-                      onClick={e => { e.stopPropagation(); setConfirmAction({ type: 'cancel', session }); }}
-                      className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition"
-                      title="Delete Session"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+                    {/* Skill Name Label */}
+                    <div className="mb-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-[#0D9488] text-black border-[#0D9488] hover:bg-[#0D9488]/90 font-semibold px-3 py-1 h-auto text-xs rounded-md"
+                      >
+                        {Array.isArray(session.teachSkillId) 
+                          ? session.teachSkillId[0]?.name || 'Skill Name'
+                          : session.teachSkillId || 'Skill Name'
+                        }
+                      </Button>
+                    </div>
+                   
+                                       {/* Description */}
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
+                      {session.description}
+                    </p>
+
+                    {/* Agenda Points */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {[
+                        'Fundamentals',
+                        'Best Practices',
+                        'Hands-on Practice',
+                        'Q&A',
+                        'Resources'
+                      ].map((topic, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="flex items-center justify-between">
+                      {/* Duration */}
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-foreground" />
+                        <span className="text-sm text-foreground">
+                          {session.startTime && session.endTime 
+                            ? `${session.startTime} - ${session.endTime}`
+                            : '30 Minutes'
+                          }
+                        </span>
+                      </div>
+                      
+                                             {/* Location/Platform */}
+                       <div className="flex items-center gap-2">
+                         <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                           <div className="w-2 h-2 rounded-full bg-primary"></div>
+                         </div>
+                         <span className="text-sm text-foreground">
+                           {session.isPublic ? 'Public Session' : 'Private Session'}
+                         </span>
+                                                   {/* Delete Button - Always visible */}
+                          <div className="ml-2">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={e => { e.stopPropagation(); setConfirmAction({ type: 'cancel', session }); }}
+                              title="Delete Session"
+                              className="h-6 w-6 p-0"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                       </div>
+                     </div>
+                 </CardContent>
+               </Card>
             ))}
           </div>
           )}
           {/* Empty State */}
           {!sessionsLoading && !sessionsError && filteredSessions.length === 0 && (
             <div className="text-center py-12">
-              <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No sessions found</h3>
-              <p className="text-gray-400 mb-6">
+              <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No sessions found</h3>
+              <p className="text-muted-foreground mb-6">
                 {searchTerm || filterStatus !== 'all' || filterVisibility !== 'all'
                   ? 'Try adjusting your search or filters'
                   : 'Create your first session to get started'}
               </p>
               <button 
                 onClick={() => setIsCreateModalOpen(true)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Session

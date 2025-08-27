@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Users, Globe, Lock, Save } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3 } from 'lucide-react';
 import { Session } from '../../types';
 import { SessionRequest } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useUpdateSession } from '@/hooks/useUpdateSession';
+import { motion } from "motion/react";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "../ui/animated-modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface SessionEditModalProps {
   session: any | null;
@@ -14,11 +24,8 @@ interface SessionEditModalProps {
 }
 
 const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, onClose, onSave, refetchSessions }) => {
-  if (!isOpen || !session) return null;
-
-  // All hooks at the top!
   const toast = useToast();
-  const { mutate: updateSession, status: updateStatus } = useUpdateSession(session._id, {
+  const { mutate: updateSession, status: updateStatus } = useUpdateSession(session?._id, {
     onSuccess: () => {
       toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
       onSave({ ...session, ...formData, subTopics: generalSubTopics });
@@ -29,6 +36,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
       toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update session', variant: 'destructive' });
     },
   });
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -55,7 +63,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         maxParticipants: session.maxParticipants || 5,
         isTeaching: session.isTeaching || true
       });
-      // Prefer focused topics if present; otherwise, use saved subTopics
       const focusedTopics = Array.isArray((session as any).focusKeywords) ? (session as any).focusKeywords : [];
       const savedSubTopics = Array.isArray((session as any).subTopics) ? (session as any).subTopics : [];
       const sourceTopics = focusedTopics.length > 0 ? focusedTopics : savedSubTopics;
@@ -93,196 +100,319 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     'Data Science',
     'Business',
     'Finance',
-    'Writing'
+    'Writing',
+    'Communication',
+    'Sales'
   ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl bg-gray-900 rounded-lg shadow-xl border border-gray-800">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold text-white">Edit Session</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Session Title
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                placeholder="Enter session title"
-                required
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                placeholder="Describe what this session covers"
-                required
-              />
-            </div>
-
-            {/* Date and Time */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
-                />
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalBody className="max-w-4xl">
+        <ModalHeader onClose={onClose}>
+          Edit Session
+        </ModalHeader>
+        
+        <ModalContent>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-6"
+          >
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                <Edit3 className="w-8 h-8 text-primary" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Start Time
-                </label>
-                <input
-                  type="time"
-                  name="startTime"
-                  value={formData.startTime}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  End Time
-                </label>
-                <input
-                  type="time"
-                  name="endTime"
-                  value={formData.endTime}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Skill Category */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Skill Category
-              </label>
-              <select
-                name="skillCategory"
-                value={formData.skillCategory}
-                onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                required
-              >
-                <option value="">Select a category</option>
-                {skillCategories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-            {/* Visibility */}
-            <div>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  name="isPublic"
-                  checked={formData.isPublic}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-primary bg-gray-800 border-gray-700 rounded focus:ring-primary focus:ring-2"
-                />
-                <span className="text-sm font-medium text-gray-300">
-                  Make this session public
-                </span>
-                {formData.isPublic ? (
-                  <Globe className="w-4 h-4 text-primary" />
-                ) : (
-                  <Lock className="w-4 h-4 text-gray-400" />
-                )}
-              </label>
-              <p className="mt-1 text-xs text-gray-400">
-                Public sessions can be discovered and joined by other users
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Edit Session
+              </h2>
+              <p className="text-muted-foreground">
+                Update your session details and settings
               </p>
             </div>
-
-          
-            {/* General Sub-Topics */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                General Sub-Topics for this Session (5 required)
-              </label>
-              <div className="space-y-3">
-                {generalSubTopics.map((topic, idx) => (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400 w-8">#{idx + 1}</span>
-                    <input
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Information Grid */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Basic Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Title */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Session Title
+                    </label>
+                    <Input
                       type="text"
-                      value={topic}
-                      onChange={e => handleGeneralSubTopicChange(idx, e.target.value)}
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder={`Sub-topic ${idx + 1}`}
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      placeholder="Enter session title"
+                      required
+                      className="text-lg"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                      placeholder="Describe what this session covers"
                       required
                     />
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
 
-            {/* Focused topics are prefilled into the 5 inputs above; no duplicate list below. */}
+              {/* Schedule, Skills & Settings Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Schedule Section */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Schedule</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Date
+                      </label>
+                      <Input
+                        type="date"
+                        name="date"
+                        value={formData.date}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+                    {/* Time Range */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Start Time
+                        </label>
+                        <Input
+                          type="time"
+                          name="startTime"
+                          value={formData.startTime}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          End Time
+                        </label>
+                        <Input
+                          type="time"
+                          name="endTime"
+                          value={formData.endTime}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skills Section */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Target className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Skills & Category</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Skill Category */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Category
+                      </label>
+                      <select
+                        name="skillCategory"
+                        value={formData.skillCategory}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        {skillCategories.map(category => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Max Participants */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Max Participants
+                      </label>
+                      <Input
+                        type="number"
+                        name="maxParticipants"
+                        value={formData.maxParticipants}
+                        onChange={handleChange}
+                        min={1}
+                        max={50}
+                        className="w-24"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Session Settings */}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Settings className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Session Settings</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Visibility */}
+                    <div>
+                      <label className="flex items-center space-x-3 p-3 bg-muted rounded-md">
+                        <input
+                          type="checkbox"
+                          name="isPublic"
+                          checked={formData.isPublic}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-foreground">
+                            Make this session public
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            Public sessions can be discovered by other users
+                          </p>
+                        </div>
+                        {formData.isPublic ? (
+                          <Globe className="w-4 h-4 text-primary" />
+                        ) : (
+                          <Lock className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </label>
+                    </div>
+
+                    {/* Teaching Mode */}
+                    <div>
+                      <label className="flex items-center space-x-3 p-3 bg-muted rounded-md">
+                        <input
+                          type="checkbox"
+                          name="isTeaching"
+                          checked={formData.isTeaching}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-foreground">
+                            Teaching session
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            You will be teaching others in this session
+                          </p>
+                        </div>
+                        <Users className="w-4 h-4 text-primary" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Session Topics */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Session Topics</h3>
+                  <span className="text-xs text-muted-foreground">(5 required)</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {generalSubTopics.map((topic, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="flex items-center space-x-3"
+                    >
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-medium">
+                        {idx + 1}
+                      </div>
+                      <Input
+                        type="text"
+                        value={topic}
+                        onChange={e => handleGeneralSubTopicChange(idx, e.target.value)}
+                        placeholder={`Topic ${idx + 1}`}
+                        required
+                        className="flex-1"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Session Preview */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-6 border border-primary/20"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Session Preview</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span className="text-foreground">{formData.date || 'Select date'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span className="text-foreground">
+                      {formData.startTime && formData.endTime ? `${formData.startTime} - ${formData.endTime}` : 'Select time'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {formData.isPublic ? (
+                      <Globe className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <span className="text-foreground">{formData.isPublic ? 'Public session' : 'Private session'}</span>
+                  </div>
+                </div>
+              </motion.div>
+            </form>
+          </motion.div>
+        </ModalContent>
+        
+        <ModalFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={updateStatus === 'pending'} className="min-w-[140px]">
+            <Save className="w-4 h-4 mr-2" />
+            {updateStatus === 'pending' ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </ModalFooter>
+      </ModalBody>
+    </Modal>
   );
 };
 
