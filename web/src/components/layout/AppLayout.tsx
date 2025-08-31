@@ -8,6 +8,8 @@ import SkillsPage from '../skills/SkillsPage';
 import ConnectPage from '../sessions/ConnectPage';
 import ExchangeRequestsPage from '../exchange/ExchangeRequestsPage';
 import ExchangeSessionsPage from '../exchange/ExchangeSessionsPage';
+import ViewSessions from '../../pages/ViewSessions';
+import VideoCall from '../video/VideoCall';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -51,6 +53,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         return <MessagesPage />;
       case 'sessions':
         return <SessionsPage />;
+      case 'view-sessions':
+        return <ViewSessions />;
+      case 'video-call':
+        return <VideoCall />;
       case 'skills':
         return <SkillsPage />;
       case 'connect':

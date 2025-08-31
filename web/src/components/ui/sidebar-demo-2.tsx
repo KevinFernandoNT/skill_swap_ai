@@ -11,7 +11,9 @@ import {
   IconArrowsExchange,
   IconMessageCircle,
   IconBulb,
-  IconLogout
+  IconLogout,
+  IconCalendarEvent,
+  IconVideo
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,22 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
        ),
       path: "settings"
     },
+    {
+      label: "View Sessions",
+      href: "#",
+      icon: (
+        <IconCalendarEvent className="h-5 w-5 shrink-0 text-white" />
+      ),
+      path: "view-sessions"
+    },
+    {
+      label: "Video Call",
+      href: "#",
+      icon: (
+        <IconVideo className="h-5 w-5 shrink-0 text-white" />
+      ),
+      path: "video-call"
+    },
   ];
 
   const [open, setOpen] = useState(false);
@@ -139,31 +157,42 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
             </div>
           </div>
           <div className="pl-1 pb-3 space-y-3">
-            <SidebarLink
-              link={{
-                label: (
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-white">
-                      {user?.name || "User"}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {user?.email || "user@example.com"}
-                    </span>
-                  </div>
-                ),
-                href: "#",
-                icon: (
-                  <img
-                    src={user?.avatar || "https://assets.aceternity.com/manu.png"}
-                    className="h-10 w-10 rounded-full"
-                    width={40}
-                    height={40}
-                    alt="Avatar"
-                  />
-                ),
-              }}
-            />
-           
+            <div className="flex items-center gap-4">
+              <SidebarLink
+                link={{
+                  label: (
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-white">
+                        {user?.name || "User"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {user?.email || "user@example.com"}
+                      </span>
+                    </div>
+                  ),
+                  href: "#",
+                  icon: (
+                    <img
+                      src={user?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80"}
+                      className="h-10 w-10 rounded-full object-cover border-2 border-white/20 shadow-sm"
+                      width={40}
+                      height={40}
+                      alt="Avatar"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80";
+                      }}
+                    />
+                  ),
+                }}
+              />
+              <button
+                onClick={() => handleNavClick('settings')}
+                className="p-2 text-gray-400 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/10"
+                title="Profile Settings"
+              >
+                <IconSettings className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </SidebarBody>
       </Sidebar>

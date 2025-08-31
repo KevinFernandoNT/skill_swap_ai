@@ -195,6 +195,44 @@
   .btn-outline {
     @apply border border-primary/30 text-primary hover:bg-primary/10 font-medium rounded-md transition-all duration-300;
   }
+
+  /* Custom Scrollbar Styles */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(161 161 161) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(161 161 161);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(115 115 115);
+  }
+
+  /* Dark mode scrollbar */
+  .dark .custom-scrollbar {
+    scrollbar-color: rgb(82 82 82) transparent;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(82 82 82);
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(115 115 115);
+  }
 }
 
 /* Light mode class support */

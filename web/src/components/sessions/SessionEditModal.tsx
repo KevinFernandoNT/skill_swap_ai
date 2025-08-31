@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3 } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3, Plus } from 'lucide-react';
 import { Session } from '../../types';
 import { SessionRequest } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,9 @@ import {
 } from "../ui/animated-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar22 } from "@/components/ui/calendar22";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 
 interface SessionEditModalProps {
   session: any | null;
@@ -29,8 +32,11 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     onSuccess: () => {
       toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
       onSave({ ...session, ...formData, subTopics: generalSubTopics });
-      onClose();
-      refetchSessions();
+      // Add a small delay to allow the exit animation to complete
+      setTimeout(() => {
+        onClose();
+        refetchSessions();
+      }, 100);
     },
     onError: (error: any) => {
       toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to update session', variant: 'destructive' });
@@ -40,28 +46,25 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    date: '',
+    date: undefined as Date | undefined,
     startTime: '',
     endTime: '',
     skillCategory: '',
-    isPublic: true,
-    maxParticipants: 5,
-    isTeaching: true
+    isPublic: true
   });
   const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
+  const [focusKeywordInput, setFocusKeywordInput] = useState('');
 
   useEffect(() => {
     if (session) {
       setFormData({
         title: session.title || '',
         description: session.description || '',
-        date: session.date || '',
+        date: session.date ? new Date(session.date) : undefined,
         startTime: session.startTime || '',
         endTime: session.endTime || '',
         skillCategory: session.skillCategory || '',
-        isPublic: session.isPublic || false,
-        maxParticipants: session.maxParticipants || 5,
-        isTeaching: session.isTeaching || true
+        isPublic: session.isPublic || false
       });
       const focusedTopics = Array.isArray((session as any).focusKeywords) ? (session as any).focusKeywords : [];
       const savedSubTopics = Array.isArray((session as any).subTopics) ? (session as any).subTopics : [];
@@ -80,15 +83,38 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     }));
   };
 
+  const handleDateChange = (date: Date | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      date: date
+    }));
+  };
+
   const handleGeneralSubTopicChange = (idx: number, value: string) => {
     setGeneralSubTopics(prev => prev.map((t, i) => (i === idx ? value : t)));
+  };
+
+  const handleAddFocusKeyword = () => {
+    const current = generalSubTopics.filter(t => t.trim());
+    if (focusKeywordInput.trim() && current.length < 5) {
+      setGeneralSubTopics(prev => [...prev, focusKeywordInput.trim()]);
+      setFocusKeywordInput('');
+    }
+  };
+
+  const handleRemoveFocusKeyword = (idx: number) => {
+    const current = generalSubTopics.filter(t => t.trim());
+    setGeneralSubTopics(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateSession({
       ...formData,
+      date: formData.date ? formData.date.toISOString().split('T')[0] : '',
       subTopics: generalSubTopics,
+      isTeaching: true, // Default to true for edit sessions
+      maxParticipants: 5, // Default value
     });
   };
 
@@ -106,8 +132,8 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalBody className="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
+              <ModalBody>
         <ModalHeader onClose={onClose}>
           Edit Session
         </ModalHeader>
@@ -117,7 +143,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-6"
           >
             {/* Header Section */}
             <div className="text-center mb-8">
@@ -144,7 +169,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                   {/* Title */}
                   <div className="lg:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Session Title
+                      Session Title *
                     </label>
                     <Input
                       type="text"
@@ -153,30 +178,47 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                       onChange={handleChange}
                       placeholder="Enter session title"
                       required
-                      className="text-lg"
+                      className="text-lg focus:outline-none focus:ring-0 focus:border-border"
                     />
                   </div>
 
                   {/* Description */}
                   <div className="lg:col-span-2">
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Description
+                      Description *
                     </label>
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
                       rows={3}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-0 focus:border-border resize-none"
                       placeholder="Describe what this session covers"
                       required
+                    />
+                  </div>
+
+                  {/* Skill Category */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Category *
+                    </label>
+                    <Combobox
+                      options={skillCategories.map(category => ({ value: category, label: category }))}
+                      value={formData.skillCategory}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, skillCategory: value }))}
+                      placeholder="Select a category"
+                      searchPlaceholder="Search categories..."
+                      emptyMessage="No categories found."
+                      width="w-full"
+                      className="[&_button]:focus:outline-none [&_button]:focus:ring-0 [&_[cmdk-item]]:focus:outline-none [&_[cmdk-item]]:focus:ring-0 [&_[cmdk-input]]:focus:outline-none [&_[cmdk-input]]:focus:ring-0"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Schedule, Skills & Settings Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Schedule & Settings Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Schedule Section */}
                 <div className="bg-card border border-border rounded-lg p-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -187,90 +229,35 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                   <div className="space-y-4">
                     {/* Date */}
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Date
-                      </label>
-                      <Input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        required
+                      <Calendar22
+                        date={formData.date}
+                        onDateChange={handleDateChange}
+                        label="Date *"
+                        placeholder="Select session date"
                       />
                     </div>
 
-                    {/* Time Range */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Start Time
-                        </label>
-                        <Input
-                          type="time"
-                          name="startTime"
-                          value={formData.startTime}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          End Time
-                        </label>
-                        <Input
-                          type="time"
-                          name="endTime"
-                          value={formData.endTime}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Skills Section */}
-                <div className="bg-card border border-border rounded-lg p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Target className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-foreground">Skills & Category</h3>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {/* Skill Category */}
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Category
-                      </label>
-                      <select
-                        name="skillCategory"
-                        value={formData.skillCategory}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                        required
-                      >
-                        <option value="">Select a category</option>
-                        {skillCategories.map(category => (
-                          <option key={category} value={category}>{category}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Max Participants */}
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Max Participants
-                      </label>
-                      <Input
-                        type="number"
-                        name="maxParticipants"
-                        value={formData.maxParticipants}
-                        onChange={handleChange}
-                        min={1}
-                        max={50}
-                        className="w-24"
-                      />
-                    </div>
+                                         {/* Time Range */}
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <TimePicker
+                           value={formData.startTime}
+                           onChange={(time) => setFormData(prev => ({ ...prev, startTime: time }))}
+                           label="Start Time *"
+                           placeholder="Select start time"
+                           className="[&_button]:focus:outline-none [&_button]:focus:ring-0"
+                         />
+                       </div>
+                       <div>
+                         <TimePicker
+                           value={formData.endTime}
+                           onChange={(time) => setFormData(prev => ({ ...prev, endTime: time }))}
+                           label="End Time *"
+                           placeholder="Select end time"
+                           className="[&_button]:focus:outline-none [&_button]:focus:ring-0"
+                         />
+                       </div>
+                     </div>
                   </div>
                 </div>
 
@@ -290,7 +277,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                           name="isPublic"
                           checked={formData.isPublic}
                           onChange={handleChange}
-                          className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                          className="w-4 h-4 text-primary bg-background border-border rounded focus:outline-none focus:ring-0"
                         />
                         <div className="flex-1">
                           <span className="text-sm font-medium text-foreground">
@@ -307,28 +294,6 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                         )}
                       </label>
                     </div>
-
-                    {/* Teaching Mode */}
-                    <div>
-                      <label className="flex items-center space-x-3 p-3 bg-muted rounded-md">
-                        <input
-                          type="checkbox"
-                          name="isTeaching"
-                          checked={formData.isTeaching}
-                          onChange={handleChange}
-                          className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
-                        />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-foreground">
-                            Teaching session
-                          </span>
-                          <p className="text-xs text-muted-foreground">
-                            You will be teaching others in this session
-                          </p>
-                        </div>
-                        <Users className="w-4 h-4 text-primary" />
-                      </label>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -337,32 +302,55 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
               <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground">Session Topics</h3>
-                  <span className="text-xs text-muted-foreground">(5 required)</span>
+                  <h3 className="text-lg font-semibold text-foreground">Focus Topics *</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {generalSubTopics.map((topic, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="flex items-center space-x-3"
+                <div className="space-y-3">
+                  <div className="flex space-x-2">
+                    <Input
+                      type="text"
+                      value={focusKeywordInput}
+                      onChange={e => setFocusKeywordInput(e.target.value)}
+                      placeholder="Type a topic and press Add"
+                      disabled={(generalSubTopics.filter(t => t.trim()).length >= 5)}
+                      className="flex-1 focus:outline-none focus:ring-0 focus:border-border"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddFocusKeyword}
+                      disabled={(generalSubTopics.filter(t => t.trim()).length >= 5) || !focusKeywordInput.trim()}
+                      size="sm"
+                      variant="outline"
                     >
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                        {idx + 1}
-                      </div>
-                      <Input
-                        type="text"
-                        value={topic}
-                        onChange={e => handleGeneralSubTopicChange(idx, e.target.value)}
-                        placeholder={`Topic ${idx + 1}`}
-                        required
-                        className="flex-1"
-                      />
-                    </motion.div>
-                  ))}
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+                    {generalSubTopics.filter(t => t.trim()).map((keyword, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="flex items-center space-x-2 bg-muted border border-border rounded-md px-3 py-2"
+                      >
+                        <span className="flex-1 text-foreground text-sm">{keyword}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFocusKeyword(idx)}
+                          className="text-destructive hover:text-destructive/80"
+                          title="Remove topic"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Add at least 1 and up to 5 focus topics for this session
+                  </p>
                 </div>
               </div>
 
@@ -380,7 +368,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span className="text-foreground">{formData.date || 'Select date'}</span>
+                    <span className="text-foreground">{formData.date ? formData.date.toLocaleDateString() : 'Select date'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-primary" />
@@ -403,7 +391,12 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         </ModalContent>
         
         <ModalFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => {
+            // Add a small delay to allow the exit animation to complete
+            setTimeout(() => {
+              onClose();
+            }, 100);
+          }}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={updateStatus === 'pending'} className="min-w-[140px]">

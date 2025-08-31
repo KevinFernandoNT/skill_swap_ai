@@ -17,6 +17,9 @@ import {
 } from "../ui/animated-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar22 } from "@/components/ui/calendar22";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 
 interface CreateSessionModalProps {
   isOpen: boolean;
@@ -28,7 +31,7 @@ interface CreateSessionModalProps {
 const sessionSchema = yup.object({
   title: yup.string().required('Session title is required'),
   description: yup.string().required('Description is required'),
-  date: yup.string().required('Date is required'),
+  date: yup.date().required('Date is required'),
   startTime: yup.string().required('Start time is required'),
   endTime: yup.string().required('End time is required'),
   skillCategory: yup.string().required('Skill category is required'),
@@ -38,7 +41,7 @@ const sessionSchema = yup.object({
   meetingLink: yup.string().url('Invalid meeting link').notRequired(),
   teachSkillId: yup.string().required('Please select a skill you want to teach'),
   teachSkillName: yup.string().notRequired(),
-  focusKeywords: yup.array().of(yup.string()).max(5, 'Up to 5 focus keywords').notRequired(),
+  focusKeywords: yup.array().of(yup.string()).min(1, 'At least 1 focus keyword is required').max(5, 'Up to 5 focus keywords').required('Focus keywords are required'),
 });
 
 type SessionFormValues = yup.InferType<typeof sessionSchema>;
@@ -76,7 +79,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
     defaultValues: {
       title: '',
       description: '',
-      date: '',
+      date: undefined,
       startTime: '',
       endTime: '',
       skillCategory: '',
@@ -86,7 +89,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       meetingLink: '',
       teachSkillId: '',
       teachSkillName: '',
-      focusKeywords: [],
+      focusKeywords: [''],
     },
   });
   
@@ -99,7 +102,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
     const sessionData: SessionRequest = {
       title: data.title,
       description: data.description,
-      date: data.date,
+      date: data.date ? data.date.toISOString().split('T')[0] : '',
       startTime: data.startTime,
       endTime: data.endTime,
       skillCategory: data.skillCategory,
@@ -115,9 +118,12 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   };
 
   const handleClose = () => {
-    reset();
-    setFocusKeywordInput('');
-    onClose();
+    // Add a small delay to allow the exit animation to complete
+    setTimeout(() => {
+      reset();
+      setFocusKeywordInput('');
+      onClose();
+    }, 100);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -157,8 +163,8 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <ModalBody className="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={handleClose} size="4xl">
+      <ModalBody>
         <ModalHeader onClose={handleClose}>
           Create New Session
         </ModalHeader>
@@ -168,7 +174,6 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="p-6"
           >
             {/* Header Section */}
             <div className="text-center mb-8">
@@ -202,7 +207,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                       {...register('title')}
                       onChange={handleChange}
                       placeholder="e.g., React Hooks Masterclass"
-                      className="text-lg"
+                      className="text-lg focus:outline-none focus:ring-0 focus:border-border"
                     />
                     {errors.title && <p className="text-destructive text-xs mt-1">{errors.title.message}</p>}
                   </div>
@@ -216,7 +221,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                       {...register('description')}
                       onChange={handleChange}
                       rows={3}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-0 focus:border-border resize-none"
                       placeholder="Describe what this session covers and what participants will learn"
                     />
                     {errors.description && <p className="text-destructive text-xs mt-1">{errors.description.message}</p>}
@@ -236,43 +241,40 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                   <div className="space-y-4">
                     {/* Date */}
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Date *
-                      </label>
-                      <Input
-                        type="date"
-                        {...register('date')}
-                        onChange={handleChange}
-                        min={minDate}
+                                             <Calendar22
+                        date={watch('date')}
+                        onDateChange={(date) => setValue('date', date)}
+                        label="Date *"
+                        minDate={new Date()}
+                        placeholder="Select session date"
+                         className="[&_button]:focus:outline-none [&_button]:focus:ring-0 [&_.day]:focus:outline-none [&_.day]:focus:ring-0 [&_.nav_button]:focus:outline-none [&_.nav_button]:focus:ring-0"
                       />
                       {errors.date && <p className="text-destructive text-xs mt-1">{errors.date.message}</p>}
                     </div>
 
-                    {/* Time Range */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Start Time *
-                        </label>
-                        <Input
-                          type="time"
-                          {...register('startTime')}
-                          onChange={handleChange}
-                        />
-                        {errors.startTime && <p className="text-destructive text-xs mt-1">{errors.startTime.message}</p>}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          End Time *
-                        </label>
-                        <Input
-                          type="time"
-                          {...register('endTime')}
-                          onChange={handleChange}
-                        />
-                        {errors.endTime && <p className="text-destructive text-xs mt-1">{errors.endTime.message}</p>}
-                      </div>
-                    </div>
+                                         {/* Time Range */}
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <TimePicker
+                           value={watch('startTime')}
+                           onChange={(time) => setValue('startTime', time)}
+                           label="Start Time *"
+                           placeholder="Select start time"
+                           className="[&_button]:focus:outline-none [&_button]:focus:ring-0"
+                         />
+                         {errors.startTime && <p className="text-destructive text-xs mt-1">{errors.startTime.message}</p>}
+                       </div>
+                       <div>
+                         <TimePicker
+                           value={watch('endTime')}
+                           onChange={(time) => setValue('endTime', time)}
+                           label="End Time *"
+                           placeholder="Select end time"
+                           className="[&_button]:focus:outline-none [&_button]:focus:ring-0"
+                         />
+                         {errors.endTime && <p className="text-destructive text-xs mt-1">{errors.endTime.message}</p>}
+                       </div>
+                     </div>
                   </div>
                 </div>
 
@@ -294,16 +296,19 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                           You have no teachable skills. Add a teaching skill first.
                         </div>
                       ) : (
-                        <select
+                        <Combobox
+                          options={teachableSkills.map(skill => ({ 
+                            value: skill._id, 
+                            label: `${skill.name} (${skill.category})` 
+                          }))}
                           value={watch('teachSkillId')}
-                          onChange={e => setValue('teachSkillId', e.target.value)}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                        >
-                          <option value="">Select a skill</option>
-                          {teachableSkills.map(skill => (
-                            <option key={skill._id} value={skill._id}>{skill.name} ({skill.category})</option>
-                          ))}
-                        </select>
+                          onValueChange={(value) => setValue('teachSkillId', value)}
+                          placeholder="Select a skill"
+                          searchPlaceholder="Search skills..."
+                          emptyMessage="No skills found."
+                          width="w-full"
+                           className="[&_button]:focus:outline-none [&_button]:focus:ring-0 [&_[cmdk-item]]:focus:outline-none [&_[cmdk-item]]:focus:ring-0 [&_[cmdk-input]]:focus:outline-none [&_[cmdk-input]]:focus:ring-0"
+                        />
                       )}
                       {errors.teachSkillId && <p className="text-destructive text-xs mt-1">{errors.teachSkillId.message}</p>}
                     </div>
@@ -313,16 +318,16 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                       <label className="block text-sm font-medium text-foreground mb-2">
                         Category *
                       </label>
-                      <select
-                        {...register('skillCategory')}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      >
-                        <option value="">Select a category</option>
-                        {skillCategories.map(category => (
-                          <option key={category} value={category}>{category}</option>
-                        ))}
-                      </select>
+                      <Combobox
+                        options={skillCategories.map(category => ({ value: category, label: category }))}
+                        value={watch('skillCategory')}
+                        onValueChange={(value) => setValue('skillCategory', value)}
+                        placeholder="Select a category"
+                        searchPlaceholder="Search categories..."
+                        emptyMessage="No categories found."
+                        width="w-full"
+                         className="[&_button]:focus:outline-none [&_button]:focus:ring-0 [&_[cmdk-item]]:focus:outline-none [&_[cmdk-item]]:focus:ring-0 [&_[cmdk-input]]:focus:outline-none [&_[cmdk-input]]:focus:ring-0"
+                      />
                       {errors.skillCategory && <p className="text-destructive text-xs mt-1">{errors.skillCategory.message}</p>}
                     </div>
                   </div>
@@ -346,6 +351,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                         {...register('meetingLink')}
                         onChange={handleChange}
                         placeholder="Paste a meeting URL"
+                        className="focus:outline-none focus:ring-0 focus:border-border"
                       />
                       {errors.meetingLink && <p className="text-destructive text-xs mt-1">{errors.meetingLink.message}</p>}
                     </div>
@@ -356,7 +362,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                         <input
                           type="checkbox"
                           {...register('isPublic')}
-                          className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                           className="w-4 h-4 text-primary bg-background border-border rounded focus:outline-none focus:ring-0"
                         />
                         <div className="flex-1">
                           <span className="text-sm font-medium text-foreground">
@@ -374,20 +380,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                       </label>
                     </div>
 
-                    {/* Max Participants */}
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Max Participants
-                      </label>
-                      <Input
-                        type="number"
-                        {...register('maxParticipants')}
-                        onChange={handleChange}
-                        min={1}
-                        max={50}
-                        className="w-24"
-                      />
-                    </div>
+                
                   </div>
                 </div>
               </div>
@@ -396,8 +389,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
               <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground">Focus Topics</h3>
-                  <span className="text-xs text-muted-foreground">(Optional)</span>
+                                     <h3 className="text-lg font-semibold text-foreground">Focus Topics *</h3>
                 </div>
                 
                 <div className="space-y-3">
@@ -408,7 +400,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                       onChange={e => setFocusKeywordInput(e.target.value)}
                       placeholder="Type a topic and press Add"
                       disabled={(watch('focusKeywords') || []).length >= 5}
-                      className="flex-1"
+                      className="flex-1 focus:outline-none focus:ring-0 focus:border-border"
                     />
                     <Button
                       type="button"
@@ -444,7 +436,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                   </div>
                   
                   <p className="text-xs text-muted-foreground">
-                    Add up to 5 focus topics for this session
+                     Add at least 1 and up to 5 focus topics for this session
                   </p>
                 </div>
               </div>
@@ -463,7 +455,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span className="text-foreground">{watch('date') || 'Select date'}</span>
+                    <span className="text-foreground">{watch('date') ? watch('date')?.toLocaleDateString() : 'Select date'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-primary" />

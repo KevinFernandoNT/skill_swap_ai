@@ -3,12 +3,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Calendar, Clock, Edit, MoreVertical, Search, Trash2, Filter, Plus } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Calendar, Clock, Edit, MoreVertical, Search, Trash2, Filter, Plus, Globe, Lock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useGetSessions } from '@/hooks/useGetSessions';
 import { useUpdateSession } from '@/hooks/useUpdateSession';
 import { useDeleteSession } from '@/hooks/useDeleteSession';
 import SessionEditModal from './SessionEditModal';
 import CreateSessionModal from './CreateSessionModal';
+import { CreateSessionModalMultiStep } from './CreateSessionModalMultiStep';
+import { SessionEditModalMultiStep } from './SessionEditModalMultiStep';
 import RescheduleModal from './RescheduleModal';
 import { Session } from '@/types';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
@@ -33,6 +37,7 @@ const SessionsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [useMultiStepModals, setUseMultiStepModals] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | { type: 'complete' | 'cancel'; session: Session }>(null);
 
@@ -214,15 +219,20 @@ const SessionsPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="mb-4 sm:mb-0">
               <h1 className="text-2xl font-bold text-foreground">Session Management</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Manage your teaching and learning sessions</p>
+              <p className="mt-1 text-sm text-muted-foreground">Manage your sessions</p>
             </div>
-            <button 
-              onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Session
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+              
+              </div>
+              <button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Session
+              </button>
+            </div>
           </div>
         </div>
 
@@ -285,7 +295,7 @@ const SessionsPage: React.FC = () => {
             {filteredSessions.map((session) => (
                              <Card
                  key={session._id}
-                 className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group overflow-hidden relative"
+                                   className="bg-card border-border hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group overflow-hidden relative"
                  onClick={() => handleEditSession(session)}
                >
                                    {/* Top right icon with date and category */}
@@ -306,46 +316,55 @@ const SessionsPage: React.FC = () => {
 
                  <CardContent className="p-6">
                                        {/* Title */}
-                    <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors pr-12">
-                      {session.title}
-                    </h3>
+                                         <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 pr-12">
+                       {session.title}
+                     </h3>
                     
-                    {/* Skill Name Label */}
-                    <div className="mb-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-[#0D9488] text-black border-[#0D9488] hover:bg-[#0D9488]/90 font-semibold px-3 py-1 h-auto text-xs rounded-md"
-                      >
-                        {Array.isArray(session.teachSkillId) 
-                          ? session.teachSkillId[0]?.name || 'Skill Name'
-                          : session.teachSkillId || 'Skill Name'
-                        }
-                      </Button>
-                    </div>
+                                                              {/* Skill Name */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm text-muted-foreground">
+                            {Array.isArray(session.teachSkillId) 
+                              ? session.teachSkillId[0]?.name || 'Skill Name'
+                              : session.teachSkillId || 'Skill Name'
+                            }
+                          </span>
+                        </div>
+                      </div>
                    
                                        {/* Description */}
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
                       {session.description}
                     </p>
 
-                    {/* Agenda Points */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {[
-                        'Fundamentals',
-                        'Best Practices',
-                        'Hands-on Practice',
-                        'Q&A',
-                        'Resources'
-                      ].map((topic, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20"
-                        >
-                          {topic}
-                        </span>
-                      ))}
+
+                    {/* Session Agenda */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                      </div>
+                                             <div className="flex items-center space-x-2 text-sm">
+                         {(session.focusKeywords && session.focusKeywords.length > 0 
+                           ? session.focusKeywords 
+                           : session.subTopics && session.subTopics.length > 0 
+                           ? session.subTopics 
+                           : [
+                               'Fundamentals',
+                               'Best Practices', 
+                               'Hands-on Practice',
+                               'Q&A',
+                               'Resources'
+                             ]
+                         ).map((topic, idx, array) => (
+                           <div key={idx} className="flex items-center">
+                                                           <span className="bg-primary text-black px-2 py-1 rounded-md text-xs font-medium">{topic}</span>
+                             {idx < array.length - 1 && <Separator orientation="vertical" className="h-3 mx-2" />}
+                           </div>
+                         ))}
+                       </div>
                     </div>
+
+                    <Separator className="my-4" />
 
                     {/* Details Section */}
                     <div className="flex items-center justify-between">
@@ -360,15 +379,17 @@ const SessionsPage: React.FC = () => {
                         </span>
                       </div>
                       
-                                             {/* Location/Platform */}
-                       <div className="flex items-center gap-2">
-                         <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
-                           <div className="w-2 h-2 rounded-full bg-primary"></div>
-                         </div>
-                         <span className="text-sm text-foreground">
-                           {session.isPublic ? 'Public Session' : 'Private Session'}
-                         </span>
-                                                   {/* Delete Button - Always visible */}
+                                                                     {/* Location/Platform */}
+                        <div className="flex items-center gap-2">
+                          {session.isPublic ? (
+                            <Globe className="w-4 h-4 text-primary" />
+                          ) : (
+                            <Lock className="w-4 h-4 text-primary" />
+                          )}
+                          <span className="text-xs text-foreground">
+                            {session.isPublic ? 'Public' : 'Private'}
+                          </span>
+                                                    {/* Delete Button - Always visible */}
                           <div className="ml-2">
                             <Button
                               variant="destructive"
@@ -410,20 +431,35 @@ const SessionsPage: React.FC = () => {
       </div>
 
       {/* Create Session Modal */}
-      <CreateSessionModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={refetchSessions}
-      />
+      {useMultiStepModals ? (
+        <CreateSessionModalMultiStep
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+      ) : (
+        <CreateSessionModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={refetchSessions}
+        />
+      )}
 
       {/* Edit Session Modal */}
-      <SessionEditModal
-        session={selectedSession}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        onSave={handleSaveSession}
-        refetchSessions={refetchSessions}
-      />
+      {useMultiStepModals ? (
+        <SessionEditModalMultiStep
+          session={selectedSession}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+        />
+      ) : (
+        <SessionEditModal
+          session={selectedSession}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          onSave={handleSaveSession}
+          refetchSessions={refetchSessions}
+        />
+      )}
 
       {/* Reschedule Modal */}
       <RescheduleModal
