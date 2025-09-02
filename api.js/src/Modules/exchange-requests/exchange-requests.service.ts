@@ -95,7 +95,6 @@ export class ExchangeRequestsService {
         skillId: exchangeRequest.offeredSkillId.toString(),
         requestedSkillId: exchangeRequest.requestedSkillId.toString(),
         requestedBy: exchangeRequest.requester.toString(),
-        subTopics: originalSession.subTopics || [],
         meetingLink: exchangeRequest.meetingLink || originalSession.meetingLink || '',
         focusKeywords: originalSession.focusKeywords || [],
         // Store the session agenda (from original session focus keywords)

@@ -126,17 +126,17 @@ export class SessionsService {
     
     const updatedSession = await this.sessionsRepository.update(id, updateSessionDto);
     
-    // Check if subTopics were updated and trigger background process if needed
+    // Check if focusKeywords were updated and trigger background process if needed
     if (updateSessionDto.focusKeywords && updateSessionDto.focusKeywords.length > 0 && session.teachSkillId) {
-      this.logger.log(`SubTopics updated for session: ${id}, triggering background process`);
+      this.logger.log(`FocusKeywords updated for session: ${id}, triggering background process`);
       this.logger.log(`teachSkillId: ${session.teachSkillId}`);
-      this.logger.log(`subTopics: ${JSON.stringify(updateSessionDto.focusKeywords)}`);
+      this.logger.log(`focusKeywords: ${JSON.stringify(updateSessionDto.focusKeywords)}`);
 
       // Execute background process asynchronously
       this.triggerBackgroundProcess(id, session.teachSkillId.toString(), updateSessionDto.focusKeywords);
     } else {
-      this.logger.log(`No subTopics update detected or missing teachSkillId, skipping background process`);
-      this.logger.log(`subTopics provided: ${updateSessionDto.focusKeywords ? 'yes' : 'no'}`);
+      this.logger.log(`No focusKeywords update detected or missing teachSkillId, skipping background process`);
+      this.logger.log(`focusKeywords provided: ${updateSessionDto.focusKeywords ? 'yes' : 'no'}`);
       this.logger.log(`teachSkillId: ${session.teachSkillId}`);
     }
     

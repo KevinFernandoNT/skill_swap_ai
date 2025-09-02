@@ -47,7 +47,6 @@ export interface Session {
     requestedSkill: string;
     swapPartner: string;
   };
-  subTopics?: string[];
   teachSkillId?: Skill[];
   teachSkillName?: string;
   meetingLink?: string;
@@ -107,7 +106,6 @@ export interface ExchangeRequest {
     participants: any[];
     teachSkillId: string[];
     teachSkillName: string;
-    subTopics: string[];
     meetingLink: string;
     focusKeywords: string[];
     metadata: string[];
@@ -191,7 +189,6 @@ export interface SessionRequest {
   isPublic?: boolean;
   teachSkillId?: string;
   teachSkillName?: string;
-  subTopics?: string[];
   meetingLink?: string;
   focusKeywords?: string[];
 }

@@ -17,7 +17,6 @@ export interface ExchangeSession {
     email: string;
     avatar?: string;
   };
-  subTopics?: string[];
   meetingLink?: string;
   focusKeywords?: string[];
   skillId: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3 } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3, Loader2 } from 'lucide-react';
 import { Session } from '../../types';
 import { SessionRequest } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,7 @@ interface SessionEditModalMultiStepProps {
   isOpen: boolean;
   onClose: () => void;
   session: Session | null;
+  onSuccess?: () => void;
 }
 
 const skillCategories = [
@@ -43,7 +44,8 @@ const skillCategories = [
 export const SessionEditModalMultiStep: React.FC<SessionEditModalMultiStepProps> = ({
   isOpen,
   onClose,
-  session
+  session,
+  onSuccess
 }) => {
   const { toast } = useToast();
   const [generalSubTopics, setGeneralSubTopics] = useState<string[]>(['', '', '', '', '']);
@@ -69,6 +71,9 @@ export const SessionEditModalMultiStep: React.FC<SessionEditModalMultiStepProps>
       // Add a small delay to allow the exit animation to complete
       setTimeout(() => {
         onClose();
+        if (onSuccess) {
+          onSuccess();
+        }
       }, 100);
     },
     onError: (error) => {
@@ -122,7 +127,7 @@ export const SessionEditModalMultiStep: React.FC<SessionEditModalMultiStepProps>
     updateSession.mutate({
       ...formData,
       date: formData.date ? formData.date.toISOString().split('T')[0] : '',
-      subTopics: generalSubTopics,
+      focusKeywords: generalSubTopics.filter(t => t.trim()),
     });
   };
 
@@ -137,7 +142,15 @@ export const SessionEditModalMultiStep: React.FC<SessionEditModalMultiStepProps>
     <Modal isOpen={isOpen} onClose={onClose} size="5xl">
       <ModalBody>
         <ModalContent>
-          <div className="space-y-6">
+          {updateSession.isPending && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="flex items-center space-x-3 text-primary">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-sm font-medium">Saving your changes...</span>
+              </div>
+            </div>
+          )}
+          <div className={`space-y-6 ${updateSession.isPending ? 'pointer-events-none opacity-50' : ''}`}>
             {/* Header */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-4">
@@ -320,16 +333,24 @@ export const SessionEditModalMultiStep: React.FC<SessionEditModalMultiStepProps>
                   onClose();
                 }, 100);
               }}
-              className="px-2 py-2 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28"
+              disabled={updateSession.isPending}
+              className="px-2 py-2 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
                       <button
               onClick={handleSubmit}
               disabled={updateSession.isPending}
-              className="bg-primary font-semibold text-primary-foreground text-sm px-2 py-2 rounded-md border border-primary w-30"
+              className="bg-primary font-semibold text-primary-foreground text-sm px-2 py-2 rounded-md border border-primary w-30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {updateSession.isPending ? 'Saving...' : 'Save Changes'}
+              {updateSession.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving Changes...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
         </ModalFooter>
       </ModalBody>

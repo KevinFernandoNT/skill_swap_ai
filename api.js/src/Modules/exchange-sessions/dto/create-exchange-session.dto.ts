@@ -42,11 +42,6 @@ export class CreateExchangeSessionDto {
   @IsBoolean()
   isPublic?: boolean;
 
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsString({ each: true })
-  subTopics?: string[];
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

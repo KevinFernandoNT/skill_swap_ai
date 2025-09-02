@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3, Plus } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, X, BookOpen, Target, Settings, Edit3, Plus, Loader2 } from 'lucide-react';
 import { Session } from '../../types';
 import { SessionRequest } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +31,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
   const { mutate: updateSession, status: updateStatus } = useUpdateSession(session?._id, {
     onSuccess: () => {
       toast.toast({ title: 'Session updated!', description: 'Your session was updated successfully.' });
-      onSave({ ...session, ...formData, subTopics: generalSubTopics });
+      onSave({ ...session, ...formData, focusKeywords: generalSubTopics.filter(t => t.trim()) });
       // Add a small delay to allow the exit animation to complete
       setTimeout(() => {
         onClose();
@@ -112,7 +112,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
     updateSession({
       ...formData,
       date: formData.date ? formData.date.toISOString().split('T')[0] : '',
-      subTopics: generalSubTopics,
+      focusKeywords: generalSubTopics.filter(t => t.trim()),
       isTeaching: true, // Default to true for edit sessions
       maxParticipants: 5, // Default value
     });
@@ -139,10 +139,19 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
         </ModalHeader>
         
         <ModalContent>
+          {updateStatus === 'pending' && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="flex items-center space-x-3 text-primary">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-sm font-medium">Saving your changes...</span>
+              </div>
+            </div>
+          )}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className={updateStatus === 'pending' ? 'pointer-events-none opacity-50' : ''}
           >
             {/* Header Section */}
             <div className="text-center mb-8">
@@ -396,12 +405,16 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ session, isOpen, on
             setTimeout(() => {
               onClose();
             }, 100);
-          }}>
+          }} disabled={updateStatus === 'pending'}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={updateStatus === 'pending'} className="min-w-[140px]">
-            <Save className="w-4 h-4 mr-2" />
-            {updateStatus === 'pending' ? 'Saving...' : 'Save Changes'}
+            {updateStatus === 'pending' ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            {updateStatus === 'pending' ? 'Saving Changes...' : 'Save Changes'}
           </Button>
         </ModalFooter>
       </ModalBody>

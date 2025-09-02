@@ -79,7 +79,6 @@ const ConnectPage: React.FC = () => {
           description: session.description,
           maxParticipants: session.maxParticipants,
           isPublic: session.isPublic,
-          subTopics: session.subTopics,
           teachSkillId: session.teachSkillId,
           teachSkillName: session.teachSkillName,
           meetingLink: session.meetingLink,

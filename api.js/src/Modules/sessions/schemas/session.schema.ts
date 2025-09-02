@@ -62,10 +62,6 @@ export class Session {
   @Prop()
   teachSkillName?: string;
 
-  @ApiProperty({ type: [String], required: false })
-  @Prop({ type: [String], default: [] })
-  subTopics?: string[];
-
   @ApiProperty({ required: false })
   @Prop()
   meetingLink?: string;

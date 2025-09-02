@@ -46,10 +46,6 @@ export class ExchangeSession {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   hostId: Types.ObjectId;
 
-  @ApiProperty({ type: [String], required: false })
-  @Prop({ type: [String], default: [] })
-  subTopics?: string[];
-
   @ApiProperty({ required: false })
   @Prop()
   meetingLink?: string;

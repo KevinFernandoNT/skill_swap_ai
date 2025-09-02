@@ -53,11 +53,6 @@ export class UpdateExchangeSessionDto {
   @IsEnum(['upcoming', 'ongoing', 'completed', 'cancelled', 'expired'])
   status?: string;
 
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsString({ each: true })
-  subTopics?: string[];
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

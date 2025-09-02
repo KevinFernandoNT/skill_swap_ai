@@ -39,5 +39,7 @@ import { AuthModule } from './Modules/auth/auth.module';
     ExchangeRequestsModule,
     NotificationsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

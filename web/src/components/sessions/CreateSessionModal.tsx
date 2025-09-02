@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Users, Globe, Lock, Save, Plus, X, BookOpen, Target, Link, Settings } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, Plus, X, BookOpen, Target, Link, Settings, Loader2 } from 'lucide-react';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
 import { useToast } from "@/hooks/use-toast";
 import { useCreateSession } from "@/hooks/useCreateSession";
@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion } from "motion/react";
+import { checkBackendHealth } from "@/lib/api";
 import {
   Modal,
   ModalBody,
@@ -49,23 +50,33 @@ type SessionFormValues = yup.InferType<typeof sessionSchema>;
 const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [focusKeywordInput, setFocusKeywordInput] = useState('');
   const { toast } = useToast();
-  const { mutate: createSession, status } = useCreateSession({
-    onSuccess: () => {
-      toast({
-        title: "Session created!",
-        description: "Your session has been created successfully.",
-      });
-      reset();
-      setFocusKeywordInput('');
-      onClose();
-      if (onSuccess) {
-        onSuccess();
-      }
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const { mutate: createSession, status, error } = useCreateSession({
+    onSuccess: (data) => {
+      console.log('Session created successfully:', data);
+      setShowSuccess(true);
+      
+      // Show success animation for 2 seconds before closing
+      setTimeout(() => {
+        toast({
+          title: "Session created!",
+          description: "Your session has been created successfully.",
+        });
+        reset();
+        setFocusKeywordInput('');
+        setShowSuccess(false);
+        onClose();
+        if (onSuccess) {
+          onSuccess();
+        }
+      }, 2000);
     },
     onError: (error: any) => {
+      console.error('Session creation failed:', error);
       toast({
         title: "Session creation failed",
-        description: error?.response?.data?.message || "Could not create session.",
+        description: error?.response?.data?.message || error?.message || "Could not create session.",
         variant: "destructive",
       });
     },
@@ -89,7 +100,7 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       meetingLink: '',
       teachSkillId: '',
       teachSkillName: '',
-      focusKeywords: [''],
+      focusKeywords: [],
     },
   });
   
@@ -99,6 +110,9 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   if (!skillsResult) return <div>No skills loaded.</div>;
 
   const handleSubmitForm = (data: SessionFormValues) => {
+    console.log('Form data submitted:', data);
+    console.log('Form validation errors:', errors);
+    
     const sessionData: SessionRequest = {
       title: data.title,
       description: data.description,
@@ -112,8 +126,12 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
       teachSkillId: data.teachSkillId,
       teachSkillName: data.teachSkillName,
       meetingLink: data.meetingLink,
-      focusKeywords: data.focusKeywords,
+      focusKeywords: data.focusKeywords ? data.focusKeywords.filter(k => k.trim() !== '') : [],
     };
+    
+    console.log('Sending session data to API:', sessionData);
+    
+    // Trigger the session creation - this is a mutation, not awaited
     createSession(sessionData);
   };
 
@@ -152,14 +170,16 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
   const handleAddFocusKeyword = () => {
     const current = watch('focusKeywords') || [];
     if (focusKeywordInput.trim() && current.length < 5) {
-      setValue('focusKeywords', [...current, focusKeywordInput.trim()]);
+      const newKeywords = [...current, focusKeywordInput.trim()];
+      setValue('focusKeywords', newKeywords, { shouldValidate: true });
       setFocusKeywordInput('');
     }
   };
 
   const handleRemoveFocusKeyword = (idx: number) => {
     const current = watch('focusKeywords') || [];
-    setValue('focusKeywords', current.filter((_, i) => i !== idx));
+    const newKeywords = current.filter((_, i) => i !== idx);
+    setValue('focusKeywords', newKeywords, { shouldValidate: true });
   };
 
   return (
@@ -170,10 +190,67 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
         </ModalHeader>
         
         <ModalContent>
+          {status === 'pending' && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-card border border-border rounded-lg p-8 max-w-sm mx-4 text-center">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Creating Session</h3>
+                <p className="text-sm text-muted-foreground mb-4">Please wait while we set up your session...</p>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-4">
+                <div className="flex items-center space-x-3 text-destructive mb-4">
+                  <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <span className="text-sm font-bold">!</span>
+                  </div>
+                  <span className="text-sm font-medium">Error Creating Session</span>
+                </div>
+                <p className="text-sm text-destructive mb-4">
+                  {error?.response?.data?.message || error?.message || 'An unexpected error occurred'}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {showSuccess && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-8 max-w-sm mx-4 text-center">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-green-600 mb-2">Session Created!</h3>
+                <p className="text-sm text-green-600/80">Your session has been successfully created.</p>
+              </div>
+            </div>
+          )}
+          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className={status === 'pending' || error || showSuccess ? 'pointer-events-none opacity-50' : ''}
           >
             {/* Header Section */}
             <div className="text-center mb-8">
@@ -478,12 +555,38 @@ const CreateSessionModal: React.FC<CreateSessionModalProps> = ({ isOpen, onClose
         </ModalContent>
         
         <ModalFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={status === 'pending'}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit(handleSubmitForm)} disabled={status === 'pending'} className="min-w-[140px]">
-            <Save className="w-4 h-4 mr-2" />
-            {status === 'pending' ? 'Creating...' : 'Create Session'}
+          <Button 
+            onClick={() => {
+              console.log('Create Session button clicked');
+              console.log('Current form values:', watch());
+              console.log('Current form errors:', errors);
+              console.log('Form is valid:', Object.keys(errors).length === 0);
+              handleSubmit(handleSubmitForm, (formErrors) => {
+                console.log('Form validation errors:', formErrors);
+                toast({
+                  title: "Validation Error",
+                  description: "Please fix the errors in the form before submitting.",
+                  variant: "destructive",
+                });
+              })();
+            }} 
+            disabled={status === 'pending'} 
+            className="min-w-[140px] relative overflow-hidden"
+          >
+            {status === 'pending' && (
+              <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+            )}
+            <div className="relative flex items-center">
+              {status === 'pending' ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {status === 'pending' ? 'Creating Session...' : 'Create Session'}
+            </div>
           </Button>
         </ModalFooter>
       </ModalBody>

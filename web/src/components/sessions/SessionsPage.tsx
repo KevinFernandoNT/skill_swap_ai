@@ -127,25 +127,19 @@ const SessionsPage: React.FC = () => {
   };
 
   const handleReschedule = (sessionId: string, newDate: string, newStartTime: string, newEndTime: string) => {
-    // setSessionsData(prev =>
-    //   prev.map(session =>
-    //     session.id === sessionId 
-    //       ? { ...session, date: newDate, startTime: newStartTime, endTime: newEndTime }
-    //       : session
-    //   )
-    // ); // No mock data, so no state update
+    // For now, we'll just refetch sessions after updates
+    // In a real implementation, you would use the updateSession hook properly
+    refetchSessions();
+    
     setIsRescheduleModalOpen(false);
     setSelectedSession(null);
   };
 
   const handleCancelSession = (sessionId: string) => {
-    // setSessionsData(prev =>
-    //   prev.map(session =>
-    //     session.id === sessionId 
-    //       ? { ...session, status: 'cancelled' as const }
-    //       : session
-    //   )
-    // ); // No mock data, so no state update
+    // For now, we'll just refetch sessions after updates
+    // In a real implementation, you would use the updateSession hook properly
+    refetchSessions();
+    
     setIsRescheduleModalOpen(false);
     setSelectedSession(null);
   };
@@ -210,6 +204,9 @@ const SessionsPage: React.FC = () => {
       toast.toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete session', variant: 'destructive' });
     },
   });
+
+  // For now, we'll just refetch sessions after updates
+  // In a real implementation, you would use the updateSession hook properly
 
   return (
     <>
@@ -298,27 +295,29 @@ const SessionsPage: React.FC = () => {
                                    className="bg-card border-border hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group overflow-hidden relative"
                  onClick={() => handleEditSession(session)}
                >
-                                   {/* Top right icon with date and category */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(session.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </span>
-                    <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center">
-                      <Calendar className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30">
-                      {session.skillCategory}
-                    </span>
-                  </div>
-
                  <CardContent className="p-6">
-                                       {/* Title */}
-                                         <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 pr-12">
-                       {session.title}
-                     </h3>
+                   {/* Header with title, date, and category */}
+                   <div className="flex items-start justify-between mb-4">
+                     <div className="flex-1 pr-4">
+                       <h3 className="text-lg font-semibold text-foreground line-clamp-2">
+                         {session.title}
+                       </h3>
+                     </div>
+                     <div className="flex items-center gap-2 flex-shrink-0">
+                       <span className="text-xs text-muted-foreground">
+                         {new Date(session.date).toLocaleDateString('en-US', { 
+                           month: 'short', 
+                           day: 'numeric' 
+                         })}
+                       </span>
+                       <div className="w-8 h-8 rounded-full border border-green-500 flex items-center justify-center">
+                         <Calendar className="w-4 h-4 text-green-500" />
+                       </div>
+                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-500 border border-green-500/30">
+                         {session.skillCategory}
+                       </span>
+                     </div>
+                   </div>
                     
                                                               {/* Skill Name */}
                       <div className="mb-4">
@@ -342,26 +341,29 @@ const SessionsPage: React.FC = () => {
                     {/* Session Agenda */}
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-3">
+           
                       </div>
-                                             <div className="flex items-center space-x-2 text-sm">
-                         {(session.focusKeywords && session.focusKeywords.length > 0 
-                           ? session.focusKeywords 
-                           : session.subTopics && session.subTopics.length > 0 
-                           ? session.subTopics 
-                           : [
-                               'Fundamentals',
-                               'Best Practices', 
-                               'Hands-on Practice',
-                               'Q&A',
-                               'Resources'
-                             ]
-                         ).map((topic, idx, array) => (
-                           <div key={idx} className="flex items-center">
-                                                           <span className="bg-primary text-black px-2 py-1 rounded-md text-xs font-medium">{topic}</span>
-                             {idx < array.length - 1 && <Separator orientation="vertical" className="h-3 mx-2" />}
-                           </div>
-                         ))}
-                       </div>
+                      <div className="space-y-2">
+                        {(session.focusKeywords && session.focusKeywords.length > 0 
+                          ? session.focusKeywords 
+                          : [
+                              'Fundamentals',
+                              'Best Practices', 
+                              'Hands-on Practice',
+                              'Q&A',
+                              'Resources'
+                            ]
+                        ).map((topic, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-sm text-gray-300">{topic}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <Separator className="my-4" />
@@ -435,6 +437,7 @@ const SessionsPage: React.FC = () => {
         <CreateSessionModalMultiStep
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={refetchSessions}
         />
       ) : (
         <CreateSessionModal
@@ -450,6 +453,7 @@ const SessionsPage: React.FC = () => {
           session={selectedSession}
           isOpen={isEditModalOpen}
           onClose={handleCloseEditModal}
+          onSuccess={refetchSessions}
         />
       ) : (
         <SessionEditModal

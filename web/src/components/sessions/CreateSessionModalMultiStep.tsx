@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Users, Globe, Lock, Save, Plus, X, BookOpen, Target, Link, Settings } from 'lucide-react';
+import { Calendar, Clock, Users, Globe, Lock, Save, Plus, X, BookOpen, Target, Link, Settings, Loader2 } from 'lucide-react';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
 import { useToast } from "@/hooks/use-toast";
 import { useCreateSession } from "@/hooks/useCreateSession";
@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { motion } from "motion/react";
+import { checkBackendHealth } from "@/lib/api";
 import {
   Modal,
   ModalBody,
@@ -46,6 +47,7 @@ type SessionFormValues = yup.InferType<typeof sessionSchema>;
 interface CreateSessionModalMultiStepProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 const skillCategories = [
@@ -64,7 +66,8 @@ const skillCategories = [
 
 export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepProps> = ({
   isOpen,
-  onClose
+  onClose,
+  onSuccess
 }) => {
   const { toast } = useToast();
   const { data: userSkillsResponse } = useGetUserSkills();
@@ -72,18 +75,23 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
   const [focusKeywords, setFocusKeywords] = useState<string[]>(['', '', '', '', '']);
 
   const createSession = useCreateSession({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Session created successfully:', data);
       toast({
         title: 'Session created!',
         description: 'Your session has been created successfully.',
       });
       onClose();
       reset();
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error) => {
+      console.error('Session creation failed:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to create session',
+        description: error?.response?.data?.message || error?.message || 'Failed to create session',
         variant: 'destructive'
       });
     },
@@ -109,6 +117,31 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
   });
 
   const handleSubmitForm = (data: SessionFormValues) => {
+    console.log('Form data submitted:', data);
+    console.log('Form validation errors:', errors);
+    
+    // Validate required fields
+    if (!data.title || !data.date || !data.startTime || !data.endTime || !data.skillCategory || !data.teachSkillId) {
+      console.log('Validation failed - missing required fields');
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (title, date, time, skill category, and teaching skill).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate focus keywords
+    if (!data.focusKeywords || data.focusKeywords.length === 0 || data.focusKeywords.every(k => !k.trim())) {
+      console.log('Validation failed - no focus keywords');
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one focus keyword for the session.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const sessionData: SessionRequest = {
       title: data.title,
       description: data.description,
@@ -122,9 +155,13 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
       teachSkillId: data.teachSkillId,
       teachSkillName: data.teachSkillName,
       meetingLink: data.meetingLink,
-      focusKeywords: data.focusKeywords,
+      focusKeywords: data.focusKeywords ? data.focusKeywords.filter(k => k.trim() !== '') : [],
     };
-    createSession(sessionData);
+    
+    console.log('Sending session data to API:', sessionData);
+    
+    // Trigger the session creation - this is a mutation, not awaited
+    createSession.mutate(sessionData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -177,7 +214,49 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
     <Modal isOpen={isOpen} onClose={onClose} size="5xl">
       <ModalBody>
         <ModalContent>
-          <div className="space-y-6">
+          {createSession.isPending && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-card border border-border rounded-lg p-8 max-w-sm mx-4 text-center">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Creating Session</h3>
+                <p className="text-sm text-muted-foreground mb-4">Please wait while we set up your session...</p>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {createSession.error && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-4">
+                <div className="flex items-center space-x-3 text-destructive mb-4">
+                  <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <span className="text-sm font-bold">!</span>
+                  </div>
+                  <span className="text-sm font-medium">Error Creating Session</span>
+                </div>
+                <p className="text-sm text-destructive mb-4">
+                  {createSession.error?.response?.data?.message || createSession.error?.message || 'An unexpected error occurred'}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+          
+
+          
+                      <div className={`space-y-6 ${createSession.isPending || createSession.error ? 'pointer-events-none opacity-50' : ''}`}>
             {/* Header */}
             <div className="text-center">
               <div className="flex items-center justify-center mb-4">
@@ -328,20 +407,24 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Sub Topics (5 topics are required) *
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {focusKeywords.map((keyword, index) => (
-                        <div key={index} className="flex gap-2">
+                        <div key={index} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-card/50">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                            <span className="text-xs font-semibold text-primary">{index + 1}</span>
+                          </div>
                           <Input
                             value={keyword}
                             onChange={(e) => updateFocusKeyword(index, e.target.value)}
-                            placeholder={`Keyword ${index + 1}`}
-                            className="h-10"
+                            placeholder={`Enter sub topic ${index + 1}`}
+                            className="flex-1 h-9 border-0 bg-transparent focus:ring-0 focus:outline-none p-0"
                           />
-
                         </div>
                       ))}
-
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      These sub topics will help participants understand what will be covered in your session.
+                    </p>
                   </div>
                 </div>
 
@@ -393,16 +476,32 @@ export const CreateSessionModalMultiStep: React.FC<CreateSessionModalMultiStepPr
         <ModalFooter className="gap-4">
           <button 
             onClick={onClose}
-            className="px-2 py-2 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28"
+            disabled={createSession.isPending}
+            className="px-2 py-2 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
                       <button
-              onClick={handleSubmit(handleSubmitForm)}
+              onClick={() => {
+                console.log('Create Session button clicked (multi-step)');
+                handleSubmit(handleSubmitForm)();
+              }}
               disabled={createSession.isPending}
-              className="bg-primary py-2 font-semibold text-primary-foreground text-sm px-2 py-1 rounded-md border border-primary w-30"
+              className="bg-primary py-2 font-semibold text-primary-foreground text-sm px-2 py-1 rounded-md border border-primary w-30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center relative overflow-hidden"
             >
-              {createSession.isPending ? 'Creating...' : 'Create Session'}
+              {createSession.isPending && (
+                <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+              )}
+              <div className="relative flex items-center">
+                {createSession.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Session...
+                  </>
+                ) : (
+                  'Create Session'
+                )}
+              </div>
             </button>
         </ModalFooter>
       </ModalBody>
