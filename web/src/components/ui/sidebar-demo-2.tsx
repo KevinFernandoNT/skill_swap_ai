@@ -13,7 +13,11 @@ import {
   IconBulb,
   IconLogout,
   IconCalendarEvent,
-  IconVideo
+  IconVideo,
+  IconChevronDown,
+  IconChevronRight,
+  IconSchool,
+  IconBook
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -26,6 +30,8 @@ interface SidebarDemoProps {
 }
 
 export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, user }: SidebarDemoProps) {
+  const [skillsExpanded, setSkillsExpanded] = useState(false);
+
   const links = [
     {
       label: "Dashboard",
@@ -42,14 +48,6 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
          <IconCalendar className="h-5 w-5 shrink-0 text-white" />
        ),
       path: "sessions"
-    },
-    {
-      label: "My Skills",
-      href: "#",
-             icon: (
-         <IconBulb className="h-5 w-5 shrink-0 text-white" />
-       ),
-      path: "skills"
     },
     {
       label: "Connect",
@@ -154,6 +152,64 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
                   />
                 </div>
               ))}
+              
+              {/* Expandable My Skills Section */}
+              <div className="flex flex-col">
+                <div 
+                  onClick={() => setSkillsExpanded(!skillsExpanded)}
+                  className={cn(
+                    "flex items-center justify-between cursor-pointer transition-all duration-300 ease-in-out rounded-[5px] pl-[10px] pr-3 py-2",
+                    (currentPage === 'skills' || currentPage === 'skills-teaching' || currentPage === 'skills-learning')
+                      ? "bg-primary font-semibold text-black shadow-lg pl-[5px]" 
+                      : "hover:bg-white/10"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <IconBulb className="h-5 w-5 shrink-0 text-white" />
+                    <span className="text-white">My Skills</span>
+                  </div>
+                  {skillsExpanded ? (
+                    <IconChevronDown className="h-4 w-4 text-white" />
+                  ) : (
+                    <IconChevronRight className="h-4 w-4 text-white" />
+                  )}
+                </div>
+                
+                {skillsExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="ml-6 mt-1 flex flex-col gap-1"
+                  >
+                    <div 
+                      onClick={() => handleNavClick('skills-teaching')}
+                      className={cn(
+                        "flex items-center gap-3 cursor-pointer transition-all duration-300 ease-in-out rounded-[5px] pl-3 pr-3 py-2",
+                        currentPage === 'skills-teaching'
+                          ? "bg-primary font-semibold text-black shadow-lg" 
+                          : "hover:bg-white/10"
+                      )}
+                    >
+                      <IconSchool className="h-4 w-4 text-white" />
+                      <span className="text-white text-sm">Skills I Can Teach</span>
+                    </div>
+                    <div 
+                      onClick={() => handleNavClick('skills-learning')}
+                      className={cn(
+                        "flex items-center gap-3 cursor-pointer transition-all duration-300 ease-in-out rounded-[5px] pl-3 pr-3 py-2",
+                        currentPage === 'skills-learning'
+                          ? "bg-primary font-semibold text-black shadow-lg" 
+                          : "hover:bg-white/10"
+                      )}
+                    >
+                      <IconBook className="h-4 w-4 text-white" />
+                      <span className="text-white text-sm">Skills I Want to Learn</span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </div>
           </div>
           <div className="pl-1 pb-3 space-y-3">

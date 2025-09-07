@@ -52,11 +52,8 @@ export type SkillRequest = {
   name?: string;
   category?: string;
   proficiency?: number;
-  type?: 'teaching' | 'learning';
-  agenda?: string[];
-  description?: string;
   experience?: string;
-  goals?: string;
+  focusedTopics?: string;
 };
 
 export type SkillResponse = {
@@ -64,11 +61,8 @@ export type SkillResponse = {
   name: string;
   category: string;
   proficiency: number;
-  type: 'teaching' | 'learning';
-  agenda?: string[];
-  description?: string;
   experience?: string;
-  goals?: string;
+  focusedTopics?: string;
   createdAt?: string;
   updatedAt?: string;
   userId?: string;

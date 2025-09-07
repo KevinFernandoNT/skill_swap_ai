@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Bell, Plus, LogOut, Check } from 'lucide-react';
+import { Bell, Plus, LogOut } from 'lucide-react';
 import CreateSessionModal from '../sessions/CreateSessionModal';
+import NotificationsSheet from './NotificationsSheet';
 import { Session } from '../../types';
-import { useGetUnreadNotifications } from '../../hooks/useGetUnreadNotifications';
 import { useGetUnreadCount } from '../../hooks/useGetUnreadCount';
-import { useMarkNotificationAsRead } from '../../hooks/useMarkNotificationAsRead';
 import { useToast } from '../../hooks/use-toast';
 import {
   Dialog,
@@ -41,25 +40,9 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('userUpdated', onUserUpdated as EventListener);
   }, []);
 
-  // Fetch unread notifications and count
-  const { data: unreadNotificationsResponse, isLoading: isLoadingNotifications, refetch: refetchNotifications } = useGetUnreadNotifications();
-  const { data: unreadCountResponse, refetch: refetchCount } = useGetUnreadCount();
-  
-  // Debug: Log the response to understand the structure
-  console.log('Unread notifications response:', unreadNotificationsResponse);
-  console.log('Unread count response:', unreadCountResponse);
-  
-  // Handle both response formats - direct array or wrapped in data property
-  const unreadNotifications = Array.isArray(unreadNotificationsResponse) 
-    ? unreadNotificationsResponse 
-    : (unreadNotificationsResponse?.data || []);
-  
-  const unreadCount = typeof unreadCountResponse === 'number' 
-    ? unreadCountResponse 
-    : (unreadCountResponse?.data || 0);
-
-  console.log('Processed unread notifications:', unreadNotifications);
-  console.log('Processed unread count:', unreadCount);
+  // Fetch unread count for badge
+  const { data: unreadCountResponse } = useGetUnreadCount();
+  const unreadCount = unreadCountResponse?.data || 0;
 
   const handleCreateSession = () => {
     // In a real app, this would save to backend
@@ -74,46 +57,6 @@ const Header: React.FC = () => {
   };
 
 
-  const { mutate: markOneAsRead } = useMarkNotificationAsRead({
-    onSuccess: () => {
-      refetchNotifications();
-      refetchCount();
-      toast({
-        title: "Notification marked as read",
-        description: "The notification has been marked as read.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description:
-          error?.response?.data?.message ||
-          "Could not mark notification as read.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleMarkAsRead = (notificationId: string) => {
-    markOneAsRead({ id: notificationId });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} min ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    } else {
-      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    }
-  };
 
   return (
     <>
@@ -158,81 +101,28 @@ const Header: React.FC = () => {
             </div>
 
             {/* Notifications */}
-            <div className="relative">
-              <button 
-                className="relative p-2 text-muted-foreground rounded-full hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-                onClick={() => setShowNotifications(!showNotifications)}
-                aria-label="Notifications"
-              >
-                <Bell className="w-6 h-6" />
-                {/* Notification badge */}
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-destructive rounded-full">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Notifications dropdown */}
-              {showNotifications && (
-                <>
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setShowNotifications(false)}
-                  />
-                  
-                  <div className="absolute right-0 z-20 mt-2 w-80 origin-top-right rounded-md bg-card shadow-lg ring-1 ring-border focus:outline-none">
-                    <div className="py-1 divide-y divide-border">
-                      <div className="px-4 py-2">
-                        <h3 className="text-sm font-medium text-foreground">Notifications</h3>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {isLoadingNotifications ? (
-                          <div className="px-4 py-3 text-center">
-                            <p className="text-sm text-muted-foreground">Loading notifications...</p>
-                          </div>
-                        ) : unreadNotifications.length === 0 ? (
-                          <div className="px-4 py-3 text-center">
-                            <p className="text-sm text-muted-foreground">No unread notifications</p>
-                          </div>
-                        ) : (
-                          unreadNotifications.map((notification) => (
-                            <div 
-                              key={notification._id} 
-                              className="px-4 py-3 hover:bg-muted bg-muted/50 border-b border-border last:border-b-0"
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-white">{notification.title}</p>
-                                  <p className="text-sm text-gray-300 mt-1">{notification.message}</p>
-                                  <p className="text-xs text-gray-400 mt-1">{formatDate(notification.createdAt)}</p>
-                                </div>
-                                <button
-                                  onClick={() => handleMarkAsRead(notification._id)}
-                                  className="ml-2 p-1 text-gray-400 hover:text-green-400 transition-colors"
-                                  title="Mark as read"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      <div className="px-4 py-2">
-                        <a href="/notifications" className="text-sm font-medium text-primary hover:text-primary/80">
-                          View all notifications
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </>
+            <button 
+              className="relative p-2 text-muted-foreground rounded-full hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+              onClick={() => setShowNotifications(!showNotifications)}
+              aria-label="Notifications"
+            >
+              <Bell className="w-6 h-6" />
+              {/* Notification badge */}
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-destructive rounded-full">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               )}
-            </div>
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Notifications Sheet */}
+      <NotificationsSheet 
+        isOpen={showNotifications} 
+        onOpenChange={setShowNotifications} 
+      />
 
       {/* Logout Confirmation Modal */}
       <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>

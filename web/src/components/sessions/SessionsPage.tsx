@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, Edit, MoreVertical, Search, Trash2, Filter, Plus, Globe, Lock } from 'lucide-react';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Clock, Edit, MoreVertical, Trash2, Filter, Plus, Globe, Lock, ArrowRight, LogOut } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useGetSessions } from '@/hooks/useGetSessions';
 import { useUpdateSession } from '@/hooks/useUpdateSession';
 import { useDeleteSession } from '@/hooks/useDeleteSession';
 import SessionEditModal from './SessionEditModal';
+import { SessionDataTable } from './SessionDataTable';
 import CreateSessionModal from './CreateSessionModal';
 import { CreateSessionModalMultiStep } from './CreateSessionModalMultiStep';
 import { SessionEditModalMultiStep } from './SessionEditModalMultiStep';
@@ -30,9 +32,9 @@ import {
 } from '../ui/alert-dialog';
 
 const SessionsPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming' | 'completed' | 'cancelled'>('all');
   const [filterVisibility, setFilterVisibility] = useState<'all' | 'public' | 'private'>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -61,18 +63,18 @@ const SessionsPage: React.FC = () => {
     id: session._id || session._id || '',
   }));
 
-  // Filter sessions based on search and filters
+  // Get unique categories for filter
+  const uniqueCategories = Array.from(new Set(allSessions.map(session => session.skillCategory).filter(Boolean)));
+
+  // Filter sessions based on filters
   const filteredSessions = allSessions.filter(session => {
-    const matchesSearch =
-      session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      session.skillCategory.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (session.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || session.status === filterStatus;
     const matchesVisibility =
       filterVisibility === 'all' ||
       (filterVisibility === 'public' && session.isPublic) ||
       (filterVisibility === 'private' && !session.isPublic);
-    return matchesSearch && matchesStatus && matchesVisibility;
+    const matchesCategory = filterCategory === 'all' || session.skillCategory === filterCategory;
+    return matchesStatus && matchesVisibility && matchesCategory;
   });
 
   const handleCreateSession = (sessionData: Omit<Session, 'id' | 'participant' | 'status'>) => {
@@ -219,9 +221,16 @@ const SessionsPage: React.FC = () => {
               <p className="mt-1 text-sm text-muted-foreground">Manage your sessions</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-              
-              </div>
+              <button 
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.href = '/login';
+                }}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </button>
               <button 
                 onClick={() => setIsCreateModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
@@ -235,180 +244,68 @@ const SessionsPage: React.FC = () => {
 
         {/* Tab Content */}
         <div className="px-4 py-6 lg:px-8">
-          {/* Filters and Search */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Search */}
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-                <Search className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <Input
-                type="text"
-                placeholder="Search sessions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 mb-6">
             {/* Status Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[180px]">
-                  Status: {filterStatus === 'all' ? 'All' : filterStatus}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => setFilterStatus('all')}>All Status</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('upcoming')}>Upcoming</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('completed')}>Completed</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('cancelled')}>Cancelled</DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Status</SelectLabel>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            
             {/* Visibility Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[180px]">
-                  Visibility: {filterVisibility === 'all' ? 'All' : filterVisibility}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => setFilterVisibility('all')}>All Visibility</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterVisibility('public')}>Public</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterVisibility('private')}>Private</DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Select value={filterVisibility} onValueChange={setFilterVisibility}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select visibility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Visibility</SelectLabel>
+                  <SelectItem value="all">All Visibility</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            
+            {/* Category Filter */}
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Category</SelectLabel>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {uniqueCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          {/* Sessions Grid */}
+          {/* Sessions Table */}
           {sessionsLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading sessions...</div>
           ) : sessionsError ? (
             <div className="text-center py-12 text-destructive">Failed to load sessions.</div>
           ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSessions.map((session) => (
-                             <Card
-                 key={session._id}
-                                   className="bg-card border-border hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group overflow-hidden relative"
-                 onClick={() => handleEditSession(session)}
-               >
-                 <CardContent className="p-6">
-                   {/* Header with title, date, and category */}
-                   <div className="flex items-start justify-between mb-4">
-                     <div className="flex-1 pr-4">
-                       <h3 className="text-lg font-semibold text-foreground line-clamp-2">
-                         {session.title}
-                       </h3>
-                     </div>
-                     <div className="flex items-center gap-2 flex-shrink-0">
-                       <span className="text-xs text-muted-foreground">
-                         {new Date(session.date).toLocaleDateString('en-US', { 
-                           month: 'short', 
-                           day: 'numeric' 
-                         })}
-                       </span>
-                       <div className="w-8 h-8 rounded-full border border-green-500 flex items-center justify-center">
-                         <Calendar className="w-4 h-4 text-green-500" />
-                       </div>
-                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-500 border border-green-500/30">
-                         {session.skillCategory}
-                       </span>
-                     </div>
-                   </div>
-                    
-                                                              {/* Skill Name */}
-                      <div className="mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-sm text-muted-foreground">
-                            {Array.isArray(session.teachSkillId) 
-                              ? session.teachSkillId[0]?.name || 'Skill Name'
-                              : session.teachSkillId || 'Skill Name'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                   
-                                       {/* Description */}
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 leading-relaxed">
-                      {session.description}
-                    </p>
-
-
-                    {/* Session Agenda */}
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-3">
-           
-                      </div>
-                      <div className="space-y-2">
-                        {(session.focusKeywords && session.focusKeywords.length > 0 
-                          ? session.focusKeywords 
-                          : [
-                              'Fundamentals',
-                              'Best Practices', 
-                              'Hands-on Practice',
-                              'Q&A',
-                              'Resources'
-                            ]
-                        ).map((topic, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                            <span className="text-sm text-gray-300">{topic}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Separator className="my-4" />
-
-                    {/* Details Section */}
-                    <div className="flex items-center justify-between">
-                      {/* Duration */}
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-foreground" />
-                        <span className="text-sm text-foreground">
-                          {session.startTime && session.endTime 
-                            ? `${session.startTime} - ${session.endTime}`
-                            : '30 Minutes'
-                          }
-                        </span>
-                      </div>
-                      
-                                                                     {/* Location/Platform */}
-                        <div className="flex items-center gap-2">
-                          {session.isPublic ? (
-                            <Globe className="w-4 h-4 text-primary" />
-                          ) : (
-                            <Lock className="w-4 h-4 text-primary" />
-                          )}
-                          <span className="text-xs text-foreground">
-                            {session.isPublic ? 'Public' : 'Private'}
-                          </span>
-                                                    {/* Delete Button - Always visible */}
-                          <div className="ml-2">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={e => { e.stopPropagation(); setConfirmAction({ type: 'cancel', session }); }}
-                              title="Delete Session"
-                              className="h-6 w-6 p-0"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                       </div>
-                     </div>
-                 </CardContent>
-               </Card>
-            ))}
-          </div>
+            <SessionDataTable 
+              data={filteredSessions}
+              onEditSession={handleEditSession}
+              onDeleteSession={(session) => setConfirmAction({ type: 'cancel', session })}
+            />
           )}
           {/* Empty State */}
           {!sessionsLoading && !sessionsError && filteredSessions.length === 0 && (
@@ -416,8 +313,8 @@ const SessionsPage: React.FC = () => {
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No sessions found</h3>
               <p className="text-muted-foreground mb-6">
-                {searchTerm || filterStatus !== 'all' || filterVisibility !== 'all'
-                  ? 'Try adjusting your search or filters'
+                {filterStatus !== 'all' || filterVisibility !== 'all' || filterCategory !== 'all'
+                  ? 'Try adjusting your filters'
                   : 'Create your first session to get started'}
               </p>
               <button 

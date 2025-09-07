@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Plus, Trash2, Loader2, Edit } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useToast } from '@/hooks/use-toast';
 import { SkillRequest } from '@/hooks/types';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+} from "../ui/animated-modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface ExtendedSkill {
   _id: string;
   name: string;
   category: string;
   proficiency: number;
-  type: 'teaching' | 'learning';
-  agenda: string[];
-  description?: string;
   experience?: string;
-  goals?: string;
+  focusedTopics?: string;
 }
 
 interface EditSkillModalProps {
@@ -30,11 +37,8 @@ const skillSchema = yup.object({
   name: yup.string().required('Skill name is required'),
   category: yup.string().required('Category is required'),
   proficiency: yup.number().min(0).max(100).required('Proficiency is required'),
-  type: yup.string().oneOf(['teaching', 'learning']).required('Type is required'),
-  agenda: yup.array().of(yup.string()).length(5, 'You must have exactly 5 sub topics').required('Sub topics are required'),
-  description: yup.string().max(500, 'Description is too long').notRequired(),
   experience: yup.string().max(500, 'Experience is too long').notRequired(),
-  goals: yup.string().max(500, 'Goals is too long').notRequired(),
+  focusedTopics: yup.string().max(500, 'Focused topics is too long').notRequired(),
 });
 
 const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose, onSuccess }) => {
@@ -59,11 +63,8 @@ const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose,
       name: skill?.name || '',
       category: skill?.category || '',
       proficiency: skill?.proficiency || 50,
-      type: skill?.type || 'teaching',
-      agenda: skill?.agenda || [],
-      description: skill?.description || '',
       experience: skill?.experience || '',
-      goals: skill?.goals || '',
+      focusedTopics: skill?.focusedTopics || '',
     },
   });
 
@@ -73,41 +74,20 @@ const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose,
         name: skill.name,
         category: skill.category,
         proficiency: skill.proficiency,
-        type: skill.type,
-        agenda: skill.agenda || [],
-        description: skill.description || '',
         experience: skill.experience || '',
-        goals: skill.goals || '',
+        focusedTopics: skill.focusedTopics || '',
       });
     }
   }, [skill, reset]);
 
-  const agenda = watch('agenda') || [];
-  const [topicInput, setTopicInput] = React.useState('');
 
   if (!isOpen || !skill) return null;
 
   const onSubmit = (data: SkillRequest) => {
     if (!skill) return;
-    // Keep the original agenda unchanged during edit
-    const updatedData = {
-      ...data,
-      agenda: skill.agenda // Always use the original agenda
-    };
-    updateSkill.mutate(updatedData);
-    setTopicInput('');
+    updateSkill.mutate(data);
   };
 
-  const handleAddTopic = () => {
-    const trimmed = topicInput.trim();
-    if (!trimmed || agenda.includes(trimmed) || agenda.length >= 5) return;
-    setValue('agenda', [...agenda, trimmed]);
-    setTopicInput('');
-  };
-
-  const handleRemoveTopic = (topic: string) => {
-    setValue('agenda', agenda.filter(t => t !== topic));
-  };
 
   const skillCategories = [
     'Programming',
@@ -123,151 +103,204 @@ const EditSkillModal: React.FC<EditSkillModalProps> = ({ skill, isOpen, onClose,
   ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl bg-gray-900 rounded-lg shadow-xl border border-gray-800">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold text-white">Edit Skill</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Skill Name
-                </label>
-                <input
-                  type="text"
-                  {...register('name')}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  placeholder="e.g., React, Python, UX Design"
-                  required
-                />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+    <Modal isOpen={isOpen} onClose={onClose} size="5xl">
+      <ModalBody>
+        <ModalContent>
+          {updateSkill.isPending && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-card border border-border rounded-lg p-8 max-w-sm mx-4 text-center">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Updating Skill</h3>
+                <p className="text-sm text-muted-foreground mb-4">Please wait while we update your skill...</p>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Category
-                </label>
-                <select
-                  {...register('category')}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  required
+            </div>
+          )}
+          
+          {updateSkill.error && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-4">
+                <div className="flex items-center space-x-3 text-destructive mb-4">
+                  <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <span className="text-sm font-bold">!</span>
+                  </div>
+                  <span className="text-sm font-medium">Error Updating Skill</span>
+                </div>
+                <p className="text-sm text-destructive mb-4">
+                  {updateSkill.error?.response?.data?.message || updateSkill.error?.message || 'An unexpected error occurred'}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
                 >
-                  <option value="">Select a category</option>
-                  {skillCategories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-                {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+                  Try Again
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Skill Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Skill Type
-              </label>
-              <select
-                {...register('type')}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="teaching">Teaching - I can teach this skill</option>
-                <option value="learning">Learning - I want to learn this skill</option>
-              </select>
-              {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>}
-            </div>
-
-            {/* Proficiency/Interest Level */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {watch('type') === 'teaching' ? 'Proficiency Level' : 'Interest Level'} ({watch('proficiency')}%)
-              </label>
-              <input
-                type="range"
-                {...register('proficiency')}
-                min="0"
-                max="100"
-                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-              />
-              {errors.proficiency && <p className="text-red-500 text-xs mt-1">{errors.proficiency.message}</p>}
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Beginner</span>
-                <span>Intermediate</span>
-                <span>Expert</span>
+          <div className={`space-y-6 ${updateSkill.isPending || updateSkill.error ? 'pointer-events-none opacity-50' : ''}`}>
+            {/* Header */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Edit className="w-6 h-6 text-primary" />
+                </div>
               </div>
+              <h4 className="text-lg md:text-2xl text-neutral-600 dark:text-neutral-100 font-bold mb-2">
+                Edit Skill
+              </h4>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Update your skill details
+              </p>
             </div>
 
-            {/* Read-only Sub Topics */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                {watch('type') === 'teaching' ? 'Topics I can teach' : 'Topics I want to learn'} (Cannot be edited)
-              </label>
-              <div className="space-y-3">
-                {agenda.map((item, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400 w-8">#{index + 1}</span>
-                    <div className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-gray-300 cursor-not-allowed">
-                      {item}
-                    </div>
-                    <div className="w-6 h-6 flex items-center justify-center text-gray-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                      </svg>
+            {/* Form Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Basic Information</h3>
+                    <p className="text-sm text-muted-foreground">Update the fundamentals</p>
+                  </div>
+
+                  {/* Skill Name */}
+                  <div>
+                    <Label className="block text-sm font-medium text-foreground mb-2">
+                      Skill Name *
+                    </Label>
+                    <Input
+                      {...register('name')}
+                      placeholder="e.g., React, Python, UX Design"
+                      className="h-12"
+                    />
+                    {errors.name && <p className="text-destructive text-xs mt-1">{errors.name.message}</p>}
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <Label className="block text-sm font-medium text-foreground mb-2">
+                      Category *
+                    </Label>
+                    <select
+                      {...register('category')}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary h-12"
+                    >
+                      <option value="">Select a category</option>
+                      {skillCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    {errors.category && <p className="text-destructive text-xs mt-1">{errors.category.message}</p>}
+                  </div>
+
+
+                  {/* Proficiency Level */}
+                  <div>
+                    <Label className="block text-sm font-medium text-foreground mb-2">
+                      Proficiency Level ({watch('proficiency')}%)
+                    </Label>
+                    <input
+                      type="range"
+                      {...register('proficiency')}
+                      min="0"
+                      max="100"
+                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    {errors.proficiency && <p className="text-destructive text-xs mt-1">{errors.proficiency.message}</p>}
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>Beginner</span>
+                      <span>Intermediate</span>
+                      <span>Expert</span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded px-2 py-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 inline mr-1">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                  </svg>
-                  Sub topics cannot be modified after skill creation
-                </p>
-                <span className="text-xs font-medium text-green-400">
-                  {agenda.length}/5 topics
-                </span>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Additional Information */}
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Additional Information</h3>
+                    <p className="text-sm text-muted-foreground">Optional details about your skill</p>
+                  </div>
+
+
+                  {/* Experience */}
+                  <div>
+                    <Label className="block text-sm font-medium text-foreground mb-2">
+                      Experience
+                    </Label>
+                    <Textarea
+                      {...register('experience')}
+                      placeholder="Your experience with this skill..."
+                      className="min-h-[100px]"
+                    />
+                    {errors.experience && <p className="text-destructive text-xs mt-1">{errors.experience.message}</p>}
+                  </div>
+
+                  {/* Focused Sub Topics */}
+                  <div>
+                    <Label className="block text-sm font-medium text-foreground mb-2">
+                      Focused Sub Topics
+                    </Label>
+                    <Textarea
+                      {...register('focusedTopics')}
+                      placeholder="e.g., Hooks, Components, State Management (comma-separated)"
+                      className="min-h-[100px]"
+                    />
+                    {errors.focusedTopics && <p className="text-destructive text-xs mt-1">{errors.focusedTopics.message}</p>}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      List the specific topics or areas you focus on teaching for this skill
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-800">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+          </div>
+
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              onClick={handleSubmit(onSubmit)}
+              disabled={updateSkill.isPending}
+              className="w-full sm:w-auto"
+            >
+              {updateSkill.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating Skill...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Update Skill
+                </>
+              )}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </ModalBody>
+    </Modal>
   );
 };
 

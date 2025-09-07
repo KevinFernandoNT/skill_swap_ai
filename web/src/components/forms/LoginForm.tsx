@@ -76,82 +76,98 @@ export const LoginForm = () => {
     loginUser({email:data.email, password: data.password})
   };
 
-  return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="space-y-6">
-          <div>
-            <label className="text-gray-400 block mb-1">Email</label>
-            <Input
-              className="bg-gray-200 text-black"
-              type="email"
-              placeholder="Enter your email"
-              {...register('email')}
-            />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-          </div>
-          <div>
-            <div className="flex justify-between items-center">
-              <label className="text-gray-400">Password</label>
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-            <div className="relative">
-              <Input
-                className="bg-gray-200 text-black"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                {...register('password')}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-          </div>
-          <div className="flex flex-row items-center space-x-3 space-y-0">
-            <Controller
-              name="rememberMe"
-              control={control}
-              render={({ field }) => (
-                <>
-                  <Checkbox
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  <label className="text-sm text-gray-400 font-normal cursor-pointer">
-                    Remember me for 30 days
-                  </label>
-                </>
-              )}
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={status === 'pending'}
-          >
-            {status === 'pending' ? (
-              <Loader2 className="animate-spin w-5 h-5 mx-auto" />
-            ) : (
-              'Log In'
-            )}
-          </Button>
+  // Show loading animation when logging in
+  if (status === 'pending') {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="relative">
+          {/* Outer spinning ring */}
+          <div className="w-16 h-16 border-4 border-primary/20 rounded-full animate-spin border-t-primary"></div>
+          {/* Inner pulsing dot */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full animate-pulse"></div>
         </div>
-      </form>
+        <div className="mt-6 text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Signing you in...</h3>
+          <p className="text-sm text-muted-foreground">Please wait while we authenticate your account</p>
+        </div>
+        {/* Animated dots */}
+        <div className="flex space-x-1 mt-4">
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="space-y-6">
+        <div>
+          <label className="text-muted-foreground block mb-2 text-sm font-medium">Email</label>
+          <Input
+            type="email"
+            placeholder="Enter your email"
+            {...register('email')}
+          />
+          {errors.email && <p className="text-destructive text-xs mt-1">{errors.email.message}</p>}
+        </div>
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-muted-foreground text-sm font-medium">Password</label>
+            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {errors.password && <p className="text-destructive text-xs mt-1">{errors.password.message}</p>}
+        </div>
+        <div className="flex flex-row items-center space-x-3 space-y-0">
+          <Controller
+            name="rememberMe"
+            control={control}
+            render={({ field }) => (
+              <>
+                <Checkbox
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                />
+                <label className="text-sm text-muted-foreground font-normal cursor-pointer">
+                  Remember me for 30 days
+                </label>
+              </>
+            )}
+          />
+        </div>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={status === 'pending'}
+        >
+          Log In
+        </Button>
+      </div>
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link to="/signup" className="text-primary font-medium hover:underline">
             Sign up
           </Link>
         </p>
       </div>
-    </div>
+    </form>
   );
 };

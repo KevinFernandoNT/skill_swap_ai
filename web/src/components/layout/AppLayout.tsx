@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
+import Header from '../dashboard/Header';
 import Dashboard from '../dashboard/Dashboard';
 import MessagesPage from '../messages/MessagesPage';
 import SessionsPage from '../sessions/SessionsPage';
@@ -58,7 +59,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       case 'video-call':
         return <VideoCall />;
       case 'skills':
-        return <SkillsPage />;
+      case 'skills-teaching':
+      case 'skills-learning':
+        return <SkillsPage activeTab={currentPage === 'skills-teaching' ? 'teaching' : currentPage === 'skills-learning' ? 'learning' : 'teaching'} />;
       case 'connect':
         return <ConnectPage />;
       case 'exchange-requests':
@@ -85,6 +88,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
+        {currentPage === 'dashboard' && <Header />}
         <main className="flex-1 overflow-y-auto bg-background">
           {children || renderCurrentPage()}
         </main>
