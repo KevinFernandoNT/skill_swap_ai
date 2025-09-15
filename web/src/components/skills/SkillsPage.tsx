@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Target, CheckCircle } from 'lucide-react';
 import { Skill } from '../../types';
 import { currentUser } from '../../data/mockData';
-import AddSkillModal from './AddSkillModal';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
 import { useGetSkills } from '@/hooks/useGetSkills';
 import { useDeleteSkill } from '@/hooks/useDeleteSkill';
 import { useToast } from '@/hooks/use-toast';
-import EditSkillModal from './EditSkillModal';
+import SkillSheet from './SkillSheet';
 import { PaginatedResult } from '@/hooks/useGetSkills';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -43,11 +42,11 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
   useEffect(() => {
     setActiveTab(initialActiveTab);
   }, [initialActiveTab]);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSkillSheetOpen, setIsSkillSheetOpen] = useState(false);
+  const [skillSheetMode, setSkillSheetMode] = useState<'create' | 'edit'>('create');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<ExtendedSkill | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Remove all local skills state and replace with API data
   // Update handleAddSkill, handleDeleteSkill, confirmDeleteSkill, etc. to use API
@@ -110,7 +109,10 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
               <p className="mt-1 text-sm text-muted-foreground">Manage your teaching and learning skills</p>
             </div>
             <button 
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setSkillSheetMode('create');
+                setIsSkillSheetOpen(true);
+              }}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -123,25 +125,23 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
           {/* Skills Table */}
           <SkillsDataTable 
             data={filteredSkills}
-            onEditSkill={(skill) => { setEditingSkill(skill); setIsEditModalOpen(true); }}
+            onEditSkill={(skill) => { 
+              setEditingSkill(skill); 
+              setSkillSheetMode('edit');
+              setIsSkillSheetOpen(true); 
+            }}
             onDeleteSkill={handleDeleteSkill}
           />
         </div>
       </div>
 
-      {/* Add Skill Modal */}
-      <AddSkillModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+      {/* Skill Sheet */}
+      <SkillSheet
+        isOpen={isSkillSheetOpen}
+        onOpenChange={setIsSkillSheetOpen}
         onSuccess={refetch}
-      />
-
-      {/* Edit Skill Modal */}
-      <EditSkillModal
         skill={editingSkill}
-        isOpen={isEditModalOpen}
-        onClose={() => { setIsEditModalOpen(false); setEditingSkill(null); }}
-        onSuccess={refetch}
+        mode={skillSheetMode}
       />
 
       {/* Delete Skill Confirmation Dialog */}

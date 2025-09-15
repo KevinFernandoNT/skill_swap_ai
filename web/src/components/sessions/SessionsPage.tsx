@@ -10,11 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { useGetSessions } from '@/hooks/useGetSessions';
 import { useUpdateSession } from '@/hooks/useUpdateSession';
 import { useDeleteSession } from '@/hooks/useDeleteSession';
-import SessionEditModal from './SessionEditModal';
 import { SessionDataTable } from './SessionDataTable';
-import CreateSessionModal from './CreateSessionModal';
-import { CreateSessionModalMultiStep } from './CreateSessionModalMultiStep';
-import { SessionEditModalMultiStep } from './SessionEditModalMultiStep';
+import SessionSheet from './SessionSheet';
 import RescheduleModal from './RescheduleModal';
 import { Session } from '@/types';
 import { useGetUserSkills } from '@/hooks/useGetUserSkills';
@@ -36,10 +33,9 @@ const SessionsPage: React.FC = () => {
   const [filterVisibility, setFilterVisibility] = useState<'all' | 'public' | 'private'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const [sessionSheetMode, setSessionSheetMode] = useState<'create' | 'edit'>('create');
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
-  const [useMultiStepModals, setUseMultiStepModals] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | { type: 'complete' | 'cancel'; session: Session }>(null);
 
@@ -108,7 +104,8 @@ const SessionsPage: React.FC = () => {
 
   const handleEditSession = (session: any) => {
     setSelectedSession(session);
-    setIsEditModalOpen(true);
+    setSessionSheetMode('edit');
+    setIsSessionSheetOpen(true);
     setActiveDropdown(null);
   };
 
@@ -118,13 +115,13 @@ const SessionsPage: React.FC = () => {
     setActiveDropdown(null);
   };
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
+  const handleCloseSessionSheet = () => {
+    setIsSessionSheetOpen(false);
     setSelectedSession(null);
   };
 
   const handleSaveSession = (updatedSession: any) => {
-    handleCloseEditModal();
+    handleCloseSessionSheet();
     refetchSessions();
   };
 
@@ -232,7 +229,10 @@ const SessionsPage: React.FC = () => {
                 Logout
               </button>
               <button 
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => {
+                  setSessionSheetMode('create');
+                  setIsSessionSheetOpen(true);
+                }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -318,7 +318,10 @@ const SessionsPage: React.FC = () => {
                   : 'Create your first session to get started'}
               </p>
               <button 
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => {
+                  setSessionSheetMode('create');
+                  setIsSessionSheetOpen(true);
+                }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -329,38 +332,14 @@ const SessionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Session Modal */}
-      {useMultiStepModals ? (
-        <CreateSessionModalMultiStep
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={refetchSessions}
-        />
-      ) : (
-        <CreateSessionModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={refetchSessions}
-        />
-      )}
-
-      {/* Edit Session Modal */}
-      {useMultiStepModals ? (
-        <SessionEditModalMultiStep
-          session={selectedSession}
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          onSuccess={refetchSessions}
-        />
-      ) : (
-        <SessionEditModal
-          session={selectedSession}
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          onSave={handleSaveSession}
-          refetchSessions={refetchSessions}
-        />
-      )}
+      {/* Session Sheet */}
+      <SessionSheet
+        isOpen={isSessionSheetOpen}
+        onOpenChange={setIsSessionSheetOpen}
+        onSuccess={refetchSessions}
+        session={selectedSession}
+        mode={sessionSheetMode}
+      />
 
       {/* Reschedule Modal */}
       <RescheduleModal
@@ -378,13 +357,18 @@ const SessionsPage: React.FC = () => {
       <AlertDialog open={!!confirmAction} onOpenChange={open => { if (!open) setConfirmAction(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-white">Delete Session?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
               Are you sure you want to delete this session? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmAction(null)}>No</AlertDialogCancel>
+            <AlertDialogCancel 
+              onClick={() => setConfirmAction(null)}
+              className="text-white hover:text-white border-gray-600 hover:border-gray-500 bg-gray-700 hover:bg-gray-600"
+            >
+              No
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (confirmAction) {

@@ -13,10 +13,9 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Trash2, Edit } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, ArrowRightLeft, Calendar, Clock, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,40 +35,34 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Session } from "../../types"
+import { SuggestedSession } from "../../hooks/useGetSuggestedSessions"
 
-interface SessionDataTableProps {
-  data: Session[];
-  onEditSession: (session: Session) => void;
-  onDeleteSession: (session: Session) => void;
+interface ConnectDataTableProps {
+  data: SuggestedSession[];
+  onSwapClick: (session: SuggestedSession, event: React.MouseEvent) => void;
+  onViewDetails: (session: SuggestedSession) => void;
 }
 
+const getCategoryColor = (category: string) => {
+  const colors: { [key: string]: string } = {
+    'programming': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
+    'design': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300',
+    'marketing': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+    'data science': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300',
+    'business': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
+    'finance': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+    'writing': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300',
+    'communication': 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-300',
+    'sales': 'bg-teal-100 text-teal-800 dark:bg-teal-900/20 dark:text-teal-300',
+  };
+  return colors[category.toLowerCase()] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+};
+
+
 export const columns = (
-  onEditSession: (session: Session) => void,
-  onDeleteSession: (session: Session) => void
-): ColumnDef<Session>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+  onSwapClick: (session: SuggestedSession, event: React.MouseEvent) => void,
+  onViewDetails: (session: SuggestedSession) => void
+): ColumnDef<SuggestedSession>[] => [
   {
     accessorKey: "title",
     header: ({ column }) => {
@@ -84,7 +77,9 @@ export const columns = (
       )
     },
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("title")}</div>
+      <div className="font-medium max-w-[200px] truncate" title={row.getValue("title")}>
+        {row.getValue("title") || 'Untitled Session'}
+      </div>
     ),
   },
   {
@@ -104,7 +99,7 @@ export const columns = (
       const description = row.getValue("description") as string
       return (
         <div className="max-w-[200px] truncate text-sm text-muted-foreground" title={description}>
-          {description || '-'}
+          {description || 'No description available'}
         </div>
       )
     },
@@ -125,7 +120,7 @@ export const columns = (
     cell: ({ row }) => {
       const category = row.getValue("skillCategory") as string
       return (
-        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+        <Badge variant="secondary" className={getCategoryColor(category || '')}>
           {category?.charAt(0).toUpperCase() + category?.slice(1).toLowerCase() || 'General'}
         </Badge>
       )
@@ -145,12 +140,13 @@ export const columns = (
       )
     },
     cell: ({ row }) => {
-      const date = new Date(row.getValue("date"))
-      return <div>{date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric' 
-      })}</div>
+      const date = row.getValue("date") as string
+      return (
+        <div className="flex items-center">
+          <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+          <span>{date ? new Date(date).toLocaleDateString() : 'Date TBD'}</span>
+        </div>
+      )
     },
   },
   {
@@ -160,32 +156,49 @@ export const columns = (
       const startTime = row.getValue("startTime") as string
       const endTime = row.original.endTime as string
       return (
-        <div>
-          {startTime && endTime ? `${startTime} - ${endTime}` : '30 Minutes'}
+        <div className="flex items-center">
+          <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+          <span>{startTime && endTime ? `${startTime} - ${endTime}` : 'TBD'}</span>
         </div>
       )
     },
   },
   {
-    accessorKey: "focusKeywords",
-    header: "Focus Keywords",
+    accessorKey: "hostId",
+    header: "Host",
     cell: ({ row }) => {
-      const keywords = row.getValue("focusKeywords") as string[]
-      if (!keywords || keywords.length === 0) return <div className="text-muted-foreground">-</div>
-      
+      const host = row.getValue("hostId") as any
       return (
-        <div className="flex flex-wrap items-center gap-1">
-          {keywords.slice(0, 2).map((keyword, index) => (
-            <span 
-              key={index}
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900/20 text-blue-300 border border-blue-300/30"
-            >
-              {keyword}
-            </span>
-          ))}
-          {keywords.length > 2 && (
-            <span className="inline-flex items-center text-xs text-muted-foreground">+{keywords.length - 2}</span>
-          )}
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <img 
+              src={host?.avatar} 
+              alt={host?.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initial if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+              <span className="text-white text-sm font-semibold">
+                {host?.name?.charAt(0) || 'H'}
+              </span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate" title={host?.name}>
+              {host?.name || 'Session Host'}
+            </p>
+            {host?.email && (
+              <p className="text-xs text-muted-foreground truncate" title={host?.email}>
+                {host?.email}
+              </p>
+            )}
+          </div>
         </div>
       )
     },
@@ -197,43 +210,38 @@ export const columns = (
       const session = row.original
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => onEditSession(session)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Session
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => onDeleteSession(session)}
-              className="text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Session
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onViewDetails(session)}
+            className="h-8"
+          >
+            View Details
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={(e) => onSwapClick(session, e)}
+            className="h-8"
+          >
+            <ArrowRightLeft className="w-4 h-4 mr-1" />
+            Request Swap
+          </Button>
+        </div>
       )
     },
   },
 ]
 
-export function SessionDataTable({ data, onEditSession, onDeleteSession }: SessionDataTableProps) {
+export function ConnectDataTable({ data, onSwapClick, onViewDetails }: ConnectDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
     data,
-    columns: columns(onEditSession, onDeleteSession),
+    columns: columns(onSwapClick, onViewDetails),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -241,12 +249,10 @@ export function SessionDataTable({ data, onEditSession, onDeleteSession }: Sessi
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
     },
   })
 
@@ -288,7 +294,7 @@ export function SessionDataTable({ data, onEditSession, onDeleteSession }: Sessi
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -328,7 +334,7 @@ export function SessionDataTable({ data, onEditSession, onDeleteSession }: Sessi
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns(onEditSession, onDeleteSession).length}
+                  colSpan={columns(onSwapClick, onViewDetails).length}
                   className="h-24 text-center"
                 >
                   No sessions found.
@@ -339,9 +345,8 @@ export function SessionDataTable({ data, onEditSession, onDeleteSession }: Sessi
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} session(s) found.
         </div>
         <div className="space-x-2">
           <Button
