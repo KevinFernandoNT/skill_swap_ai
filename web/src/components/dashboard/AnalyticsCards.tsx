@@ -3,8 +3,9 @@ import { ExchangeSession } from '../../hooks/useGetUpcomingExchangeSessions';
 import { useGetExchangeSessionStats } from '../../hooks/useGetExchangeSessionStats';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
 import { ChartLineDots } from '../ui/chart-line-dots';
-import { ChartBarSessions } from '../ui/chart-bar-sessions';
 import { ExpandableCards } from '../ui/expandable-cards';
+import KPICards from './KPICards';
+import SessionCategoryPieChart from './SessionCategoryPieChart';
 import {
   IconCalendar,
   IconClock,
@@ -51,6 +52,9 @@ const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
 
   return (
     <div className="w-full h-full">
+      {/* KPI Cards Row */}
+      <KPICards upcomingExchangeSessions={upcomingExchangeSessions} />
+      
       <BentoGrid className="w-full h-full">
         {/* Row 1 */}
         <BentoGridItem className='h-[400px]'>
@@ -88,53 +92,16 @@ const AnalyticsCards: React.FC<AnalyticsCardsProps> = ({
         </BentoGridItem>
 
         <BentoGridItem  className='h-[400px]'>
-          <ChartBarSessions />
+          <ExpandableCards />
         </BentoGridItem>
 
-        <BentoGridItem  className='h-[400px]'>
-          <div className="w-full h-full flex flex-col">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="text-sm font-medium text-muted-foreground">Exchange Partners</h3>
-              <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full">
-                <IconTrendingUp className="h-3 w-3 text-primary" />
-                <span className="text-xs font-medium text-primary">+15.3%</span>
-              </div>
-            </div>
-            
-            <div className="flex-1 flex flex-col">
-              <div className="text-3xl font-bold text-foreground mb-1">
-                {statsLoading ? '...' : stats.uniqueExchangePartners}
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">Recent Connections</p>
-              
-              <div className="space-y-2 flex-1">
-                {recentConnections.map((connection, index) => (
-                  <div key={index} className="p-3 flex items-center gap-3 hover:bg-muted rounded-xl cursor-pointer border border-border">
-                    <img 
-                      src={connection.avatar} 
-                      alt={connection.name}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{connection.name}</p>
-                      <p className="text-xs text-muted-foreground">{connection.date}</p>
-                    </div>
-                    <button className="px-3 py-1 text-xs rounded-full font-bold bg-primary text-primary-foreground hover:bg-primary/90">
-                      Connect
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        <BentoGridItem  className='h-[400px] bg-transaparent border-0 p-0'>
+          <SessionCategoryPieChart showDetails={true} />
         </BentoGridItem>
         
-        {/* Row 2 - Chart spans 2 columns, ExpandableCards in 3rd column */}
-        <BentoGridItem className="col-span-2">
+        {/* Row 2 - Learning Progress chart spans 2 columns */}
+        <BentoGridItem className="col-span-2 h-[400px]">
           <ChartLineDots />
-        </BentoGridItem>
-        <BentoGridItem>
-          <ExpandableCards />
         </BentoGridItem>
       </BentoGrid>
     </div>

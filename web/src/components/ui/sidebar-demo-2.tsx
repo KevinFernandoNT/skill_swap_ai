@@ -82,14 +82,6 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
       path: "messages"
     },
     {
-      label: "Settings",
-      href: "#",
-             icon: (
-         <IconSettings className="h-5 w-5 shrink-0 text-white" />
-       ),
-      path: "settings"
-    },
-    {
       label: "View Sessions",
       href: "#",
       icon: (
@@ -133,27 +125,28 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
                <Logo className="text-white" />
              </>
             <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
-                <div key={idx} onClick={() => handleNavClick(link.path)}>
-                  <SidebarLink 
-                    link={{
-                      ...link,
-                      icon: currentPage === link.path 
-                        ? React.cloneElement(link.icon as React.ReactElement, { className: "h-5 w-5 shrink-0 text-black" })
-                        : link.icon
-                    }} 
-                    selected={currentPage === link.path}
-                    className={cn(
-                      "cursor-pointer transition-all duration-300 ease-in-out",
-                      currentPage === link.path 
-                        ? "bg-primary font-semibold text-black rounded-[5px] shadow-lg pl-[5px]" 
-                        : "hover:bg-white/10 rounded-[5px] pl-[10px]"
-                    )}
-                  />
-                </div>
-              ))}
-              
-              {/* Expandable My Skills Section */}
+              {/* Dashboard */}
+              <div onClick={() => handleNavClick('dashboard')}>
+                <SidebarLink 
+                  link={{
+                    label: "Dashboard",
+                    href: "#",
+                    icon: currentPage === 'dashboard' 
+                      ? React.cloneElement(<IconHome className="h-5 w-5 shrink-0 text-black" />, { className: "h-5 w-5 shrink-0 text-black" })
+                      : <IconHome className="h-5 w-5 shrink-0 text-white" />,
+                    path: "dashboard"
+                  }} 
+                  selected={currentPage === 'dashboard'}
+                  className={cn(
+                    "cursor-pointer transition-all duration-300 ease-in-out",
+                    currentPage === 'dashboard' 
+                      ? "bg-primary font-semibold text-black rounded-[5px] shadow-lg pl-[5px]" 
+                      : "hover:bg-white/10 rounded-[5px] pl-[10px]"
+                  )}
+                />
+              </div>
+
+              {/* Expandable My Skills Section - Now in second position */}
               <div className="flex flex-col">
                 <div 
                   onClick={() => setSkillsExpanded(!skillsExpanded)}
@@ -210,6 +203,27 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
                   </motion.div>
                 )}
               </div>
+
+              {/* Rest of the navigation links */}
+              {links.slice(1).map((link, idx) => (
+                <div key={idx} onClick={() => handleNavClick(link.path)}>
+                  <SidebarLink 
+                    link={{
+                      ...link,
+                      icon: currentPage === link.path 
+                        ? React.cloneElement(link.icon as React.ReactElement, { className: "h-5 w-5 shrink-0 text-black" })
+                        : link.icon
+                    }} 
+                    selected={currentPage === link.path}
+                    className={cn(
+                      "cursor-pointer transition-all duration-300 ease-in-out",
+                      currentPage === link.path 
+                        ? "bg-primary font-semibold text-black rounded-[5px] shadow-lg pl-[5px]" 
+                        : "hover:bg-white/10 rounded-[5px] pl-[10px]"
+                    )}
+                  />
+                </div>
+              ))}
             </div>
           </div>
           <div className="pl-1 pb-3 space-y-3">

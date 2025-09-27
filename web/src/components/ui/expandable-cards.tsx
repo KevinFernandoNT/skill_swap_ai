@@ -40,10 +40,10 @@ export function ExpandableCards() {
   useOutsideClick(ref, () => setActive(null));
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="mb-4">
-        <h3 className="font-bold text-foreground mb-1 text-lg">Suggested Users</h3>
-        <p className="text-muted-foreground text-sm">Connect with skill partners</p>
+    <div className="w-full h-full flex flex-col bg-card rounded-lg p-6 border border-border">
+      <div className="mb-6">
+        <h3 className="font-bold text-white mb-1 text-lg">Suggested Users</h3>
+        <p className="text-gray-400 text-sm">Connect with skill partners</p>
       </div>
       
       <div className="flex-1 overflow-y-auto">
@@ -138,13 +138,13 @@ export function ExpandableCards() {
           ) : null}
         </AnimatePresence>
         
-        <div className="space-y-3 h-full">
+        <div className="space-y-3">
           {users.slice(0, 3).map((user, index) => (
             <motion.div
               layoutId={`card-${user.name}-${id}`}
               key={`card-${user.name}-${id}`}
               onClick={() => setActive(user)}
-              className="p-3 flex items-center gap-3 hover:bg-muted rounded-xl cursor-pointer border border-border flex-1"
+              className="p-3 flex items-center gap-3 hover:bg-muted/50 rounded-xl cursor-pointer border border-border/50 transition-colors"
             >
               <motion.div layoutId={`image-${user.name}-${id}`}>
                 <img
@@ -158,13 +158,13 @@ export function ExpandableCards() {
               <div className="flex-1 min-w-0">
                 <motion.h3
                   layoutId={`title-${user.name}-${id}`}
-                  className="font-medium text-foreground text-sm truncate"
+                  className="font-medium text-white text-sm truncate"
                 >
                   {user.name}
                 </motion.h3>
                 <motion.p
                   layoutId={`description-${user.email}-${id}`}
-                  className="text-muted-foreground text-xs truncate"
+                  className="text-gray-400 text-xs truncate"
                 >
                   {user.email}
                 </motion.p>
