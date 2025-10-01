@@ -281,3 +281,247 @@
   from, to { border-color: transparent }
   50% { border-color: var(--primary) }
 }
+
+/* Stream Chat Theme Overrides */
+.str-chat__theme-dark {
+  --str-chat__primary-color: var(--primary);
+  --str-chat__primary-color-low-emphasis: var(--primary);
+  --str-chat__text-high-emphasis: var(--foreground);
+  --str-chat__text-low-emphasis: var(--muted-foreground);
+  --str-chat__text-color: var(--foreground);
+  --str-chat__surface-color: var(--background);
+  --str-chat__surface-color-low: var(--card);
+  --str-chat__border-color: var(--border);
+  --str-chat__border-color-low: var(--border);
+  --str-chat__shadow-elevation-1: 0 1px 3px 0px rgba(0, 0, 0, 0.1);
+  --str-chat__shadow-elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --str-chat__border-radius: var(--radius);
+  --str-chat__spacing-px: 1px;
+  --str-chat__spacing-0_5: 0.125rem;
+  --str-chat__spacing-1: 0.25rem;
+  --str-chat__spacing-1_5: 0.375rem;
+  --str-chat__spacing-2: 0.5rem;
+  --str-chat__spacing-3: 0.75rem;
+  --str-chat__spacing-4: 1rem;
+  --str-chat__spacing-5: 1.25rem;
+  --str-chat__spacing-6: 1.5rem;
+  --str-chat__spacing-8: 2rem;
+  --str-chat__spacing-10: 2.5rem;
+  --str-chat__spacing-12: 3rem;
+  --str-chat__spacing-16: 4rem;
+  --str-chat__spacing-20: 5rem;
+  --str-chat__spacing-24: 6rem;
+  --str-chat__spacing-32: 8rem;
+  --str-chat__spacing-40: 10rem;
+  --str-chat__spacing-48: 12rem;
+  --str-chat__spacing-56: 14rem;
+  --str-chat__spacing-64: 16rem;
+  --str-chat__spacing-72: 18rem;
+  --str-chat__spacing-80: 20rem;
+  --str-chat__spacing-96: 24rem;
+  --str-chat__spacing-px: 1px;
+  --str-chat__spacing-0: 0;
+  --str-chat__spacing-0_5: 0.125rem;
+  --str-chat__spacing-1: 0.25rem;
+  --str-chat__spacing-1_5: 0.375rem;
+  --str-chat__spacing-2: 0.5rem;
+  --str-chat__spacing-2_5: 0.625rem;
+  --str-chat__spacing-3: 0.75rem;
+  --str-chat__spacing-3_5: 0.875rem;
+  --str-chat__spacing-4: 1rem;
+  --str-chat__spacing-5: 1.25rem;
+  --str-chat__spacing-6: 1.5rem;
+  --str-chat__spacing-7: 1.75rem;
+  --str-chat__spacing-8: 2rem;
+  --str-chat__spacing-9: 2.25rem;
+  --str-chat__spacing-10: 2.5rem;
+  --str-chat__spacing-11: 2.75rem;
+  --str-chat__spacing-12: 3rem;
+  --str-chat__spacing-14: 3.5rem;
+  --str-chat__spacing-16: 4rem;
+  --str-chat__spacing-20: 5rem;
+  --str-chat__spacing-24: 6rem;
+  --str-chat__spacing-28: 7rem;
+  --str-chat__spacing-32: 8rem;
+  --str-chat__spacing-36: 9rem;
+  --str-chat__spacing-40: 10rem;
+  --str-chat__spacing-44: 11rem;
+  --str-chat__spacing-48: 12rem;
+  --str-chat__spacing-52: 13rem;
+  --str-chat__spacing-56: 14rem;
+  --str-chat__spacing-60: 15rem;
+  --str-chat__spacing-64: 16rem;
+  --str-chat__spacing-72: 18rem;
+  --str-chat__spacing-80: 20rem;
+  --str-chat__spacing-96: 24rem;
+}
+
+/* Custom Stream Chat Component Styles */
+.str-chat__channel-list {
+  background-color: var(--card) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+.str-chat__channel-list__container {
+  background-color: var(--card) !important;
+}
+
+.str-chat__channel-preview {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.str-chat__channel-preview:hover {
+  background-color: var(--accent) !important;
+}
+
+.str-chat__channel-preview--active {
+  background-color: var(--accent) !important;
+  border-left: 4px solid var(--primary) !important;
+}
+
+.str-chat__channel-preview__name {
+  color: var(--foreground) !important;
+}
+
+.str-chat__channel-preview__last-message {
+  color: var(--muted-foreground) !important;
+}
+
+.str-chat__channel-preview__time {
+  color: var(--muted-foreground) !important;
+}
+
+.str-chat__channel-header {
+  background-color: var(--background) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+.str-chat__channel-header__title {
+  color: var(--foreground) !important;
+}
+
+.str-chat__channel-header__subtitle {
+  color: var(--muted-foreground) !important;
+}
+
+.str-chat__message-list {
+  background-color: var(--background) !important;
+}
+
+.str-chat__message {
+  color: var(--foreground) !important;
+}
+
+.str-chat__message--me .str-chat__message__inner {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.str-chat__message--other .str-chat__message__inner {
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.str-chat__message__text {
+  color: inherit !important;
+}
+
+.str-chat__message__timestamp {
+  color: var(--muted-foreground) !important;
+}
+
+.str-chat__message-input {
+  background-color: var(--background) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.str-chat__message-input__input {
+  background-color: var(--input) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+
+.str-chat__message-input__input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary) !important;
+}
+
+.str-chat__message-input__button {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-radius: var(--radius) !important;
+}
+
+.str-chat__message-input__button:hover {
+  background-color: var(--primary) !important;
+  opacity: 0.9 !important;
+}
+
+.str-chat__typing-indicator {
+  color: var(--muted-foreground) !important;
+}
+
+.str-chat__typing-indicator__dots {
+  background-color: var(--primary) !important;
+}
+
+/* Thread styles */
+.str-chat__thread {
+  background-color: var(--card) !important;
+  border-left: 1px solid var(--border) !important;
+}
+
+.str-chat__thread-header {
+  background-color: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+}
+
+/* Online indicator */
+.str-chat__avatar__image {
+  border: 2px solid var(--border) !important;
+}
+
+.str-chat__avatar__image--online {
+  border-color: var(--primary) !important;
+}
+
+/* Custom scrollbar for chat components */
+.str-chat__message-list,
+.str-chat__channel-list,
+.str-chat__thread {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+
+.str-chat__message-list::-webkit-scrollbar,
+.str-chat__channel-list::-webkit-scrollbar,
+.str-chat__thread::-webkit-scrollbar {
+  width: 8px;
+}
+
+.str-chat__message-list::-webkit-scrollbar-track,
+.str-chat__channel-list::-webkit-scrollbar-track,
+.str-chat__thread::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.str-chat__message-list::-webkit-scrollbar-thumb,
+.str-chat__channel-list::-webkit-scrollbar-thumb,
+.str-chat__thread::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.str-chat__message-list::-webkit-scrollbar-thumb:hover,
+.str-chat__channel-list::-webkit-scrollbar-thumb:hover,
+.str-chat__thread::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}

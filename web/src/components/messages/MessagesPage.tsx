@@ -35,9 +35,10 @@ const options = { state: true, watch: true, presence: true };
 
 // Custom Message Input component that handles API calls
 const CustomMessageInput: React.FC = () => {
-
   return (
-    <MessageInput />
+    <div className="p-4 bg-background border-t border-border">
+      <MessageInput />
+    </div>
   );
 };
 
@@ -100,9 +101,9 @@ const MessagesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Initializing chat...</p>
         </div>
       </div>
@@ -111,12 +112,12 @@ const MessagesPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <div className="text-center">
-          <p className="text-red-400 mb-4">Error: {error}</p>
+          <p className="text-destructive mb-4">Error: {error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
           >
             Retry
           </button>
@@ -127,7 +128,7 @@ const MessagesPage: React.FC = () => {
 
   if (!clientReady || !user || !userToken) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
         Connecting to chat...
       </div>
     );
@@ -135,18 +136,18 @@ const MessagesPage: React.FC = () => {
 
   // Use the ref for the Chat component
   return (
-    <div className="h-screen bg-black">
+    <div className="h-screen bg-background">
       <Chat client={chatClientRef.current!} theme="str-chat__theme-dark">
         <div className="flex h-screen">
           {/* Channel List */}
-          <div className="w-80 border-r border-gray-800 bg-black flex flex-col">
+          <div className="w-80 border-r border-border bg-card flex flex-col">
             <ChannelList
               filters={filters}
               options={options}
             />
           </div>
           {/* Chat Area */}
-          <div className="flex-1 bg-black flex flex-col">
+          <div className="flex-1 bg-background flex flex-col">
             <Channel>
               <Window>
                 <ChannelHeader />

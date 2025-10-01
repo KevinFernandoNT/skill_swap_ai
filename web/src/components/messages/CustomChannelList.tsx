@@ -15,8 +15,8 @@ const CustomChannelPreview: React.FC<any> = ({ channel, setActiveChannel, active
   
   return (
     <div
-      className={`p-4 cursor-pointer border-b border-gray-800 hover:bg-gray-800 transition-colors ${
-        isActive ? 'bg-gray-800 border-l-4 border-l-primary' : ''
+      className={`p-4 cursor-pointer border-b border-border hover:bg-accent transition-colors ${
+        isActive ? 'bg-accent border-l-4 border-l-primary' : ''
       }`}
       onClick={() => setActiveChannel(channel)}
     >
@@ -27,16 +27,16 @@ const CustomChannelPreview: React.FC<any> = ({ channel, setActiveChannel, active
             alt={user?.name || 'User'}
             className="w-10 h-10 rounded-full object-cover"
           />
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full ring-2 ring-gray-900"></span>
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-background"></span>
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-sm text-white truncate">
+            <span className="text-sm font-sm text-foreground truncate">
               {user?.name || 'Unknown User'}
             </span>
             {lastMessage && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {new Date(lastMessage.created_at).toLocaleTimeString([], { 
                   hour: '2-digit', 
                   minute: '2-digit' 
@@ -45,7 +45,7 @@ const CustomChannelPreview: React.FC<any> = ({ channel, setActiveChannel, active
             )}
           </div>
           
-          <p className="text-sm text-gray-400 truncate">
+          <p className="text-sm text-muted-foreground truncate">
             {lastMessage?.text || 'No messages yet'}
           </p>
         </div>
@@ -57,8 +57,8 @@ const CustomChannelPreview: React.FC<any> = ({ channel, setActiveChannel, active
 const CustomChannelList: React.FC<any> = (props) => {
   return (
     <div className="h-full">
-      <div className="p-4 border-b border-gray-800">
-        <h2 className="text-lg font-semibold text-white">Conversations</h2>
+      <div className="p-4 border-b border-border">
+        <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
       </div>
       
       <StreamChannelList

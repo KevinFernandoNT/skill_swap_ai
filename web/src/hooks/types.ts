@@ -52,7 +52,7 @@ export type SkillRequest = {
   name?: string;
   category?: string;
   proficiency?: number;
-  experience?: string;
+  type: 'teaching' | 'learning';
   focusedTopics?: string;
 };
 

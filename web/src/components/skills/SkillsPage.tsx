@@ -5,6 +5,7 @@ import { currentUser } from '../../data/mockData';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
 import { useGetSkills } from '@/hooks/useGetSkills';
 import { useDeleteSkill } from '@/hooks/useDeleteSkill';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import SkillSheet from './SkillSheet';
 import { PaginatedResult } from '@/hooks/useGetSkills';
@@ -25,12 +26,17 @@ interface SkillsPageProps {
 
 const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = 'teaching' }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: skillsResult = { data: [] }, refetch } = useGetSkills();
   const skills = skillsResult.data || [];
+  // Function to invalidate skills query
+  const invalidateSkills = () => {
+    queryClient.invalidateQueries({ queryKey: ['/skills'] });
+  };
+
   const deleteSkill = useDeleteSkill({
     onSuccess: () => {
-      toast({ title: 'Skill deleted!', description: 'Your skill was deleted successfully.' });
-      refetch();
+      invalidateSkills();
     },
     onError: (error) => {
       toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete skill', variant: 'destructive' });
@@ -139,7 +145,7 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
       <SkillSheet
         isOpen={isSkillSheetOpen}
         onOpenChange={setIsSkillSheetOpen}
-        onSuccess={refetch}
+        onSuccess={invalidateSkills}
         skill={editingSkill}
         mode={skillSheetMode}
       />
