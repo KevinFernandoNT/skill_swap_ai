@@ -2,44 +2,30 @@ import React from 'react';
 
 interface GrowthRateChartProps {
   period: 'daily' | 'weekly' | 'monthly';
+  chartData?: Array<{ name: string; value: number }>;
 }
 
-const GrowthRateChart: React.FC<GrowthRateChartProps> = ({ period }) => {
-  // Mock data for different periods
-  const getChartData = () => {
-    switch (period) {
-      case 'daily':
-        return [
-          { day: 'Mon', value: 5.2 },
-          { day: 'Tue', value: 6.8 },
-          { day: 'Wed', value: 7.1 },
-          { day: 'Thu', value: 8.2 },
-          { day: 'Fri', value: 7.9 },
-          { day: 'Sat', value: 6.5 },
-          { day: 'Sun', value: 5.8 }
-        ];
-      case 'weekly':
-        return [
-          { week: 'W1', value: 8.5 },
-          { week: 'W2', value: 10.2 },
-          { week: 'W3', value: 12.5 },
-          { week: 'W4', value: 11.8 }
-        ];
-      case 'monthly':
-        return [
-          { month: 'Jan', value: 12.5 },
-          { month: 'Feb', value: 15.2 },
-          { month: 'Mar', value: 18.7 },
-          { month: 'Apr', value: 16.8 },
-          { month: 'May', value: 20.1 },
-          { month: 'Jun', value: 18.7 }
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const data = getChartData();
+const GrowthRateChart: React.FC<GrowthRateChartProps> = ({ period, chartData = [] }) => {
+  // Use real API data or empty array
+  const data = chartData.length > 0 ? chartData : [];
+  
+  if (data.length === 0) {
+    return (
+      <div className="mt-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-muted-foreground">Last 7 days</span>
+          <span className="text-xs text-muted-foreground">No data</span>
+        </div>
+        <div className="w-full h-16 bg-muted/20 rounded-lg flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground mb-1">No growth data</div>
+            <div className="text-xs text-muted-foreground">Complete sessions to see trends</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const maxValue = Math.max(...data.map(d => d.value));
   const minValue = Math.min(...data.map(d => d.value));
   const range = maxValue - minValue;

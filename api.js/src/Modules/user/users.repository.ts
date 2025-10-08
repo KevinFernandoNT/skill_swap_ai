@@ -53,7 +53,7 @@ export class UsersRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).lean().exec();
+    return this.userModel.findOne({ email }).exec();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {

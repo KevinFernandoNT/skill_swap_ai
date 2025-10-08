@@ -1,24 +1,28 @@
 
 import { Link } from "react-router-dom";
-import { SignupForm } from "@/components/forms/SignupForm";
+import { MultiStepSignupForm } from "@/components/forms/MultiStepSignupForm";
 import { PageTransition } from "@/components/common/PageTransition";
+import { LogoWhite } from "@/components/common/LogoWhite";
 
 const Signup = () => {
   return (
     <PageTransition>
-      <div className="min-h-screen flex flex-col">
+      <div className="bg-black min-h-screen flex flex-col">
         <main className="flex-grow flex">
           {/* Left Section - Form (60% width) */}
-          <div className="w-3/5 flex flex-col justify-center items-center px-16 py-12 bg-card">
+          <div className="w-3/5 flex flex-col justify-center items-center px-16 py-12 bg-black">
             <div className="max-w-md w-full">
               <div className="mb-8 text-left">
-                <h1 className="text-4xl font-bold mb-4 text-foreground">Join SkillSwap</h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <div className="mb-6">
+                  <LogoWhite className="mb-4" />
+                </div>
+                <h1 className="text-4xl font-bold mb-4 text-white">Join SkillSwap</h1>
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Create your account and start exchanging skills with professionals
                 </p>
               </div>
               
-              <SignupForm />
+              <MultiStepSignupForm />
             </div>
           </div>
 

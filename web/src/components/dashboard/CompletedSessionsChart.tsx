@@ -1,12 +1,14 @@
 import React from 'react';
 
 interface CompletedSessionsChartProps {
-  data?: number[];
+  chartData?: Array<{ name: string; value: number }>;
 }
 
 const CompletedSessionsChart: React.FC<CompletedSessionsChartProps> = ({ 
-  data = [2, 4, 3, 6, 5, 8, 7, 9, 6, 8, 10, 12, 11, 13, 15] // Mock daily data for last 15 days
+  chartData = []
 }) => {
+  // Use real API data or empty array
+  const data = chartData.length > 0 ? chartData.map(item => item.value) : [];
   const maxValue = Math.max(...data);
   const minValue = Math.min(...data);
   const range = maxValue - minValue;
@@ -25,6 +27,17 @@ const CompletedSessionsChart: React.FC<CompletedSessionsChartProps> = ({
     
     return `M ${points.join(' L ')}`;
   };
+
+  if (data.length === 0) {
+    return (
+      <div className="w-full h-16 bg-muted/20 rounded-lg p-2 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xs text-muted-foreground mb-1">No data available</div>
+          <div className="text-xs text-muted-foreground">Complete sessions to see trends</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-16 bg-muted/20 rounded-lg p-2">
@@ -66,7 +79,7 @@ const CompletedSessionsChart: React.FC<CompletedSessionsChartProps> = ({
       
       {/* Chart info */}
       <div className="flex justify-between items-center mt-1 text-xs text-muted-foreground">
-        <span>Last 15 days</span>
+        <span>Last 7 days</span>
         <span>Peak: {maxValue}</span>
       </div>
     </div>

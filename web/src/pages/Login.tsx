@@ -2,18 +2,22 @@
 import { Link } from "react-router-dom";
 import { LoginForm } from "@/components/forms/LoginForm";
 import { PageTransition } from "@/components/common/PageTransition";
+import { LogoWhite } from "@/components/common/LogoWhite";
 
 const Login = () => {
   return (
     <PageTransition>
-      <div className="min-h-screen flex flex-col">
+      <div className="bg-black min-h-screen flex flex-col">
         <main className="flex-grow flex">
           {/* Left Section - Form (60% width) */}
-          <div className="w-3/5 flex flex-col justify-center items-center px-16 py-12 bg-card">
+          <div className="w-3/5 flex flex-col justify-center items-center px-16 py-12 bg-black">
             <div className="max-w-md w-full">
               <div className="mb-8 text-left">
-                <h1 className="text-4xl font-bold mb-4 text-foreground">Welcome Back!</h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <div className="mb-6">
+                  <LogoWhite className="mb-4" />
+                </div>
+                <h1 className="text-4xl font-bold mb-4 text-white">Welcome Back!</h1>
+                <p className="text-gray-400 text-sm leading-relaxed">
                   Sign in to continue to SkillSwap
                 </p>
               </div>

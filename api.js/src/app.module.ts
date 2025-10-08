@@ -10,6 +10,7 @@ import { ExchangeRequestsModule } from './Modules/exchange-requests/exchange-req
 import { NotificationsModule } from './Modules/notifications/notifications.module';
 import { MessagesModule } from './Modules/messages/messages.module';
 import { StreamChatModule } from './Infastructure/StreamChat/stream-chat.module';
+import { DashboardModule } from './Modules/dashboard/dashboard.module';
 import configuration from './config/configuration';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './Modules/auth/auth.module';
@@ -38,6 +39,7 @@ import { AuthModule } from './Modules/auth/auth.module';
     StreamChatModule,
     ExchangeRequestsModule,
     NotificationsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

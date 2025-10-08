@@ -87,8 +87,8 @@ export const LoginForm = () => {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full animate-pulse"></div>
         </div>
         <div className="mt-6 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">Signing you in...</h3>
-          <p className="text-sm text-muted-foreground">Please wait while we authenticate your account</p>
+          <h3 className="text-lg font-semibold text-white mb-2">Signing you in...</h3>
+          <p className="text-sm text-gray-400">Please wait while we authenticate your account</p>
         </div>
         {/* Animated dots */}
         <div className="flex space-x-1 mt-4">
@@ -104,17 +104,18 @@ export const LoginForm = () => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-6">
         <div>
-          <label className="text-muted-foreground block mb-2 text-sm font-medium">Email</label>
+          <label className="text-white block mb-2 text-sm font-medium">Email</label>
           <Input
             type="email"
             placeholder="Enter your email"
+            className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-primary"
             {...register('email')}
           />
-          {errors.email && <p className="text-destructive text-xs mt-1">{errors.email.message}</p>}
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
         </div>
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-muted-foreground text-sm font-medium">Password</label>
+            <label className="text-white text-sm font-medium">Password</label>
             <Link to="/forgot-password" className="text-sm text-primary hover:underline">
               Forgot password?
             </Link>
@@ -123,17 +124,18 @@ export const LoginForm = () => {
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
+              className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-primary"
               {...register('password')}
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <p className="text-destructive text-xs mt-1">{errors.password.message}</p>}
+          {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
         </div>
         <div className="flex flex-row items-center space-x-3 space-y-0">
           <Controller
@@ -144,8 +146,9 @@ export const LoginForm = () => {
                 <Checkbox
                   checked={!!field.value}
                   onCheckedChange={field.onChange}
+                  className="border-gray-700 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-                <label className="text-sm text-muted-foreground font-normal cursor-pointer">
+                <label className="text-sm text-gray-300 font-normal cursor-pointer">
                   Remember me for 30 days
                 </label>
               </>
@@ -154,14 +157,14 @@ export const LoginForm = () => {
         </div>
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-primary hover:bg-primary/90 text-white"
           disabled={status === 'pending'}
         >
           Log In
         </Button>
       </div>
       <div className="mt-8 text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-400">
           Don't have an account?{' '}
           <Link to="/signup" className="text-primary font-medium hover:underline">
             Sign up
