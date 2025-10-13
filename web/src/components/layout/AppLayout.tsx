@@ -11,6 +11,8 @@ import ExchangeRequestsPage from '../exchange/ExchangeRequestsPage';
 import ExchangeSessionsPage from '../exchange/ExchangeSessionsPage';
 import ViewSessions from '../../pages/ViewSessions';
 import VideoCall from '../video/VideoCall';
+import UsersPage from '../users/UsersPage';
+import SubscriptionPage from '../subscription/SubscriptionPage';
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -50,6 +52,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard />;
+      case 'users':
+        return <UsersPage />;
+      case 'subscription':
+        return <SubscriptionPage />;
       case 'messages':
         return <MessagesPage />;
       case 'sessions':

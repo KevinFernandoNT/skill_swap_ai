@@ -17,7 +17,7 @@ import { SkillsDataTable } from './SkillsDataTable';
 
 interface ExtendedSkill extends Skill {
   type: 'teaching' | 'learning';
-  agenda: string[];
+  agenda?: string[];
 }
 
 interface SkillsPageProps {

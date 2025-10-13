@@ -72,14 +72,6 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-3">
             {/* Quick actions */}
             <div className="hidden md:flex space-x-2">
-
-            <button
-                className="inline-flex items-center px-3 py-2  text-xs font-bold text-black bg-primary border border-border rounded-md  ml-2"
-                onClick={() => setIsLogoutModalOpen(true)}
-                aria-label="Logout"
-              >
-                Request a Demo
-              </button>
               <button
                 className="inline-flex items-center px-3 py-2  text-xs font-semibold text-black bg-primary border border-border rounded-md  ml-2"
                 onClick={() => setIsLogoutModalOpen(true)}

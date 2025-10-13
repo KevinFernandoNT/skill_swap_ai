@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2, Loader2, Edit, BookOpen } from 'lucide-react';
+import { X, Save, Plus, Trash2, Loader2, Edit, BookOpen, Target } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -105,8 +105,13 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
   // Reset form when skill changes (for edit mode)
   useEffect(() => {
     if (skill && mode === 'edit') {
-      // Convert string fields to arrays for edit mode
-      const topicsArray = skill.focusedTopics ? [skill.focusedTopics] : [];
+      // Convert agenda array or focusedTopics string to array for edit mode
+      let topicsArray: string[] = [];
+      if (skill.agenda && Array.isArray(skill.agenda)) {
+        topicsArray = skill.agenda;
+      } else if (skill.focusedTopics && typeof skill.focusedTopics === 'string') {
+        topicsArray = skill.focusedTopics.split(',').map(t => t.trim()).filter(t => t.length > 0);
+      }
       
       reset({
         name: skill.name,
@@ -156,14 +161,24 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
 
   const onSubmit = (data: SkillRequest) => {
     if (mode === 'create') {
-      createSkill.mutate(data);
+      // Map focusedTopics array to agenda field for backend
+      const createData = {
+        ...data,
+        agenda: data.focusedTopics || [],
+        experience: data.experience && data.experience.length > 0 ? data.experience.join(', ') : '',
+      };
+      // Remove focusedTopics as it's not part of the backend schema
+      delete createData.focusedTopics;
+      createSkill.mutate(createData);
     } else {
       // Convert arrays back to strings for edit mode
       const editData = {
         ...data,
+        agenda: data.focusedTopics || [],
         experience: data.experience && data.experience.length > 0 ? data.experience.join(', ') : '',
-        focusedTopics: data.focusedTopics && data.focusedTopics.length > 0 ? data.focusedTopics.join(', ') : '',
       };
+      // Remove focusedTopics as it's not part of the backend schema
+      delete editData.focusedTopics;
       updateSkill.mutate(editData);
     }
     
@@ -341,17 +356,34 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
 
 
                 {/* Focused Sub Topics */}
-                <div>
-                  <Label className="block text-xs font-medium text-foreground mb-2">
-                    Focused Sub Topics
-                  </Label>
+                <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-4 border border-blue-200/50 dark:border-blue-800/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <Label className="text-sm font-medium text-foreground">
+                      Focused Sub Topics
+                    </Label>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      Optional
+                    </span>
+                  </div>
+                  
+                  <div className="mb-3 p-3 bg-blue-50/80 dark:bg-blue-950/30 rounded-md border border-blue-200/50 dark:border-blue-800/30">
+                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
+                      💡 Purpose of this section:
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                      Specify the particular areas or topics within this skill that you focus on teaching. 
+                      This helps learners understand your expertise depth and find sessions that match their specific learning goals.
+                    </p>
+                  </div>
+
                   <div className="space-y-4">
                     <div className="flex gap-3">
                       <Input
                         value={topicInput}
                         onChange={(e) => setTopicInput(e.target.value)}
-                        placeholder="e.g., Hooks, Components, State Management"
-                        className="flex-1"
+                        placeholder="e.g., React Hooks, Component Lifecycle, State Management, Context API..."
+                        className="flex-1 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -364,31 +396,51 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
                         onClick={handleAddTopic}
                         disabled={!topicInput.trim()}
                         size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
                     </div>
+                    
                     {focusedTopics.length > 0 && (
-                      <div className="space-y-3">
-                        {focusedTopics.map((topic, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 border border-border rounded-lg bg-card/50">
-                            <span className="flex-1 text-sm text-foreground">{topic}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTopic(topic)}
-                              className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Added topics ({focusedTopics.length}):
+                        </p>
+                        <div className="space-y-2">
+                          {focusedTopics.map((topic, index) => (
+                            <div key={index} className="flex items-center gap-2 p-3 border border-blue-200/50 dark:border-blue-800/50 rounded-lg bg-white/80 dark:bg-gray-800/80 shadow-sm">
+                              <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
+                              <span className="flex-1 text-sm text-foreground font-medium">{topic}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTopic(topic)}
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors rounded-md"
+                                title="Remove topic"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {focusedTopics.length === 0 && (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No sub topics added yet</p>
+                        <p className="text-xs">Add specific areas you focus on teaching</p>
                       </div>
                     )}
                   </div>
-                  {errors.focusedTopics && <p className="text-destructive text-xs mt-1">{errors.focusedTopics.message}</p>}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    List the specific topics or areas you focus on teaching for this skill
-                  </p>
+                  
+                  {errors.focusedTopics && (
+                    <p className="text-destructive text-xs mt-2 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-destructive"></span>
+                      {errors.focusedTopics.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -18,6 +18,7 @@ export interface Skill {
   proficiency: number;
   experience?: string;
   focusedTopics?: string;
+  agenda?: string[];
   createdAt?: string;
   updatedAt?: string;
   userId?: string;

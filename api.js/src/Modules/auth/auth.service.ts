@@ -19,14 +19,17 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
+      // Convert to plain object and remove password
+      const { password: _, ...result } = user;
       return result;
     }
     return null;
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user._id };
+    console.log('Login - User object:', { email: user.email, id: user._id });
+    const payload = { email: user.email, sub: String(user._id) };
+    console.log('Login - JWT Payload:', payload);
     const access_token = this.jwtService.sign(payload);
     const stream_chat_token = this.streamChatService.generateUserToken(String(user._id));
     return {

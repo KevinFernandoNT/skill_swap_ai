@@ -2,49 +2,51 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MindMap } from "./MindMap";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
-  const [email, setEmail] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Signup with email:", email);
-    // Implement your signup logic here
-  };
-
   return (
-    <section className="relative py-16 md:py-24 overflow-hidden hero-gradient">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-foreground"></div>
-      
-      {/* Decorative elements */}
-      <div className="absolute top-1/4 right-0 w-64 h-64 bg-accent/5 rounded-full filter blur-3xl"></div>
-      <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-primary/5 rounded-full filter blur-3xl"></div>
-      
+    <section className="relative py-16 md:py-24 overflow-hidden bg-white">
       <div className="container relative z-10 mx-auto px-6 md:px-8 lg:px-12">
-        <div className="max-w-screen-xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Level Up Your Skills with Peer-to-Peer Learning
-              </h1>
-              <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto lg:mx-0">
-                Connect with peers, learn from experts, and accelerate your growth using our advanced AI-driven personalized learning paths.
-              </p>
-              
-              <div className="flex flex-col md:flex-row gap-4 justify-center lg:justify-start mb-8">
-              <Button type="submit" className="whitespace-nowrap btn-supabase">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-              </div>
-      
-            </div>
-            
-            <div className="flex-1 relative">
-              {/* Replace chat component with the mind map */}
-              <MindMap />
+        <div className="max-w-screen-xl mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-900">
+            Build in a weekend<br />
+            <span className="text-green-600">Scale to millions</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            SkillSwap AI is the peer-to-peer learning platform.<br />
+            Start your project with AI-powered matching, instant skill exchanges, real-time collaboration, 
+            progress tracking, and personalized learning paths.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg">
+              <Link to="/signup">
+                Start your project
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 text-lg">
+              Request a demo
+            </Button>
+          </div>
+
+          {/* Trusted by section */}
+          <div className="mb-16">
+            <p className="text-sm text-gray-500 mb-8">Trusted by fast-growing companies worldwide</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+              <div className="text-2xl font-bold text-gray-400">mozilla</div>
+              <div className="text-2xl font-bold text-gray-400">github</div>
+              <div className="text-2xl font-bold text-gray-400">1password</div>
+              <div className="text-2xl font-bold text-gray-400">pwc</div>
+              <div className="text-2xl font-bold text-gray-400">pika</div>
+              <div className="text-2xl font-bold text-gray-400">humata</div>
+              <div className="text-2xl font-bold text-gray-400">udio</div>
+              <div className="text-2xl font-bold text-gray-400">langchain</div>
+              <div className="text-2xl font-bold text-gray-400">resend</div>
+              <div className="text-2xl font-bold text-gray-400">loops</div>
+              <div className="text-2xl font-bold text-gray-400">mobbin</div>
+              <div className="text-2xl font-bold text-gray-400">gopuff</div>
             </div>
           </div>
         </div>

@@ -1,12 +1,12 @@
 
 import { 
-  Brain, 
-  BarChart3, 
-  Calendar, 
-  MessageSquare, 
-  Users, 
-  FileText,
-  Sparkles
+  Database, 
+  Shield, 
+  Zap, 
+  Cloud, 
+  Radio, 
+  Brain,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React, { CSSProperties } from "react";
@@ -22,65 +22,67 @@ interface FeatureProps {
 const FeatureCard = ({ icon, title, description, className, style }: FeatureProps) => (
   <div 
     className={cn(
-      "bg-gray-900 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-800 hover:border-primary/50",
+      "bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-green-200",
       className
     )}
     style={style}
   >
-    <div className="feature-icon mb-4 inline-flex">
+    <div className="mb-4 inline-flex text-green-600">
       {icon}
     </div>
-    <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
-    <p className="text-gray-400">{description}</p>
+    <h3 className="text-xl font-semibold mb-2 text-gray-900">{title}</h3>
+    <p className="text-gray-600">{description}</p>
   </div>
 );
 
 export const Features = () => {
   const features = [
     {
+      icon: <Database size={24} />,
+      title: "AI Matching Engine",
+      description: "Every project is powered by our advanced AI matching system, connecting learners with the perfect skill exchange partners. 100% intelligent matching.",
+    },
+    {
+      icon: <Shield size={24} />,
+      title: "Secure Learning",
+      description: "Add verified profiles and secure learning sessions, protecting your progress with advanced security measures.",
+    },
+    {
+      icon: <Zap size={24} />,
+      title: "Instant Sessions",
+      description: "Easily start learning sessions without complex setup or scheduling conflicts.",
+    },
+    {
+      icon: <Cloud size={24} />,
+      title: "Progress Storage",
+      description: "Store, organize, and track your learning progress, from skills to achievements.",
+    },
+    {
+      icon: <Radio size={24} />,
+      title: "Real-time Learning",
+      description: "Build collaborative experiences with real-time skill sharing and feedback.",
+    },
+    {
       icon: <Brain size={24} />,
-      title: "AI-Powered Learning",
-      description: "Personalized learning paths and recommendations based on your goals and progress.",
+      title: "AI Recommendations",
+      description: "Integrate your favorite learning models to store, index and search personalized learning paths.",
     },
     {
       icon: <BarChart3 size={24} />,
-      title: "Progress Tracking",
-      description: "Visualize your skill development with detailed analytics and insights.",
-    },
-    {
-      icon: <Calendar size={24} />,
-      title: "Smart Scheduling",
-      description: "Optimize your study time with AI-recommended scheduling based on your availability.",
-    },
-    {
-      icon: <MessageSquare size={24} />,
-      title: "Real-time Collaboration",
-      description: "Connect with peers for study sessions, discussions, and knowledge sharing.",
-    },
-    {
-      icon: <Users size={24} />,
-      title: "Expert Community",
-      description: "Access a network of mentors and field experts for guidance and feedback.",
-    },
-    {
-      icon: <FileText size={24} />,
-      title: "Resource Library",
-      description: "Curated learning materials and resources tailored to your specific needs.",
+      title: "Learning APIs",
+      description: "Instant ready-to-use RESTful APIs for seamless integration with your learning tools.",
     },
   ];
 
   return (
-    <section id="features" className="py-16 md:py-24 bg-foreground">
+    <section id="features" className="py-16 md:py-24 bg-gray-50">
       <div className="container mx-auto px-6 md:px-8">
         <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center justify-center gap-2 mb-4 bg-primary/10 px-4 py-1.5 rounded-full text-primary font-medium text-sm">
-            <Sparkles size={16} />
-            <span>Powerful Features</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Everything you need to accelerate your learning</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-            Our AI-powered platform combines cutting-edge technology with best practices in education to create
-            the most effective learning experience possible.
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+            Use one or all. Best of breed products. Integrated as a platform.
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+            Use SkillSwap AI with any learning framework
           </p>
         </div>
         

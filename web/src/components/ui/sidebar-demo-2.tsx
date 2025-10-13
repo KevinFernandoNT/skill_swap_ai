@@ -17,7 +17,9 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconSchool,
-  IconBook
+  IconBook,
+  IconUser,
+  IconCrown
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -40,6 +42,14 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
          <IconHome className="h-5 w-5 shrink-0 text-white" />
        ),
       path: "dashboard"
+    },
+    {
+      label: "Users",
+      href: "#",
+             icon: (
+         <IconUser className="h-5 w-5 shrink-0 text-white" />
+       ),
+      path: "users"
     },
     {
       label: "Sessions",
@@ -227,6 +237,20 @@ export default function SidebarDemo({ currentPage = 'dashboard', onNavigate, use
             </div>
           </div>
           <div className="pl-1 pb-3 space-y-3">
+            {/* Subscription Tab */}
+            <div 
+              onClick={() => handleNavClick('subscription')}
+              className={cn(
+                "flex items-center gap-3 cursor-pointer transition-all duration-300 ease-in-out rounded-[5px] pl-3 pr-3 py-2",
+                currentPage === 'subscription'
+                  ? "bg-primary font-semibold text-black shadow-lg" 
+                  : "hover:bg-white/10"
+              )}
+            >
+              <IconCrown className="h-5 w-5 text-white text-sm" />
+              <span className="text-white text-sm">Upgrade to Pro</span>
+            </div>
+
             <div className="flex items-center gap-4">
               <SidebarLink
                 link={{

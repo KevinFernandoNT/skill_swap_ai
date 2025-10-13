@@ -195,6 +195,43 @@ export const columns = (
     },
   },
   {
+    accessorKey: "agenda",
+    header: "Sub Topics",
+    cell: ({ row }) => {
+      const agenda = row.getValue("agenda") as string[]
+      const focusedTopics = row.original.focusedTopics as string
+      
+      // Handle both agenda array and focusedTopics string
+      let topics: string[] = []
+      if (Array.isArray(agenda) && agenda.length > 0) {
+        topics = agenda
+      } else if (focusedTopics && typeof focusedTopics === 'string') {
+        topics = focusedTopics.split(',').map(t => t.trim()).filter(t => t.length > 0)
+      }
+      
+      if (topics.length === 0) {
+        return <div className="text-muted-foreground">-</div>
+      }
+      
+      return (
+        <div className="max-w-xs">
+          <div className="flex flex-wrap gap-1">
+            {topics.slice(0, 3).map((topic, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {topic}
+              </Badge>
+            ))}
+            {topics.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{topics.length - 3} more
+              </Badge>
+            )}
+          </div>
+        </div>
+      )
+    },
+  },
+  {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {

@@ -96,13 +96,6 @@ const GrowthRateChart: React.FC<GrowthRateChartProps> = ({ period, chartData = [
           })}
         </svg>
         
-        {/* Trend indicator */}
-        <div className="absolute top-1 right-1">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-green-600 dark:text-green-400 font-medium">Live</span>
-          </div>
-        </div>
       </div>
     </div>
   );
