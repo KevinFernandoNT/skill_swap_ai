@@ -108,6 +108,41 @@ export class SkillsService {
     await this.skillsRepository.remove(id);
   }
 
+  async removeAll(userId: string): Promise<{ deletedCount: number }> {
+    this.logger.log(`Deleting all skills for user: ${userId}`);
+    this.logger.log(`User ID type: ${typeof userId}`);
+    this.logger.log(`User ID value: "${userId}"`);
+    
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      this.logger.error('Invalid userId provided to removeAll method');
+      throw new Error('Invalid user ID provided');
+    }
+    
+    const result = await this.skillModel.deleteMany({ userId }).exec();
+    
+    this.logger.log(`Deleted ${result.deletedCount} skills for user: ${userId}`);
+    
+    return { deletedCount: result.deletedCount };
+  }
+
+  async removeAllByType(userId: string, type: 'teaching' | 'learning'): Promise<{ deletedCount: number }> {
+    this.logger.log(`Deleting all ${type} skills for user: ${userId}`);
+    this.logger.log(`User ID type: ${typeof userId}`);
+    this.logger.log(`User ID value: "${userId}"`);
+    this.logger.log(`Skill type: ${type}`);
+    
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      this.logger.error('Invalid userId provided to removeAllByType method');
+      throw new Error('Invalid user ID provided');
+    }
+    
+    const result = await this.skillModel.deleteMany({ userId, type }).exec();
+    
+    this.logger.log(`Deleted ${result.deletedCount} ${type} skills for user: ${userId}`);
+    
+    return { deletedCount: result.deletedCount };
+  }
+
   async search(query: string, type?: string, paginationDto?: PaginationDto): Promise<PaginatedResult<Skill>> {
     return this.skillsRepository.search(query, type, paginationDto);
   }

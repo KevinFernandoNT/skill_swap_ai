@@ -382,15 +382,22 @@ CLOUDINARY_API_SECRET=your-api-secret
 
 ### Python API (.env)
 ```env
-# Required
-HOST=0.0.0.0
-PORT=8000
+# Required - Get your Pinecone API key from https://www.pinecone.io/
+PINECONE_API_KEY=your-pinecone-key
 
 # Optional
+HOST=0.0.0.0
+PORT=8000
 DEBUG=True
 OPENAI_API_KEY=your-openai-key
-PINECONE_API_KEY=your-pinecone-key
+HF_TOKEN=your-huggingface-token
 ```
+
+**Important:** The Python API requires a valid Pinecone API key to function. 
+- Create a `.env` file in the `api.py` directory
+- Get your API key from https://www.pinecone.io/
+- A `.env.example` template file is provided
+- The API uses Pinecone for vector database operations and skill matching
 
 ### Frontend (.env)
 ```env

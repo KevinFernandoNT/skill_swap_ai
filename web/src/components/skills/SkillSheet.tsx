@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2, Loader2, Edit, BookOpen, Target } from 'lucide-react';
+import { X, Save, Plus, Trash2, Loader2, Edit, Target } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -38,6 +38,7 @@ interface SkillSheetProps {
   onSuccess?: () => void;
   skill?: ExtendedSkill | null; // For editing
   mode: 'create' | 'edit';
+  activeTab?: 'teaching' | 'learning';
 }
 
 const skillSchema = yup.object({
@@ -48,7 +49,7 @@ const skillSchema = yup.object({
   focusedTopics: yup.array().of(yup.string().trim().required('Topic cannot be empty')).notRequired(),
 });
 
-const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess, skill, mode }) => {
+const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess, skill, mode, activeTab = 'teaching' }) => {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingClose, setPendingClose] = useState(false);
   const { toast } = useToast();
@@ -94,7 +95,7 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
       name: '',
       category: '',
       proficiency: 50,
-      type: 'teaching' as const,
+      type: activeTab,
       focusedTopics: [],
     },
   });
@@ -117,7 +118,7 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
         name: skill.name,
         category: skill.category,
         proficiency: skill.proficiency,
-        type: 'teaching' as const,
+        type: skill.type || activeTab,
         focusedTopics: topicsArray,
       });
     } else if (mode === 'create') {
@@ -125,11 +126,11 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
         name: '',
         category: '',
         proficiency: 50,
-        type: 'teaching' as const,
+        type: activeTab,
         focusedTopics: [],
       });
     }
-  }, [skill, mode, reset]);
+  }, [skill, mode, reset, activeTab]);
 
   // Handle unsaved changes detection
   const handleSheetOpenChange = (open: boolean) => {
@@ -187,7 +188,7 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
       name: '',
       category: '',
       proficiency: 50,
-      type: 'teaching' as const,
+      type: activeTab,
       focusedTopics: [],
     });
     setTopicInput('');
@@ -445,28 +446,6 @@ const SkillSheet: React.FC<SkillSheetProps> = ({ isOpen, onOpenChange, onSuccess
               </div>
             </div>
 
-            {/* Skill Preview */}
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/20">
-              <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <h3 className="text-base font-semibold text-foreground">Skill Preview</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Name:</span>
-                  <span className="text-foreground font-medium">{watch('name') || 'Enter skill name'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Category:</span>
-                  <span className="text-foreground font-medium">{watch('category') || 'Select category'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Proficiency:</span>
-                  <span className="text-foreground font-medium">{watch('proficiency')}%</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

@@ -13,7 +13,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Trash2, Edit } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Trash2, Edit, Trash } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -42,6 +42,9 @@ interface SkillsDataTableProps {
   data: Skill[];
   onEditSkill: (skill: Skill) => void;
   onDeleteSkill: (skillId: string) => void;
+  onDeleteAllSkills: () => void;
+  onDeleteSelectedSkills: (skillIds: string[]) => void;
+  activeTab?: 'teaching' | 'learning';
 }
 
 export const columns = (
@@ -266,7 +269,7 @@ export const columns = (
   },
 ]
 
-export function SkillsDataTable({ data, onEditSkill, onDeleteSkill }: SkillsDataTableProps) {
+export function SkillsDataTable({ data, onEditSkill, onDeleteSkill, onDeleteAllSkills, onDeleteSelectedSkills, activeTab = 'teaching' }: SkillsDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -302,32 +305,59 @@ export function SkillsDataTable({ data, onEditSkill, onDeleteSkill }: SkillsData
           }
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
+        <div className="ml-auto flex items-center space-x-2">
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                const selectedIds = table.getFilteredSelectedRowModel().rows.map(row => row.original._id);
+                onDeleteSelectedSkills(selectedIds);
+              }}
+              className="flex items-center"
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete Selected ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          {data.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDeleteAllSkills}
+              className="flex items-center"
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete All
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>

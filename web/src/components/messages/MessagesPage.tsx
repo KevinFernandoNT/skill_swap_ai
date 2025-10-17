@@ -49,6 +49,7 @@ const MessagesPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userToken, setUserToken] = useState<string | null>(null);
   const [filters, setFilters] = useState<any>(null);
+  const [activeChannel, setActiveChannel] = useState<any>(null);
   const chatClientRef = useRef<StreamChat | null>(null);
 
   useEffect(() => {
@@ -82,6 +83,14 @@ const MessagesPage: React.FC = () => {
           chatClientRef.current = client;
         }
         setClientReady(true);
+        
+        // Check if there's a pre-selected channel from navigation
+        const selectedChannel = (window as any).selectedChannel;
+        if (selectedChannel) {
+          setActiveChannel(selectedChannel);
+          // Clear the global reference
+          (window as any).selectedChannel = null;
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize chat');
         console.error('Chat initialization error:', err);
@@ -144,11 +153,13 @@ const MessagesPage: React.FC = () => {
             <ChannelList
               filters={filters}
               options={options}
+              setActiveChannel={setActiveChannel}
+              activeChannel={activeChannel}
             />
           </div>
           {/* Chat Area */}
           <div className="flex-1 bg-background flex flex-col">
-            <Channel>
+            <Channel channel={activeChannel}>
               <Window>
                 <ChannelHeader />
                 <MessageList />

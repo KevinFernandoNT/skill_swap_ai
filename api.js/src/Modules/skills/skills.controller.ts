@@ -61,6 +61,52 @@ export class SkillsController {
     return this.skillsService.update(req.user._id, id, updateSkillDto);
   }
 
+  @Delete('all')
+  @ApiOperation({ summary: 'Delete all skills for current user' })
+  @ApiResponse({ status: 200, description: 'All skills deleted successfully' })
+  async removeAll(@Request() req) {
+    console.log('RemoveAll - Request user object:', req.user);
+    console.log('RemoveAll - User ID:', req.user?._id);
+    console.log('RemoveAll - User ID type:', typeof req.user?._id);
+    
+    if (!req.user || !req.user._id) {
+      console.error('RemoveAll - No user found in request');
+      throw new Error('User not authenticated');
+    }
+    
+    return this.skillsService.removeAll(req.user._id);
+  }
+
+  @Delete('all/teaching')
+  @ApiOperation({ summary: 'Delete all teaching skills for current user' })
+  @ApiResponse({ status: 200, description: 'All teaching skills deleted successfully' })
+  async removeAllTeaching(@Request() req) {
+    console.log('RemoveAllTeaching - Request user object:', req.user);
+    console.log('RemoveAllTeaching - User ID:', req.user?._id);
+    
+    if (!req.user || !req.user._id) {
+      console.error('RemoveAllTeaching - No user found in request');
+      throw new Error('User not authenticated');
+    }
+    
+    return this.skillsService.removeAllByType(req.user._id, 'teaching');
+  }
+
+  @Delete('all/learning')
+  @ApiOperation({ summary: 'Delete all learning skills for current user' })
+  @ApiResponse({ status: 200, description: 'All learning skills deleted successfully' })
+  async removeAllLearning(@Request() req) {
+    console.log('RemoveAllLearning - Request user object:', req.user);
+    console.log('RemoveAllLearning - User ID:', req.user?._id);
+    
+    if (!req.user || !req.user._id) {
+      console.error('RemoveAllLearning - No user found in request');
+      throw new Error('User not authenticated');
+    }
+    
+    return this.skillsService.removeAllByType(req.user._id, 'learning');
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete skill' })
   @ApiResponse({ status: 200, description: 'Skill deleted successfully' })

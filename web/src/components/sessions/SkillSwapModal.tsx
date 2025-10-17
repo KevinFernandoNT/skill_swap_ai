@@ -543,7 +543,7 @@ const SkillSwapModal: React.FC<SkillSwapModalProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelSwap}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSwap}>Send Request</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmSwap} className="bg-primary text-white hover:bg-primary/90">Send Request</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

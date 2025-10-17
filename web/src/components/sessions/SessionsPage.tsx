@@ -376,6 +376,7 @@ const SessionsPage: React.FC = () => {
                   setConfirmAction(null);
                 }
               }}
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Yes, Delete
             </AlertDialogAction>
@@ -396,7 +397,7 @@ const SessionsPage: React.FC = () => {
             <AlertDialogAction onClick={() => {
               window.dispatchEvent(new CustomEvent('navigateToTab', { detail: { tab: 'skills' } }));
               setShowNoSkillModal(false);
-            }}>Go to Skills</AlertDialogAction>
+            }} className="bg-primary text-white hover:bg-primary/90">Go to Skills</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

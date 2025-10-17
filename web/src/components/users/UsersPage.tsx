@@ -1,23 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Users, Mail, MapPin, Calendar, Eye, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, Users, Mail, MapPin, Calendar, Eye, MoreHorizontal, MessageCircle } from 'lucide-react';
 import { useGetUsers } from '@/hooks/useGetUsers';
 import { User } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { StreamChat } from 'stream-chat';
 
 const UsersPage: React.FC = () => {
   const { data: usersResponse, isLoading, error, refetch } = useGetUsers();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [locationFilter, setLocationFilter] = useState<string>('all');
 
   const users = usersResponse?.data || [];
 
@@ -33,32 +31,10 @@ const UsersPage: React.FC = () => {
           skill.category?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-      const matchesLocation = locationFilter === 'all' || 
-        (user.location && user.location.toLowerCase().includes(locationFilter.toLowerCase()));
-
-      return matchesSearch && matchesStatus && matchesLocation;
+      return matchesSearch;
     });
-  }, [users, searchTerm, statusFilter, locationFilter]);
+  }, [users, searchTerm]);
 
-  // Get unique locations for filter
-  const uniqueLocations = useMemo(() => {
-    const locations = users
-      .map(user => user.location)
-      .filter(Boolean)
-      .map(location => location!.toLowerCase())
-      .filter((location, index, self) => self.indexOf(location) === index);
-    return locations;
-  }, [users]);
-
-  // Get unique statuses for filter
-  const uniqueStatuses = useMemo(() => {
-    const statuses = users
-      .map(user => user.status)
-      .filter(Boolean)
-      .filter((status, index, self) => self.indexOf(status) === index);
-    return statuses;
-  }, [users]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -83,12 +59,77 @@ const UsersPage: React.FC = () => {
     // TODO: Implement profile view functionality
   };
 
-  const handleSendMessage = (user: User) => {
-    toast({
-      title: "Send Message",
-      description: `Opening chat with ${user.name}`,
-    });
-    // TODO: Implement messaging functionality
+  const handleSendMessage = async (user: User) => {
+    try {
+      // Get current user from localStorage
+      const storedUserData = localStorage.getItem('user');
+      const streamChatToken = localStorage.getItem('stream_chat_token');
+
+      if (!storedUserData || !streamChatToken) {
+        toast({
+          title: 'Authentication Error',
+          description: 'Please log in again to send messages.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const storedUser = JSON.parse(storedUserData);
+      
+      const streamUser: any = {
+        id: storedUser._id || storedUser.id,
+        name: storedUser.name,
+        image: storedUser.avatar,
+        email: storedUser.email,
+      };
+
+      const apiKey = '4ngq5ws5e4b8';
+      const chatClient = StreamChat.getInstance(apiKey);
+      await chatClient.connectUser(streamUser, streamChatToken);
+
+      const channelId = `user_${user._id}`;
+      
+      // Check if channel already exists
+      const existingChannels = await chatClient.queryChannels({
+        id: { $eq: channelId },
+      });
+
+      let channel;
+      if (existingChannels.length > 0) {
+        // Channel exists, use it
+        channel = existingChannels[0];
+        await channel.watch();
+      } else {
+        // Create new channel
+        channel = chatClient.channel('messaging', channelId, {
+          members: [streamUser.id, user._id],
+        });
+        await channel.create();
+        
+        toast({
+          title: 'Chat Started',
+          description: `A new chat with ${user.name} has been created.`,
+        });
+      }
+
+      // Store globally for MessagesPage to use
+      (window as any).selectedChannel = channel;
+      
+      // Navigate to Messages tab
+      const navigateEvent = new CustomEvent('navigateToTab', { 
+        detail: { tab: 'messages' } 
+      });
+      window.dispatchEvent(navigateEvent);
+
+    } catch (error: any) {
+      console.error("Error starting chat:", error);
+      
+      toast({
+        title: 'Chat Error',
+        description: error.message || 'Unable to start chat. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
@@ -140,9 +181,9 @@ const UsersPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex justify-start">
               {/* Search */}
-              <div className="relative">
+              <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search users, skills, or locations..."
@@ -151,36 +192,6 @@ const UsersPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {uniqueStatuses.map(status => (
-                    <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Location Filter */}
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {uniqueLocations.map(location => (
-                    <SelectItem key={location} value={location}>
-                      {location.charAt(0).toUpperCase() + location.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -284,7 +295,7 @@ const UsersPage: React.FC = () => {
                                 View Profile
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleSendMessage(user)}>
-                                <Mail className="w-4 h-4 mr-2" />
+                                <MessageCircle className="w-4 h-4 mr-2" />
                                 Send Message
                               </DropdownMenuItem>
                             </DropdownMenuContent>

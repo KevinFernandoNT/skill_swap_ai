@@ -5,6 +5,10 @@ import { currentUser } from '../../data/mockData';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '../ui/alert-dialog';
 import { useGetSkills } from '@/hooks/useGetSkills';
 import { useDeleteSkill } from '@/hooks/useDeleteSkill';
+import { useDeleteAllSkills } from '@/hooks/useDeleteAllSkills';
+import { useDeleteAllTeachingSkills } from '@/hooks/useDeleteAllTeachingSkills';
+import { useDeleteAllLearningSkills } from '@/hooks/useDeleteAllLearningSkills';
+import { useDeleteSelectedSkills } from '@/hooks/useDeleteSelectedSkills';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import SkillSheet from './SkillSheet';
@@ -42,6 +46,46 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
       toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete skill', variant: 'destructive' });
     },
   });
+
+  const deleteAllSkills = useDeleteAllSkills({
+    onSuccess: () => {
+      invalidateSkills();
+      toast({ title: 'Success', description: 'All skills have been deleted successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete all skills', variant: 'destructive' });
+    },
+  });
+
+  const deleteAllTeachingSkills = useDeleteAllTeachingSkills({
+    onSuccess: () => {
+      invalidateSkills();
+      toast({ title: 'Success', description: 'All teaching skills have been deleted successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete all teaching skills', variant: 'destructive' });
+    },
+  });
+
+  const deleteAllLearningSkills = useDeleteAllLearningSkills({
+    onSuccess: () => {
+      invalidateSkills();
+      toast({ title: 'Success', description: 'All learning skills have been deleted successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete all learning skills', variant: 'destructive' });
+    },
+  });
+
+  const deleteSelectedSkills = useDeleteSelectedSkills({
+    onSuccess: () => {
+      invalidateSkills();
+      toast({ title: 'Success', description: 'Selected skills have been deleted successfully' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error?.response?.data?.message || 'Failed to delete selected skills', variant: 'destructive' });
+    },
+  });
   const [activeTab, setActiveTab] = useState<'teaching' | 'learning'>(initialActiveTab);
 
   // Update activeTab when prop changes
@@ -51,7 +95,10 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
   const [isSkillSheetOpen, setIsSkillSheetOpen] = useState(false);
   const [skillSheetMode, setSkillSheetMode] = useState<'create' | 'edit'>('create');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [deleteSelectedDialogOpen, setDeleteSelectedDialogOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
+  const [skillsToDelete, setSkillsToDelete] = useState<string[]>([]);
   const [editingSkill, setEditingSkill] = useState<ExtendedSkill | null>(null);
 
   // Remove all local skills state and replace with API data
@@ -78,6 +125,39 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
   const cancelDeleteSkill = () => {
     setSkillToDelete(null);
     setDeleteDialogOpen(false);
+  };
+
+  const handleDeleteAllSkills = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
+  const confirmDeleteAllSkills = () => {
+    if (activeTab === 'teaching') {
+      deleteAllTeachingSkills.mutate();
+    } else {
+      deleteAllLearningSkills.mutate();
+    }
+    setDeleteAllDialogOpen(false);
+  };
+
+  const cancelDeleteAllSkills = () => {
+    setDeleteAllDialogOpen(false);
+  };
+
+  const handleDeleteSelectedSkills = (skillIds: string[]) => {
+    setSkillsToDelete(skillIds);
+    setDeleteSelectedDialogOpen(true);
+  };
+
+  const confirmDeleteSelectedSkills = () => {
+    deleteSelectedSkills.mutate(skillsToDelete);
+    setSkillsToDelete([]);
+    setDeleteSelectedDialogOpen(false);
+  };
+
+  const cancelDeleteSelectedSkills = () => {
+    setSkillsToDelete([]);
+    setDeleteSelectedDialogOpen(false);
   };
 
   const getCategoryColor = (category: string) => {
@@ -137,6 +217,9 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
               setIsSkillSheetOpen(true); 
             }}
             onDeleteSkill={handleDeleteSkill}
+            onDeleteAllSkills={handleDeleteAllSkills}
+            onDeleteSelectedSkills={handleDeleteSelectedSkills}
+            activeTab={activeTab}
           />
         </div>
       </div>
@@ -148,6 +231,7 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
         onSuccess={invalidateSkills}
         skill={editingSkill}
         mode={skillSheetMode}
+        activeTab={activeTab}
       />
 
       {/* Delete Skill Confirmation Dialog */}
@@ -161,7 +245,43 @@ const SkillsPage: React.FC<SkillsPageProps> = ({ activeTab: initialActiveTab = '
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelDeleteSkill}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteSkill}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmDeleteSkill} className="bg-destructive text-white hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Skills Confirmation Dialog */}
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All {activeTab === 'teaching' ? 'Teaching' : 'Learning'} Skills?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all your {activeTab === 'teaching' ? 'teaching' : 'learning'} skills? This action cannot be undone and will permanently remove all your {activeTab === 'teaching' ? 'teaching' : 'learning'} skills.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteAllSkills}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAllSkills} className="bg-destructive text-white hover:bg-destructive/90">
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Selected Skills Confirmation Dialog */}
+      <AlertDialog open={deleteSelectedDialogOpen} onOpenChange={setDeleteSelectedDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Skills?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {skillsToDelete.length} selected skill{skillsToDelete.length > 1 ? 's' : ''}? This action cannot be undone and will permanently remove the selected skills.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteSelectedSkills}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteSelectedSkills} className="bg-destructive text-white hover:bg-destructive/90">
+              Delete Selected Skills ({skillsToDelete.length})
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
